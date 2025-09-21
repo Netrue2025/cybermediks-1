@@ -26,7 +26,6 @@ class PatientProfileController extends Controller
             'dob'        => ['nullable', 'date'],
             'country'    => ['nullable', 'string', 'max:100'],
             'address'    => ['nullable', 'string', 'max:255'],
-            'name'       => ['required', 'string', 'max:200'],
         ]);
 
         $user->fill([

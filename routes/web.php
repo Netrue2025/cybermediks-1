@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Doctor\DoctorCredentialController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\Doctor\DoctorLocationController;
 use App\Http\Controllers\Doctor\DoctorMessengerController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Doctor\DoctorPatientController;
 use App\Http\Controllers\Doctor\DoctorPrescriptionController;
 use App\Http\Controllers\Doctor\DoctorProfileController;
 use App\Http\Controllers\Doctor\DoctorScheduleController;
+use App\Http\Controllers\Doctor\DoctorWalletController;
 use App\Http\Controllers\Patient\DoctorBrowseController;
 use App\Http\Controllers\Patient\PatientAppointmentController;
 use App\Http\Controllers\Patient\PatientDashboardController;
@@ -102,21 +104,37 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
     Route::get('/patients', [DoctorPatientController::class, 'index'])->name('patients');
     Route::get('/patient/{patient}/history', [DoctorPatientController::class, 'show'])->name('patient.history');
 
+    // WALLETS
+    Route::get('/wallet', [DoctorWalletController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/add-funds', [DoctorWalletController::class, 'addFunds'])->name('wallet.add');
+    Route::post('/wallet/withdraw', [DoctorWalletController::class, 'withdraw'])->name('wallet.withdraw');
+
     // MESSENGERS
     Route::get('/messenger', [DoctorMessengerController::class, 'index'])->name('messenger'); // list + optional open
     Route::get('/messenger/{conversation}', [DoctorMessengerController::class, 'show'])->name('messenger.show'); // messages
     Route::post('/messenger/{conversation}/messages', [DoctorMessengerController::class, 'send'])->name('messenger.send');
 
-    Route::get('/credentials', fn() => view('doctor.credentials'))->name('credentials');
+    Route::get('/credentials', [DoctorCredentialController::class, 'index'])->name('credentials.index'); // optional page
+    Route::post('/credentials', [DoctorCredentialController::class, 'store'])->name('credentials.store'); // upload
+    Route::delete('/credentials/{credential}', [DoctorCredentialController::class, 'destroy'])->name('credentials.destroy'); // delete
+    Route::get('/credentials/{credential}/download', [DoctorCredentialController::class, 'download'])->name('credentials.download'); // download/view
+    Route::get('/credentials/list/fragment', [DoctorCredentialController::class, 'listFragment'])->name('credentials.fragment'); // return partial HTML
+
+
+    // PROFILE
+    Route::get('/profile', [DoctorProfileController::class, 'show'])->name('profile');
+    Route::post('/profile', [DoctorProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [DoctorProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/availability', [DoctorProfileController::class, 'availability'])->name('profile.availability');
+    Route::post('/profile/quick', [DoctorProfileController::class, 'quickUpdate'])->name('profile.quick');            
+
+
+    
     Route::get('/queue', fn() => view('doctor.queue'))->name('queue');
 
 
-    Route::get('/wallet', fn() => view('doctor.wallet'))->name('wallet');
     Route::get('/consultations', fn() => view('doctor.consultations'))->name('consultations');
-    Route::get('/profile', [DoctorProfileController::class, 'show'])->name('profile');
-
-    Route::post('/profile', [DoctorProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/password', [DoctorProfileController::class, 'updatePassword'])->name('profile.password');
+    
     Route::post('/location', [DoctorLocationController::class, 'store'])
         ->name('location.update');
 });

@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\DoctorProfile;
+use App\Models\DoctorSpecialty;
 use App\Models\Prescription;
+use App\Models\Specialty;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -47,12 +50,19 @@ class DoctorDashboardController extends Controller
             ->whereBetween('scheduled_at', [$now, $now->copy()->addMinutes(15)])
             ->count();
 
+        $profile = DoctorProfile::firstOrCreate(['doctor_id' => Auth::id()]);
+        $allSpecialties = Specialty::orderBy('name')->get(['id', 'name']);
+        $selectedSpecialtyIds = DoctorSpecialty::where('doctor_id', Auth::id())->pluck('specialty_id')->all();
+
         return view('doctor.dashboard', compact(
             'pendingRequests',
             'activeConsultations',
             'prescriptionsToday',
             'earnings',
-            'videoQueueCount'
+            'videoQueueCount',
+            'profile',
+            'allSpecialties',
+            'selectedSpecialtyIds'
         ));
     }
 }

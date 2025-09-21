@@ -159,8 +159,8 @@
                     <i class="fa-solid fa-wallet fs-3" style="color:#cbd5e1;"></i>
                 </div>
                 <div class="d-grid gap-2 mt-3">
-                    <a href="{{ route('doctor.wallet') }}" class="btn btn-gradient">Withdraw Funds</a>
-                    <a href="{{ route('doctor.wallet') }}" class="btn btn-outline-light">View Transactions</a>
+                    <a href="{{ route('doctor.wallet.index') }}" class="btn btn-gradient">Withdraw Funds</a>
+                    <a href="{{ route('doctor.wallet.index') }}" class="btn btn-outline-light">View Transactions</a>
                 </div>
             </div>
 
