@@ -118,4 +118,19 @@ class User extends Authenticatable
     {
         return $this->hasOne(PharmacyProfile::class, 'user_id');
     }
+
+    public function appointmentsAsPatient()
+    {
+        return $this->hasMany(\App\Models\Appointment::class, 'patient_id');
+    }
+    public function appointmentsAsDoctor()
+    {
+        return $this->hasMany(\App\Models\Appointment::class, 'doctor_id');
+    }
+
+    // Nice helper for your name fields
+    public function getFullNameAttribute(): string
+    {
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
 };

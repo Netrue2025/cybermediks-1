@@ -49,6 +49,8 @@ class DoctorBrowseController extends Controller
                     'initials'    => strtoupper($initials),
                     'available'   => (bool)optional($d->doctorProfile)->is_available,
                     'specialties' => $d->specialties->pluck('name')->all(),
+                    'appointment_url' => route('patient.appointments.create', ['doctor_id' => $d->id, 'type' => 'video']),
+                    'chat_url'        => route('patient.messages', ['doctor_id' => $d->id]),
                 ];
             }),
             'next_page_url' => $doctors->nextPageUrl(),

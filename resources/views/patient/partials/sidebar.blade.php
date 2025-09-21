@@ -32,15 +32,15 @@
                 <i class="fa-solid fa-store"></i><span>Online Store</span>
             </a>
 
-            <a class="item {{ request()->routeIs('patient.prescriptions') ? 'active' : '' }}" href="{{ route('patient.prescriptions') }}">
+            <a class="item {{ request()->routeIs('patient.prescriptions.index') ? 'active' : '' }}" href="{{ route('patient.prescriptions.index') }}">
                 <i class="fa-solid fa-file-prescription"></i><span>My Prescriptions</span>
             </a>
 
-            <a class="item {{ request()->routeIs('patient.appointments') ? 'active' : '' }}" href="{{ route('patient.appointments') }}">
+            <a class="item {{ request()->routeIs('patient.appointments.index') ? 'active' : '' }}" href="{{ route('patient.appointments.index') }}">
                 <i class="fa-solid fa-clock-rotate-left"></i><span>Appointment History</span>
             </a>
 
-            <a class="item {{ request()->routeIs('patient.wallet') ? 'active' : '' }}" href="{{ route('patient.wallet') }}">
+            <a class="item {{ request()->routeIs('patient.wallet.index') ? 'active' : '' }}" href="{{ route('patient.wallet.index') }}">
                 <i class="fa-solid fa-wallet"></i><span>My Wallet</span>
             </a>
 

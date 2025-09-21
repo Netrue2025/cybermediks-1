@@ -6,9 +6,13 @@ use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\Doctor\DoctorLocationController;
 use App\Http\Controllers\Doctor\DoctorProfileController;
 use App\Http\Controllers\Patient\DoctorBrowseController;
+use App\Http\Controllers\Patient\PatientAppointmentController;
 use App\Http\Controllers\Patient\PatientDashboardController;
 use App\Http\Controllers\Patient\PatientLocationController;
+use App\Http\Controllers\Patient\PatientMessageController;
 use App\Http\Controllers\Patient\PatientProfileController;
+use App\Http\Controllers\Patient\PrescriptionController;
+use App\Http\Controllers\Patient\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -43,13 +47,17 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
 
     Route::get('/dashboard', [PatientDashboardController::class, 'index'])->name('dashboard');
     Route::get('/store', fn() => view('patient.store'))->name('store');
-    Route::get('/prescriptions', fn() => view('patient.prescriptions'))->name('prescriptions');
-    Route::get('/appointments', fn() => view('patient.appointments'))->name('appointments');
-    Route::get('/wallet', fn() => view('patient.wallet'))->name('wallet');
+    Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
+    Route::get('/appointments', [PatientAppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/pharmacies', fn() => view('patient.pharmacies'))->name('pharmacies');
 
     // DOCTORS
     Route::get('/doctors', [DoctorBrowseController::class, 'index'])->name('doctors.index');
+
+    // WALLETS
+    Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/add-funds', [WalletController::class, 'addFunds'])->name('wallet.add');
+    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw'])->name('wallet.withdraw');
 
 
     Route::post('/location', [PatientLocationController::class, 'store'])
@@ -57,6 +65,17 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::get('/profile', [PatientProfileController::class, 'show'])->name('profile');
     Route::post('/profile', [PatientProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/password', [PatientProfileController::class, 'updatePassword'])->name('profile.password');
+
+     // Messages
+    Route::get('/messages', [PatientMessageController::class, 'index'])->name('messages');
+    Route::get('/messages/conversations', [PatientMessageController::class, 'conversations'])->name('messages.conversations'); // AJAX
+    Route::get('/messages/{conversation}', [PatientMessageController::class, 'show'])->name('messages.show'); // AJAX
+    Route::post('/messages/{conversation}', [PatientMessageController::class, 'send'])->name('messages.send'); // AJAX
+    Route::post('/messages/start', [PatientMessageController::class, 'start'])->name('messages.start'); // AJAX (start convo with a doctor)
+
+    // Appointments
+    Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');
+    Route::post('/appointments', [PatientAppointmentController::class, 'store'])->name('appointments.store'); // AJAX
 });
 
 

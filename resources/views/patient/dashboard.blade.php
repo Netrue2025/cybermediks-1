@@ -295,8 +295,8 @@
           ${d.specialties.length ? `<span class="chip ms-2">${d.specialties.join(', ')}</span>` : ''}
         </div>
         <div class="d-flex gap-2">
-          <a href="{{ url('/messenger') }}?doctor_id=${d.id}" class="btn btn-outline-light"><i class="fa-regular fa-message me-1"></i> Chat</a>
-          <a href="{{ url('/appointments/create') }}?doctor_id=${d.id}&type=video" class="btn btn-success"><i class="fa-solid fa-video me-1"></i> Video Call</a>
+          <a href="${d.chat_url}" class="btn btn-outline-light"><i class="fa-regular fa-message me-1"></i> Chat</a>
+          <a href="${d.appointment_url}" class="btn btn-success"><i class="fa-solid fa-video me-1"></i> Video Call</a>
         </div>
       </div>`;
         }
