@@ -177,7 +177,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Pending Requests</div>
-                        <div class="metric">0</div>
+                        <div class="metric">{{ $pendingRequests }}</div>
                     </div>
                     <div class="pill"><i class="fa-solid fa-users fs-5" style="color:#efed86;"></i></div>
                 </div>
@@ -188,7 +188,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Active Consultations</div>
-                        <div class="metric">0</div>
+                        <div class="metric">{{ $activeConsultations }}</div>
                     </div>
                     <div class="pill"><i class="fa-solid fa-comments fs-5" style="color:#86bcef;"></i></div>
                 </div>
@@ -199,7 +199,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Prescriptions Today</div>
-                        <div class="metric">0</div>
+                        <div class="metric">{{ $prescriptionsToday }}</div>
                     </div>
                     <div class="pill"><i class="fa-solid fa-file-prescription fs-5" style="color:#86efac;"></i></div>
                 </div>
@@ -207,12 +207,24 @@
         </div>
     </div>
 
+    <div class="cardx mt-3 cardx-soft">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="subtle">Total Earnings</div>
+            <div class="fw-bold">$ {{ number_format($earnings, 2, '.', ',') }}</div>
+        </div>
+    </div>
+
+
     {{-- VIDEO CALL QUEUE --}}
     <div class="cardx mt-3">
         <div class="sec-head cursor-pointer" onclick="window.location.href='{{ route('doctor.queue') }}'">
             <i class="fa-regular fa-folder-open"></i>
             <span>Video Call Queue</span>
+            @isset($videoQueueCount)
+                <span class="badge bg-secondary ms-2">{{ $videoQueueCount }}</span>
+            @endisset
         </div>
+
 
         <a href="{{ route('doctor.queue') }}" class="sec-wrap link-card">
             <div class="empty">

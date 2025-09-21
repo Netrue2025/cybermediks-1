@@ -32,16 +32,19 @@
                 <form id="schedForm">
                     @csrf
                     @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $d)
+                        @php
+                            $row = $schedule[$d] ?? ['start' => '09:00', 'end' => '17:00', 'enabled' => true];
+                        @endphp
                         <div class="slot d-flex align-items-center justify-content-between mb-2">
                             <div class="fw-semibold">{{ $d }}</div>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 align-items-center">
                                 <input type="time" class="form-control form-control-sm" name="start[{{ $d }}]"
-                                    value="09:00">
+                                    value="{{ $row['start'] }}">
                                 <input type="time" class="form-control form-control-sm" name="end[{{ $d }}]"
-                                    value="17:00">
+                                    value="{{ $row['end'] }}">
                                 <div class="form-check form-switch m-0">
                                     <input class="form-check-input" type="checkbox" name="enabled[{{ $d }}]"
-                                        checked>
+                                        {{ $row['enabled'] ? 'checked' : '' }}>
                                 </div>
                             </div>
                         </div>
@@ -64,8 +67,23 @@
                 <div class="text-secondary mb-2">Overview of your next visits</div>
 
                 <div class="d-flex flex-column gap-2">
-                    @forelse([] as $a)
-                        {{-- real items here --}}
+                    @forelse($upcoming as $a)
+                        <div class="d-flex justify-content-between align-items-start slot">
+                            <div>
+                                <div class="fw-semibold">
+                                    {{ \Carbon\Carbon::parse($a->scheduled_at)->format('D, M d · g:ia') }}
+                                </div>
+                                <div class="text-secondary small">
+                                    Patient: {{ $a->patient?->first_name }} {{ $a->patient?->last_name }}
+                                    @if ($a->title)
+                                        — {{ $a->title }}
+                                    @endif
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-dark border">{{ str_replace('_', ' ', $a->type) }}</span>
+                            </div>
+                        </div>
                     @empty
                         <div class="text-center text-secondary py-4">No upcoming appointments.</div>
                     @endforelse
@@ -81,11 +99,17 @@
             e.preventDefault();
             const $btn = $('#btnSaveSched');
             lockBtn($btn);
-            // TODO: POST to /doctor/schedule
-            setTimeout(() => {
-                flash('success', 'Schedule saved (demo)');
-                unlockBtn($btn);
-            }, 700);
+
+            $.post(`{{ route('doctor.schedule.store') }}`, $(this).serialize())
+                .done(res => {
+                    flash('success', res.message || 'Schedule saved');
+                })
+                .fail(err => {
+                    const msg = err.responseJSON?.message || 'Failed to save schedule';
+                    flash('danger', msg);
+                    if (err.responseJSON?.errors) console.warn(err.responseJSON.errors);
+                })
+                .always(() => unlockBtn($btn));
         });
     </script>
 @endpush

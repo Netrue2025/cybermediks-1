@@ -71,43 +71,59 @@
             <div class="col-lg-6">
                 <div class="search-wrap">
                     <i class="fa-solid fa-magnifying-glass icon"></i>
-                    <input id="pSearch" class="form-control" placeholder="Search by name, email, or ID...">
+                    <input id="pSearch" class="form-control" placeholder="Search by name, email, or ID..."
+                        value="{{ request('q') }}">
                 </div>
             </div>
             <div class="col-lg-3">
                 <select id="pFilter" class="form-select">
-                    <option value="">All</option>
-                    <option>Recent</option>
-                    <option>With active Rx</option>
-                    <option>Follow-ups</option>
+                    @php $curr = strtolower(request('filter','')); @endphp
+                    <option value="" {{ $curr === '' ? 'selected' : '' }}>All</option>
+                    <option value="recent" {{ $curr === 'recent' ? 'selected' : '' }}>Recent</option>
+                    <option value="with active rx" {{ $curr === 'with active rx' ? 'selected' : '' }}>With active Rx</option>
+                    <option value="follow-ups" {{ $curr === 'follow-ups' ? 'selected' : '' }}>Follow-ups</option>
                 </select>
             </div>
         </div>
     </div>
 
-    <div class="d-flex flex-column gap-2">
-        @foreach ([['EM', 'Ebuka Mbanusi', 'ebuka@example.com', '3 visits'], ['DJ', 'Don Joe', 'don@example.com', '1 visit']] as $p)
-            <div class="patient-row">
-                <div class="avatar">{{ $p[0] }}</div>
-                <div class="flex-grow-1">
-                    <div class="fw-semibold">{{ $p[1] }}</div>
-                    <div class="text-secondary small">{{ $p[2] }}</div>
-                    <span class="chip mt-1 d-inline-block">{{ $p[3] }}</span>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="#" class="btn btn-outline-light btn-sm"><i class="fa-regular fa-file-lines me-1"></i>
-                        History</a>
-                    <a href="#" class="btn btn-gradient btn-sm">Start Consult</a>
-                </div>
-            </div>
-        @endforeach
+    <div id="patientsList">
+        @include('doctor.patients._list', ['patients' => $patients])
     </div>
 @endsection
 
 @push('scripts')
     <script>
-        $('#pSearch,#pFilter').on('input change', function() {
-            // TODO: AJAX filter
-        });
+        (function() {
+            const $list = $('#patientsList');
+            let t = null;
+
+            function fetchList() {
+                $.get(`{{ route('doctor.patients') }}`, {
+                    q: $('#pSearch').val(),
+                    filter: $('#pFilter').val()
+                }, function(html) {
+                    $list.html(html);
+                });
+            }
+
+            $('#pSearch').on('input', function() {
+                clearTimeout(t);
+                t = setTimeout(fetchList, 300);
+            });
+            $('#pFilter').on('change', fetchList);
+
+            // Actions (wire up routes you have)
+            $(document).on('click', '[data-history]', function() {
+                const id = $(this).data('history');
+                // e.g. go to a patient history page
+                window.location.href = `/doctor/patient/${id}/history`;
+            });
+            $(document).on('click', '[data-consult]', function() {
+                const id = $(this).data('consult');
+                // e.g. open messenger with that patient
+                window.location.href = `/doctor/messenger?patient_id=${id}`;
+            });
+        })();
     </script>
 @endpush

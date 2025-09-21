@@ -3,8 +3,13 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\Doctor\DoctorLocationController;
+use App\Http\Controllers\Doctor\DoctorMessengerController;
+use App\Http\Controllers\Doctor\DoctorPatientController;
+use App\Http\Controllers\Doctor\DoctorPrescriptionController;
 use App\Http\Controllers\Doctor\DoctorProfileController;
+use App\Http\Controllers\Doctor\DoctorScheduleController;
 use App\Http\Controllers\Patient\DoctorBrowseController;
 use App\Http\Controllers\Patient\PatientAppointmentController;
 use App\Http\Controllers\Patient\PatientDashboardController;
@@ -66,7 +71,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::post('/profile', [PatientProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/password', [PatientProfileController::class, 'updatePassword'])->name('profile.password');
 
-     // Messages
+    // Messages
     Route::get('/messages', [PatientMessageController::class, 'index'])->name('messages');
     Route::get('/messages/conversations', [PatientMessageController::class, 'conversations'])->name('messages.conversations'); // AJAX
     Route::get('/messages/{conversation}', [PatientMessageController::class, 'show'])->name('messages.show'); // AJAX
@@ -81,19 +86,33 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
 
 /** Doctor Dashboard (authed + verified) */
 Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'doctor'])->group(function () {
-    Route::view('/dashboard', 'doctor.dashboard')->name('dashboard');
+    Route::get('/dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/patients', fn() => view('doctor.patients'))->name('patients');
-    Route::get('/messenger', fn() => view('doctor.messenger'))->name('messenger');
-    Route::get('/prescriptions/create', fn() => view('doctor.prescriptions.create'))->name('prescriptions.create');
-    Route::get('/prescriptions', fn() => view('doctor.prescriptions'))->name('prescriptions');
-    Route::get('/schedule', fn() => view('doctor.schedule'))->name('schedule');
+
+    // PRESCRIPTIONS
+    Route::get('/prescriptions/create', [DoctorPrescriptionController::class, 'create'])->name('prescriptions.create');
+    Route::post('/prescriptions', [DoctorPrescriptionController::class, 'store'])->name('prescriptions.store');
+
+
+    // SCHEDULE
+    Route::get('/schedule', [DoctorScheduleController::class, 'index'])->name('schedule');
+    Route::post('/schedule', [DoctorScheduleController::class, 'store'])->name('schedule.store');
+
+    // PATIENTS
+    Route::get('/patients', [DoctorPatientController::class, 'index'])->name('patients');
+    Route::get('/patient/{patient}/history', [DoctorPatientController::class, 'show'])->name('patient.history');
+
+    // MESSENGERS
+    Route::get('/messenger', [DoctorMessengerController::class, 'index'])->name('messenger'); // list + optional open
+    Route::get('/messenger/{conversation}', [DoctorMessengerController::class, 'show'])->name('messenger.show'); // messages
+    Route::post('/messenger/{conversation}/messages', [DoctorMessengerController::class, 'send'])->name('messenger.send');
+
     Route::get('/credentials', fn() => view('doctor.credentials'))->name('credentials');
     Route::get('/queue', fn() => view('doctor.queue'))->name('queue');
 
 
     Route::get('/wallet', fn() => view('doctor.wallet'))->name('wallet');
-     Route::get('/consultations', fn() => view('doctor.consultations'))->name('consultations');
+    Route::get('/consultations', fn() => view('doctor.consultations'))->name('consultations');
     Route::get('/profile', [DoctorProfileController::class, 'show'])->name('profile');
 
     Route::post('/profile', [DoctorProfileController::class, 'update'])->name('profile.update');

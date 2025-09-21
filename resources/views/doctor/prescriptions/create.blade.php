@@ -33,9 +33,13 @@
                 <label class="form-label">Patient</label>
                 <select class="form-select" name="patient_id" required>
                     <option value="">Choose patient…</option>
-                    <option value="1">Ebuka Mbanusi (#P001)</option>
-                    <option value="2">Don Joe (#P002)</option>
+                    @foreach ($patients as $p)
+                        <option value="{{ $p->id }}">
+                            {{ $p->first_name }} {{ $p->last_name }} (ID: {{ $p->id }})
+                        </option>
+                    @endforeach
                 </select>
+
             </div>
             <div class="col-lg-3">
                 <label class="form-label">Encounter Type</label>
@@ -74,7 +78,7 @@
                     </div>
                     <div class="col-lg-2">
                         <label class="form-label">Qty</label>
-                        <input class="form-control" name="items[0][qty]" placeholder="14">
+                        <input class="form-control" name="items[0][quantity]" placeholder="14">
                     </div>
                 </div>
             </div>
@@ -92,16 +96,17 @@
 @push('scripts')
     <script>
         let rxIndex = 1;
+
         $('#addItem').on('click', function() {
             const i = rxIndex++;
             $('#rxItems').append(`
       <div class="rx-item">
         <div class="row g-2">
-          <div class="col-lg-4"><label class="form-label">Drug</label><input class="form-control" name="items[${i}][drug]" required></div>
-          <div class="col-lg-2"><label class="form-label">Dose</label><input class="form-control" name="items[${i}][dose]"></div>
-          <div class="col-lg-2"><label class="form-label">Freq.</label><input class="form-control" name="items[${i}][freq]"></div>
-          <div class="col-lg-2"><label class="form-label">Days</label><input class="form-control" name="items[${i}][days]"></div>
-          <div class="col-lg-2"><label class="form-label">Qty</label><input class="form-control" name="items[${i}][qty]"></div>
+          <div class="col-lg-4"><label class="form-label">Drug</label><input class="form-control" name="items[${i}][drug]" placeholder="e.g., Amoxicillin 500mg" required></div>
+          <div class="col-lg-2"><label class="form-label">Dose</label><input class="form-control" name="items[${i}][dose]" placeholder="1 tab"></div>
+          <div class="col-lg-2"><label class="form-label">Freq.</label><input class="form-control" name="items[${i}][freq]" placeholder="2×/day"></div>
+          <div class="col-lg-2"><label class="form-label">Days</label><input class="form-control" name="items[${i}][days]" placeholder="7"></div>
+          <div class="col-lg-2"><label class="form-label">Qty</label><input class="form-control" name="items[${i}][quantity]" placeholder="14"></div>
         </div>
       </div>`);
         });
@@ -110,11 +115,36 @@
             e.preventDefault();
             const $btn = $('#btnIssue');
             lockBtn($btn);
-            // TODO: AJAX post to store endpoint
-            setTimeout(() => {
-                flash('success', 'Prescription issued (demo)');
-                unlockBtn($btn);
-            }, 800);
+
+            $.ajax({
+                url: `{{ route('doctor.prescriptions.store') }}`,
+                method: 'POST',
+                data: $(this).serialize(),
+                headers: {
+                    'X-CSRF-TOKEN': `{{ csrf_token() }}`
+                },
+                success: function(res) {
+                    flash('success', res.message || 'Prescription issued');
+                    if (res.redirect) {
+                        window.location.href = res.redirect;
+                    } else {
+                        // fallback: clear the form for another entry
+                        $('#rxForm')[0].reset();
+                        $('#rxItems').html($('#rxItems .rx-item').first()); // keep first row
+                    }
+                },
+                error: function(xhr) {
+                    const msg = xhr.responseJSON?.message || 'Failed to issue prescription';
+                    flash('danger', msg);
+                    // Optional: show validation errors
+                    if (xhr.responseJSON?.errors) {
+                        console.warn(xhr.responseJSON.errors);
+                    }
+                },
+                complete: function() {
+                    unlockBtn($btn);
+                }
+            });
         });
     </script>
 @endpush

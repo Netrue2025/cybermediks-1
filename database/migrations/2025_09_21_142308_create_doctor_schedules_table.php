@@ -15,8 +15,8 @@ return new class extends Migration
             $t->id();
             $t->foreignId('doctor_id')->constrained('users')->cascadeOnDelete();
             $t->unsignedTinyInteger('weekday'); // 1=Mon … 7=Sun
-            $t->time('start_time');
-            $t->time('end_time');
+            $t->time('start_time')->nullable();
+            $t->time('end_time')->nullable();
             $t->boolean('enabled')->default(true);
             $t->timestamps();
             $t->unique(['doctor_id', 'weekday', 'start_time', 'end_time']);
