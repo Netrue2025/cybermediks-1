@@ -1,7 +1,7 @@
 <?php
 $secret = 'cgGHi73W83WmVwnQGqir';
-$git_path = '/home/u405460257/domains/nexusedu.org/public_html/cybermediks'; // Path to your repository
-$log_path = '/home/u405460257/domains/nexusedu.org/public_html/cybermediks/deploy.log'; // Log file
+$git_path = '/home/u405460257/domains/nexusedu.org/public_html/cybermediks_new'; // Path to your repository
+$log_path = '/home/u405460257/domains/nexusedu.org/public_html/cybermediks_new/deploy.log'; // Log file
 
 
 // Use $_SERVER to get the header (case-insensitive)
