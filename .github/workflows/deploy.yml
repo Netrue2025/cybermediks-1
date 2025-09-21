@@ -1,7 +1,7 @@
-name: Deploy via SFTP
+name: Deploy via SSH
 on:
   push:
-    branches: [ "main" ]  # adjust
+    branches: [ "main" ] # adjust branch if needed
 
 jobs:
   deploy:
@@ -9,16 +9,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # (Optional) build steps here (composer install, npm build, etc.)
-
-      - name: SFTP Deploy
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v0.1.10
         with:
-          server: ${{ secrets.SFTP_HOST }}
-          port: ${{ secrets.SFTP_PORT }}
-          username: ${{ secrets.SFTP_USER }}
-          password: ${{ secrets.SFTP_PASS }}
-          local_path: './'
-          remote_path: '/home/u405460257/domains/nexusedu.org/public_html/cybermediks_new'
-          sftp_only: true
-          delete_remote_files: false
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/u405460257/domains/nexusedu.org/public_html/cybermediks_new
+            git reset --hard
+            git pull origin main
+            # Optional: run post-deploy tasks
+            # /usr/bin/php artisan migrate --force
+            # /usr/bin/php artisan config:cache
