@@ -3,7 +3,6 @@
 
 @push('styles')
     <style>
-        /* Theme (keeps consistent with your auth + layout) */
         :root {
             --bg: #0f172a;
             --panel: #0f1628;
@@ -18,7 +17,6 @@
             --success: #22c55e;
         }
 
-        /* Cards / sections */
         .cardx {
             background: var(--card);
             border: 1px solid var(--border);
@@ -32,7 +30,6 @@
             line-height: 1;
         }
 
-        /* Section header */
         .section-title {
             display: flex;
             align-items: center;
@@ -45,7 +42,6 @@
             margin-bottom: 1rem;
         }
 
-        /* Inputs */
         .form-control,
         .form-select {
             background: #0b1222;
@@ -59,7 +55,6 @@
             box-shadow: none;
         }
 
-        /* Search with icon */
         .search-wrap {
             position: relative;
         }
@@ -76,26 +71,24 @@
             padding-left: 2.3rem;
         }
 
-        /* Toggle label */
         .switch-label {
             color: var(--muted);
             margin-left: .35rem;
         }
 
-        /* Specialty tiles */
         .spec-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 16px;
         }
 
-        @media (max-width: 1200px) {
+        @media (max-width:1200px) {
             .spec-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
 
-        @media (max-width: 576px) {
+        @media (max-width:576px) {
             .spec-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -107,6 +100,8 @@
             text-align: center;
             cursor: pointer;
             transition: all .15s ease;
+            border: 1px solid transparent;
+            background: #0f1a2e;
         }
 
         .spec-tile .icon {
@@ -129,7 +124,6 @@
             outline: 2px solid rgba(135, 88, 232, .45);
         }
 
-        /* Doctor rows */
         .doctor-row {
             background: #0d162a;
             border: 1px solid var(--border);
@@ -186,12 +180,15 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="section-subtle">Next Appointment</div>
-                        <div class="mt-1">No upcoming appointments.</div>
+                        <div class="mt-2">
+                            @if ($nextAppt)
+                                {{ $nextAppt->scheduled_at->format('D, M j · g:i A') }}
+                            @else
+                                No upcoming appointments.
+                            @endif
+                        </div>
                     </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center"
-                        style="width:44px;height:44px;background:#0b1222;border:1px solid var(--border);">
-                        <i class="fa-regular fa-calendar-days fs-5" style="color:#cbd5e1;"></i>
-                    </div>
+                    <i class="fa-regular fa-calendar-days fs-2" style="color:#cbd5e1;"></i>
                 </div>
             </div>
         </div>
@@ -199,7 +196,7 @@
         <div class="col-lg-4">
             <div class="cardx h-100">
                 <div class="section-subtle">Active Prescriptions</div>
-                <div class="metric">0</div>
+                <div class="metric">{{ $activeRxCount }}</div>
             </div>
         </div>
 
@@ -208,12 +205,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="section-subtle">Nearby Pharmacies</div>
-                        <div class="metric">1</div>
+                        <div class="metric">{{ $nearbyCount }}</div>
                     </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center"
-                        style="width:44px;height:44px;background:#0b1222;border:1px solid var(--border);">
-                        <i class="fa-solid fa-location-dot fs-5" style="color:#86efac;"></i>
-                    </div>
+                    <i class="fa-solid fa-location-dot fs-2" style="color:#86efac;"></i>
                 </div>
             </div>
         </div>
@@ -231,19 +225,15 @@
             <div class="col-lg-8">
                 <div class="search-wrap">
                     <i class="fa-solid fa-magnifying-glass icon"></i>
-                    <input class="form-control" placeholder="Search doctors by name..." id="doctorSearch">
+                    <input class="form-control" placeholder="Search doctors by name or title..." id="doctorSearch">
                 </div>
             </div>
             <div class="col-lg-2">
                 <select class="form-select" id="specialtySelect">
-                    <option>All Specialties</option>
-                    <option>Cardiology</option>
-                    <option>Dermatology</option>
-                    <option>Neurology</option>
-                    <option>Orthopedics</option>
-                    <option>Pediatrics</option>
-                    <option>Psychiatry</option>
-                    <option>General Medicine</option>
+                    <option value="">All Specialties</option>
+                    @foreach ($specialties as $s)
+                        <option value="{{ $s->id }}">{{ $s->name }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="col-lg-2 d-flex align-items-center justify-content-lg-end mt-2 mt-lg-0">
@@ -254,61 +244,125 @@
             </div>
         </div>
 
-        {{-- Specialties --}}
-        <div class="spec-grid mt-3">
-            <div class="spec-tile" data-spec="Cardiology">
-                <i class="fa-regular fa-heart icon" style="color:#f472b6;"></i><span>Cardiology</span>
+        {{-- Specialties (chips) --}}
+        <div class="spec-grid mt-3" id="specGrid">
+            <div class="spec-tile active" data-spec="">
+                <i class="fa-regular fa-circle icon" style="color:#9aa3b2;"></i><span>All</span>
             </div>
-            <div class="spec-tile" data-spec="Dermatology">
-                <i class="fa-regular fa-sun icon" style="color:#fbbf24;"></i><span>Dermatology</span>
-            </div>
-            <div class="spec-tile" data-spec="Neurology">
-                <i class="fa-solid fa-brain icon" style="color:#a78bfa;"></i><span>Neurology</span>
-            </div>
-            <div class="spec-tile" data-spec="Orthopedics">
-                <i class="fa-solid fa-bone icon" style="color:#93c5fd;"></i><span>Orthopedics</span>
-            </div>
-            <div class="spec-tile" data-spec="Pediatrics">
-                <i class="fa-solid fa-baby icon" style="color:#fb7185;"></i><span>Pediatrics</span>
-            </div>
-            <div class="spec-tile" data-spec="Psychiatry">
-                <i class="fa-solid fa-user icon" style="color:#a0aec0;"></i><span>Psychiatry</span>
-            </div>
-            <div class="spec-tile" data-spec="General">
-                <i class="fa-solid fa-stethoscope icon" style="color:#60a5fa;"></i><span>General Medicine</span>
-            </div>
+            @foreach ($specialties as $s)
+                <div class="spec-tile" data-spec="{{ $s->id }}">
+                    <i class="fa-solid {{ $s->icon }} icon" style="color:{{ $s->color }};"></i><span>{{ $s->name }}</span>
+                </div>
+            @endforeach
         </div>
     </div>
 
     {{-- Doctor list --}}
-    <div class="mt-3 d-flex flex-column gap-3">
-        @foreach ([['initials' => 'DJ', 'name' => 'Don Joe', 'status' => 'Offline'], ['initials' => 'KS', 'name' => 'Kuyik Swiss', 'status' => 'Offline']] as $doc)
-            <div class="doctor-row">
-                <div class="avatar-sm">{{ $doc['initials'] }}</div>
-                <div class="flex-grow-1">
-                    <div class="fw-semibold">{{ $doc['name'] }}</div>
-                    <span class="chip">
-                        <span class="me-1"
-                            style="display:inline-block;width:8px;height:8px;background:#64748b;border-radius:50%;"></span>
-                        {{ $doc['status'] }}
-                    </span>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-light"><i class="fa-regular fa-message me-1"></i> Chat</button>
-                    <button class="btn btn-success"><i class="fa-solid fa-video me-1"></i> Video Call</button>
-                </div>
-            </div>
-        @endforeach
+    <div class="mt-3 d-flex flex-column gap-3" id="doctorsList"></div>
+    <div class="d-grid mt-3">
+        <button class="btn btn-outline-light d-none" id="btnMore"><span class="btn-text">Load more</span></button>
     </div>
 @endsection
 
 @push('scripts')
     <script>
-        // Specialty tile selection (visual only for now)
-        $('.spec-tile').on('click', function() {
-            $('.spec-tile').removeClass('active');
+        // --- Simple debounce without lodash
+        function debounce(fn, wait) {
+            let t;
+            return function() {
+                const ctx = this,
+                    args = arguments;
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(ctx, args), wait);
+            };
+        }
+
+        let nextUrl = null;
+        const $list = $('#doctorsList');
+        const $btnMore = $('#btnMore');
+
+        function rowHtml(d) {
+            const dot = d.available ? '#22c55e' : '#64748b';
+            return `
+      <div class="doctor-row">
+        <div class="avatar-sm">${d.initials}</div>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">${d.first_name} ${d.last_name}</div>
+          <span class="chip">
+            <span class="me-1" style="display:inline-block;width:8px;height:8px;background:${dot};border-radius:50%;"></span>
+            ${d.available ? 'Online' : 'Offline'}
+          </span>
+          ${d.specialties.length ? `<span class="chip ms-2">${d.specialties.join(', ')}</span>` : ''}
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{{ url('/messenger') }}?doctor_id=${d.id}" class="btn btn-outline-light"><i class="fa-regular fa-message me-1"></i> Chat</a>
+          <a href="{{ url('/appointments/create') }}?doctor_id=${d.id}&type=video" class="btn btn-success"><i class="fa-solid fa-video me-1"></i> Video Call</a>
+        </div>
+      </div>`;
+        }
+
+        function renderDoctors(res, replace = true) {
+            nextUrl = res.next_page_url;
+            if (replace) $list.empty();
+            if (res.data.length === 0 && replace) {
+                $list.html(`<div class="text-center text-secondary py-4">No doctors found.</div>`);
+            } else {
+                res.data.forEach(d => $list.append(rowHtml(d)));
+            }
+            $btnMore.toggleClass('d-none', !nextUrl);
+        }
+
+        function fetchDoctors(replace = true) {
+            const q = $('#doctorSearch').val() || '';
+            const specialty_id = $('#specialtySelect').val() || ($('#specGrid .spec-tile.active').data('spec') || '');
+            const available = $('#onlyAvailable').is(':checked') ? 1 : 0;
+
+            $.get(`{{ route('patient.doctors.index') }}`, {
+                    q,
+                    specialty_id,
+                    available
+                })
+                .done(res => renderDoctors(res, replace))
+                .fail(() => flash('danger', 'Failed to load doctors'));
+        }
+
+        // Events
+        $('#doctorSearch').on('input', debounce(() => fetchDoctors(true), 300));
+        $('#specialtySelect').on('change', () => fetchDoctors(true));
+        $('#onlyAvailable').on('change', () => fetchDoctors(true));
+
+        $(document).on('click', '#specGrid .spec-tile', function() {
+            $('#specGrid .spec-tile').removeClass('active');
             $(this).addClass('active');
-            // TODO: trigger filter by $(this).data('spec')
+            // sync dropdown with chip (and clear dropdown when "All")
+            const id = $(this).data('spec') || '';
+            $('#specialtySelect').val(id);
+            fetchDoctors(true);
         });
+
+        $btnMore.on('click', function() {
+            if (!nextUrl) return;
+            const $btn = $(this);
+            lockBtn($btn);
+            $.get(nextUrl)
+                .done(res => renderDoctors(res, false))
+                .always(() => unlockBtn($btn));
+        });
+
+        // Initial load
+        fetchDoctors(true);
+
+        // Optional: capture geolocation once to improve Nearby Pharmacies metric next time
+        @if (($nearbyCount ?? 0) === 0)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    $.post(`{{ route('patient.location.update') }}`, {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    });
+                });
+            }
+        @endif
     </script>
 @endpush

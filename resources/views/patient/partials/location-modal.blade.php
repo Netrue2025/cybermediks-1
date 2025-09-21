@@ -130,7 +130,7 @@
                     localStorage.setItem(MODAL_KEY_GRANTED, '1');
 
                     // Send to backend (optional but recommended)
-                    $.post(`{{ route('patient.location.save') }}`, payload)
+                    $.post(`{{ route('patient.location.update') }}`, payload)
                         .done(res => {
                             flash('success', res.message || 'Location saved');
                             const modalEl = document.getElementById('locationModal');

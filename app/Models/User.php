@@ -50,8 +50,72 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'dob'=>'date',
+            'dob' => 'date',
             'password' => 'hashed',
         ];
     }
-}
+
+
+
+    public function doctorProfile()
+    {
+        return $this->hasOne(DoctorProfile::class, 'doctor_id');
+    }
+    public function specialties()
+    {
+        return $this->belongsToMany(Specialty::class, 'doctor_specialty', 'doctor_id');
+    }
+    public function schedules()
+    {
+        return $this->hasMany(DoctorSchedule::class, 'doctor_id');
+    }
+    public function timeoffs()
+    {
+        return $this->hasMany(DoctorTimeoff::class, 'doctor_id');
+    }
+
+    public function doctorAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
+    }
+    public function patientAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'patient_id');
+    }
+
+    public function conversationsAsDoctor()
+    {
+        return $this->hasMany(Conversation::class, 'doctor_id');
+    }
+    public function conversationsAsPatient()
+    {
+        return $this->hasMany(Conversation::class, 'patient_id');
+    }
+
+    public function prescriptionsAuthored()
+    {
+        return $this->hasMany(Prescription::class, 'doctor_id');
+    }
+    public function prescriptionsOwned()
+    {
+        return $this->hasMany(Prescription::class, 'patient_id');
+    }
+
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+    public function credentials()
+    {
+        return $this->hasMany(DoctorCredential::class, 'doctor_id');
+    }
+    public function scopePharmacists($q)
+    {
+        return $q->where('role', 'pharmacist');
+    }
+
+    public function pharmacyProfile()
+    {
+        return $this->hasOne(PharmacyProfile::class, 'user_id');
+    }
+};

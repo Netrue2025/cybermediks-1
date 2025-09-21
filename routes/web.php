@@ -3,7 +3,10 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Doctor\DoctorLocationController;
 use App\Http\Controllers\Doctor\DoctorProfileController;
+use App\Http\Controllers\Patient\DoctorBrowseController;
+use App\Http\Controllers\Patient\PatientDashboardController;
 use App\Http\Controllers\Patient\PatientLocationController;
 use App\Http\Controllers\Patient\PatientProfileController;
 use Illuminate\Support\Facades\Route;
@@ -36,21 +39,24 @@ Route::middleware('auth')->group(function () {
 });
 
 /** Patient Dashboard (authed + verified) */
-Route::middleware(['auth', 'verified', 'patient'])->group(function () {
+Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'patient'])->group(function () {
 
-    Route::view('/patient/dashboard', 'patient.dashboard')->name('patient.dashboard');
-    Route::get('/patient/store', fn() => view('patient.store'))->name('patient.store');
-    Route::get('/patient/prescriptions', fn() => view('patient.prescriptions'))->name('patient.prescriptions');
-    Route::get('/patient/appointments', fn() => view('patient.appointments'))->name('patient.appointments');
-    Route::get('/patient/wallet', fn() => view('patient.wallet'))->name('patient.wallet');
-    Route::get('/patient/pharmacies', fn() => view('patient.pharmacies'))->name('patient.pharmacies');
+    Route::get('/dashboard', [PatientDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/store', fn() => view('patient.store'))->name('store');
+    Route::get('/prescriptions', fn() => view('patient.prescriptions'))->name('prescriptions');
+    Route::get('/appointments', fn() => view('patient.appointments'))->name('appointments');
+    Route::get('/wallet', fn() => view('patient.wallet'))->name('wallet');
+    Route::get('/pharmacies', fn() => view('patient.pharmacies'))->name('pharmacies');
+
+    // DOCTORS
+    Route::get('/doctors', [DoctorBrowseController::class, 'index'])->name('doctors.index');
 
 
-    Route::post('/patient/location', [PatientLocationController::class, 'store'])
-        ->name('patient.location.save');
-    Route::get('/patient/profile', [PatientProfileController::class, 'show'])->name('patient.profile');
-    Route::post('/patient/profile', [PatientProfileController::class, 'update'])->name('patient.profile.update');
-    Route::post('/patient/profile/password', [PatientProfileController::class, 'updatePassword'])->name('patient.profile.password');
+    Route::post('/location', [PatientLocationController::class, 'store'])
+        ->name('location.update');
+    Route::get('/profile', [PatientProfileController::class, 'show'])->name('profile');
+    Route::post('/profile', [PatientProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [PatientProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
 
@@ -73,4 +79,6 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
 
     Route::post('/profile', [DoctorProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/password', [DoctorProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/location', [DoctorLocationController::class, 'store'])
+        ->name('location.update');
 });
