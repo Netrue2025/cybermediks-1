@@ -33,8 +33,8 @@ class DoctorMiddleware
                 case 'dispatcher':
                     $dashboardRoute = 'dispatcher.dashboard';
                     break;
-                case 'pharmacist':
-                    $dashboardRoute = 'pharmacist.dashboard';
+                case 'pharmacy':
+                    $dashboardRoute = 'pharmacy.dashboard';
                     break;
                 default:
                     Auth::logout();

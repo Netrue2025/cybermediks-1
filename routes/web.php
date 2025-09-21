@@ -20,6 +20,9 @@ use App\Http\Controllers\Patient\PatientMessageController;
 use App\Http\Controllers\Patient\PatientProfileController;
 use App\Http\Controllers\Patient\PrescriptionController;
 use App\Http\Controllers\Patient\WalletController;
+use App\Http\Controllers\Pharmacy\PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\PharmacyPrescriptionController;
+use App\Http\Controllers\Pharmacy\PharmacyProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -126,15 +129,51 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
     Route::post('/profile', [DoctorProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/password', [DoctorProfileController::class, 'updatePassword'])->name('profile.password');
     Route::post('/profile/availability', [DoctorProfileController::class, 'availability'])->name('profile.availability');
-    Route::post('/profile/quick', [DoctorProfileController::class, 'quickUpdate'])->name('profile.quick');            
+    Route::post('/profile/quick', [DoctorProfileController::class, 'quickUpdate'])->name('profile.quick');
 
 
-    
+
     Route::get('/queue', fn() => view('doctor.queue'))->name('queue');
 
 
     Route::get('/consultations', fn() => view('doctor.consultations'))->name('consultations');
-    
+
     Route::post('/location', [DoctorLocationController::class, 'store'])
         ->name('location.update');
+});
+
+
+/** Pharmacy Dashboard (authed + verified) */
+
+Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'pharmacy'])->group(function () {
+
+    Route::get('/dashboard', [PharmacyDashboardController::class, 'index'])->name('dashboard');
+
+    // Prescriptions
+
+    Route::get('/prescriptions', [PharmacyPrescriptionController::class, 'index'])->name('prescriptions.index');
+    Route::get('/prescriptions/{rx}', [PharmacyPrescriptionController::class, 'show'])->name('prescriptions.show');
+
+    Route::post('/prescriptions/{rx}/status', [PharmacyPrescriptionController::class, 'updateStatus'])->name('prescriptions.status');
+    Route::post('/prescriptions/{rx}/amount', [PharmacyPrescriptionController::class, 'updateAmount'])->name('prescriptions.amount');
+
+    Route::post('/prescriptions/{rx}/claim', [PharmacyPrescriptionController::class, 'claim'])->name('prescriptions.claim');
+
+    // actions
+    Route::post('/prescriptions/{rx}/ready',  [PharmacyDashboardController::class, 'markReady'])->name('rx.ready');
+    Route::post('/prescriptions/{rx}/picked', [PharmacyDashboardController::class, 'markPicked'])->name('rx.picked');
+
+    // Order history
+    Route::get('/orders', [PharmacyDashboardController::class, 'orders'])->name('orders.index');
+    Route::get('/orders/{order}', [PharmacyDashboardController::class, 'orderShow'])->name('orders.show');
+
+
+    // list pages these tiles link to (stub if not built yet)
+    Route::view('/inventory', 'pharmacy.inventory.index')->name('inventory.index');
+    Route::view('/reports',   'pharmacy.reports.index')->name('reports.index');
+    Route::view('/settings',  'pharmacy.settings.index')->name('settings.index');
+
+    Route::get('/profile', [PharmacyProfileController::class, 'show'])->name('profile');
+    Route::post('/profile', [PharmacyProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [PharmacyProfileController::class, 'updatePassword'])->name('profile.password');
 });

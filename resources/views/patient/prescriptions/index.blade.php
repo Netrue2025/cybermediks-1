@@ -25,6 +25,45 @@
             padding: .2rem .6rem;
             text-transform: capitalize;
         }
+
+
+        .badge-soft {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .18rem .55rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            font-size: .8rem;
+            background: #0e162b
+        }
+
+        .badge-pending {
+            border-color: #334155
+        }
+
+        .badge-ready {
+            border-color: #1f6f43;
+            background: rgba(34, 197, 94, .08)
+        }
+
+        .badge-picked {
+            border-color: #1f6f43;
+            background: rgba(34, 197, 94, .16)
+        }
+
+        .badge-cancelled {
+            border-color: #6f2b2b;
+            background: rgba(239, 68, 68, .08)
+        }
+
+        .price-pill {
+            background: #0d162a;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .18rem .55rem;
+            font-weight: 600
+        }
     </style>
 @endpush
 

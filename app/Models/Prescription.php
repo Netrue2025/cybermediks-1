@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Prescription extends Model
 {
-    protected $fillable = ['appointment_id', 'patient_id', 'doctor_id', 'code', 'status', 'refills', 'notes'];
+    protected $fillable = ['appointment_id', 'patient_id', 'doctor_id', 'code', 'status', 'refills', 'notes', 'pharmacy_id', 'dispense_status', 'total_amount'];
     protected $casts = ['refills' => 'int'];
     public function appointment()
     {

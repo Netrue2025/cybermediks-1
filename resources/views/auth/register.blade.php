@@ -124,7 +124,7 @@
                                         <option value="" disabled selected>Select Role</option>
                                         <option value="patient">Patient</option>
                                         <option value="doctor">Doctor</option>
-                                        <option value="pharmacist">Pharmacist</option>
+                                        <option value="pharmacy">Pharmacy</option>
                                         <option value="dispatcher">Dispatch Rider</option>
                                     </select>
                                 </div>
