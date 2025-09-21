@@ -46,28 +46,6 @@ try {
         respond(403, 'Invalid signature');
     }
 
-    // Parse event and ref
-    $event = $_SERVER['HTTP_X_GITHUB_EVENT'] ?? 'unknown';
-    logx("Event: $event");
-
-    if ($event === 'ping') {
-        logx('Ping OK');
-        respond(200, 'pong');
-    }
-    if ($event !== 'push') {
-        logx("Ignoring non-push event: $event");
-        respond(200, "Ignored $event");
-    }
-
-    $payload = json_decode($raw, true);
-    $ref = $payload['ref'] ?? '';
-    logx("Push ref: $ref");
-
-    if ($required_ref && $ref !== $required_ref) {
-        logx("Ref not allowed; required=$required_ref, got=$ref");
-        respond(200, "Ignoring push to $ref");
-    }
-
     // Ensure environment for git/ssh on shared hosting
     // HOME lets git/ssh find known_hosts and deploy key under /home/<user>/.ssh
     putenv('HOME=/home/u405460257');
