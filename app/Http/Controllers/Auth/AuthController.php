@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\OneTimeCode;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+
+class AuthController extends Controller
+{
+    public function showRegister()
+    {
+        return view('auth.register');
+    }
+    public function showLogin()
+    {
+        return view('auth.login');
+    }
+
+    public function register(Request $r)
+    {
+        $data = $r->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', 'string', 'in:doctor,pharmacist,dispatcher,patient'],
+            'password' => ['required', 'confirmed', Password::min(6)],
+        ]);
+
+        $user = User::create([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => strtolower($data['email']),
+            'role' => $data['role'],
+            'password' => Hash::make($data['password']),
+        ]);
+
+        // Generate verification code & (optionally) email it
+        $code = OneTimeCode::make($user->email, 'verify', 15);
+
+        // TODO: send mail here (see Mail section below)
+        // Mail::to($user->email)->send(new \App\Mail\VerificationCodeMail($code));
+
+        Auth::login($user);
+        return response()->json([
+            'ok' => true,
+            'message' => 'Account created. Verification code sent to your email.',
+            'redirect' => route('verify.show')
+        ]);
+    }
+
+    public function login(Request $r)
+    {
+        $r->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        if (Auth::attempt($r->only('email', 'password'), true)) {
+            $r->session()->regenerate();
+            $role = auth()->user()->role;
+            switch ($role) {
+                case 'admin':
+                    $redirect = 'admin.dashboard';
+                    break;
+                case 'doctor':
+                    $redirect = 'doctor.dashboard';
+                    break;
+                case 'pharmacist':
+                    $redirect = 'pharmacist.dashboard';
+                    break;
+                case 'dispatcher':
+                    $redirect = 'dispatcher.dashboard';
+                    break;
+                default:
+                    $redirect = 'patient.dashboard';
+            }
+            return response()->json([
+                'ok' => true,
+                'redirect' => route($redirect)
+            ]);
+        }
+        return response()->json(['ok' => false, 'message' => 'Invalid credentials'], 422);
+    }
+
+    public function logout(Request $r)
+    {
+        Auth::logout();
+        $r->session()->invalidate();
+        $r->session()->regenerateToken();
+        return redirect()->route('home');
+    }
+}
