@@ -5,10 +5,9 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
-class PatientMiddleware
+class DoctorMiddleware
 {
     /**
      * Handle an incoming request.
@@ -24,12 +23,12 @@ class PatientMiddleware
             return redirect()->route('login')->with('error', 'Please login first.');
         }
 
-        if (!$user->role || $user->role !== 'patient') {
+        if (!$user->role || $user->role !== 'doctor') {
             $dashboardRoute = '';
 
             switch ($user->role) {
-                case 'doctor':
-                    $dashboardRoute = 'doctor.dashboard';
+                case 'patient':
+                    $dashboardRoute = 'patient.dashboard';
                     break;
                 case 'dispatcher':
                     $dashboardRoute = 'dispatcher.dashboard';
@@ -41,7 +40,7 @@ class PatientMiddleware
                     Auth::logout();
                     return redirect()->route('login')->with('error', 'Unauthorized access. Please login with a valid account.');
             }
-            return redirect()->route($dashboardRoute)->with('error', 'Unauthorized access to patient area.');
+            return redirect()->route($dashboardRoute)->with('error', 'Unauthorized access to doctor area.');
         }
         return $next($request);
     }

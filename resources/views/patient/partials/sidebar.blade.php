@@ -2,7 +2,7 @@
     {{-- Top brand / back --}}
     <div class="sb-head d-flex align-items-center justify-content-between">
         <a href="{{ url('/') }}" class="sb-back d-flex align-items-center text-decoration-none">
-            <i class="fa-solid fa-chevron-left me-2"></i>
+            <img src="{{ asset('images/logo.webp') }}" width="40" alt="">
             <span class="brand-gradient fw-bold">{{ strtoupper(config('app.name', 'CYBERMEDIKS')) }}</span>
         </a>
     </div>
@@ -28,23 +28,23 @@
                 <i class="fa-solid fa-gauge"></i><span>Dashboard</span>
             </a>
 
-            <a class="item" href="#">
+            <a class="item {{ request()->routeIs('patient.store') ? 'active' : '' }}" href="{{ route('patient.store') }}">
                 <i class="fa-solid fa-store"></i><span>Online Store</span>
             </a>
 
-            <a class="item" href="#">
+            <a class="item {{ request()->routeIs('patient.prescriptions') ? 'active' : '' }}" href="{{ route('patient.prescriptions') }}">
                 <i class="fa-solid fa-file-prescription"></i><span>My Prescriptions</span>
             </a>
 
-            <a class="item" href="#">
+            <a class="item {{ request()->routeIs('patient.appointments') ? 'active' : '' }}" href="{{ route('patient.appointments') }}">
                 <i class="fa-solid fa-clock-rotate-left"></i><span>Appointment History</span>
             </a>
 
-            <a class="item" href="#">
+            <a class="item {{ request()->routeIs('patient.wallet') ? 'active' : '' }}" href="{{ route('patient.wallet') }}">
                 <i class="fa-solid fa-wallet"></i><span>My Wallet</span>
             </a>
 
-            <a class="item" href="#">
+            <a class="item {{ request()->routeIs('patient.pharmacies') ? 'active' : '' }}" href="{{ route('patient.pharmacies') }}">
                 <i class="fa-solid fa-location-dot"></i><span>Nearby Pharmacies</span>
             </a>
         </nav>
@@ -52,13 +52,13 @@
 
     {{-- Bottom actions --}}
     <div class="sb-bottom">
-        <a class="item" href="#">
+        <a class="item {{ request()->routeIs('patient.profile') ? 'active' : '' }} mb-4" href="{{ route('patient.profile') }}">
             <i class="fa-solid fa-gear"></i><span>Profile Settings</span>
         </a>
 
-        <form action="{{ route('logout') }}" method="POST" class="m-0">
+        <form action="{{ route('logout') }}" method="POST" class="mb-2">
             @csrf
-            <button class="item btn-as-link text-start w-100 logout">
+            <button class="item btn-as-link text-end w-100 logout">
                 <i class="fa-solid fa-right-from-bracket"></i><span>Log Out</span>
             </button>
         </form>

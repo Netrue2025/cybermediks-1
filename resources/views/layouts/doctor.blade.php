@@ -368,7 +368,7 @@
 
     <div class="layout">
         {{-- Sidebar --}}
-        @include('patient.partials.sidebar')
+        @include('doctor.partials.sidebar')
 
         {{-- Main content --}}
         <section class="content">
@@ -377,7 +377,7 @@
                     <button class="btn btn-sm btn-outline-light d-lg-none" id="btnSidebar">
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    <span class="fw-semibold">Patient</span>
+                    <span class="fw-semibold">Doctor</span>
                 </div>
             </div>
 
@@ -393,7 +393,7 @@
     <script>
         $('#btnSidebar').on('click', () => $('.sidebar').toggleClass('show'));
     </script>
-    @include('patient.partials.location-modal')
+    @include('doctor.partials.location-modal')
     @stack('scripts')
 </body>
 
