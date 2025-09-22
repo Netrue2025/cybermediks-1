@@ -70,6 +70,141 @@
             border-radius: 10px;
             padding: 8px;
         }
+
+        .nav-tabs .nav-link {
+            border: 1px solid var(--border);
+            background: #0e162b;
+            color: #cfe0ff;
+            border-radius: 999px;
+            padding: .4rem .9rem;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: #13203a;
+            border-color: #2a3854;
+            color: #fff;
+        }
+
+        /* Rows / blocks */
+        .blk {
+            background: #0f1a2e;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px
+        }
+
+        .blk+.blk {
+            margin-top: 10px
+        }
+
+        .blk-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px
+        }
+
+        .blk-title {
+            font-weight: 700
+        }
+
+        .blk-meta {
+            color: #9aa3b2;
+            font-size: .9rem
+        }
+
+        .blk-subtle {
+            color: #9aa3b2;
+            font-size: .85rem
+        }
+
+        /* Pills / badges */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            background: #0e162b;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .22rem .55rem;
+            font-size: .85rem;
+            color: #cfe0ff
+        }
+
+        .pill-kind {
+            background: #13203a;
+            border-color: #2a3854
+        }
+
+        .badge-soft {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .22rem .6rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: #0e162b;
+            font-size: .85rem;
+            color: #cfe0ff
+        }
+
+        .b-scheduled {
+            background: rgba(56, 189, 248, .10);
+            border-color: #1f4a6f
+        }
+
+        .b-completed {
+            background: rgba(34, 197, 94, .10);
+            border-color: #1f6f43
+        }
+
+        .b-cancelled {
+            background: rgba(239, 68, 68, .10);
+            border-color: #6f2b2b
+        }
+
+        .b-pending {
+            background: rgba(148, 163, 184, .12);
+            border-color: #334155
+        }
+
+        .b-ready {
+            background: rgba(34, 197, 94, .10);
+            border-color: #1f6f43
+        }
+
+        .b-picked {
+            background: rgba(34, 197, 94, .16);
+            border-color: #1f6f43
+        }
+
+        .b-expired {
+            background: rgba(245, 158, 11, .10);
+            border-color: #7a5217
+        }
+
+        /* List of Rx items */
+        .rx-items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px
+        }
+
+        .rx-chip {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: .35rem .5rem;
+            background: #0d162a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .45rem .55rem;
+            font-size: .85rem
+        }
+
+        .rx-chip strong {
+            color: #fff
+        }
     </style>
 @endpush
 
@@ -138,36 +273,56 @@
         {{-- RIGHT: Tabs: Appointments + Prescriptions --}}
         <div class="col-lg-8">
             <div class="cardx">
-                <ul class="nav nav-tabs border-0" id="histTabs" role="tablist" style="gap:.25rem;">
+                <ul class="nav nav-tabs border-0" id="histTabs" role="tablist" style="gap:.4rem;">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="ap-tab" data-bs-toggle="tab" data-bs-target="#ap"
-                            type="button" role="tab">Appointments</button>
+                            type="button" role="tab">
+                            <i class="fa-solid fa-calendar-day me-1"></i> Appointments
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="rx-tab" data-bs-toggle="tab" data-bs-target="#rx" type="button"
-                            role="tab">Prescriptions</button>
+                            role="tab">
+                            <i class="fa-solid fa-prescription-bottle-medical me-1"></i> Prescriptions
+                        </button>
                     </li>
                 </ul>
 
                 <div class="tab-content pt-3">
+
                     {{-- Appointments --}}
                     <div class="tab-pane fade show active" id="ap" role="tabpanel" aria-labelledby="ap-tab">
-                        <div class="d-flex flex-column gap-2">
+                        <div class="d-flex flex-column">
                             @forelse($appointments as $a)
-                                <div class="block d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="fw-semibold">
-                                            {{ \Carbon\Carbon::parse($a->scheduled_at)->format('D, M d · g:ia') }}
+                                @php
+                                    $apDate = \Carbon\Carbon::parse($a->scheduled_at)->format('D, M d · g:ia');
+                                    $apType = str_replace('_', ' ', $a->type);
+                                    $apStat = strtolower($a->status ?? 'scheduled');
+                                    $apCls = match ($apStat) {
+                                        'scheduled' => 'b-scheduled',
+                                        'completed' => 'b-completed',
+                                        'cancelled' => 'b-cancelled',
+                                        default => 'b-pending',
+                                    };
+                                @endphp
+
+                                <div class="blk">
+                                    <div class="blk-head">
+                                        <div>
+                                            <div class="blk-title">
+                                                <i class="fa-regular fa-calendar me-1"></i>{{ $apDate }}
+                                            </div>
+                                            <div class="blk-meta mt-1">
+                                                <span class="pill pill-kind"><i
+                                                        class="fa-solid fa-video me-1"></i>{{ ucfirst($apType) }}</span>
+                                                @if ($a->title)
+                                                    <span class="pill ms-1">{{ $a->title }}</span>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <div class="subtle small">
-                                            Type: {{ str_replace('_', ' ', $a->type) }}
-                                            @if ($a->title)
-                                                • {{ $a->title }}
-                                            @endif
+                                        <div class="text-end">
+                                            <span class="badge-soft {{ $apCls }}">{{ ucfirst($apStat) }}</span>
                                         </div>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="badge-soft">{{ ucfirst(str_replace('_', ' ', $a->status)) }}</span>
                                     </div>
                                 </div>
                             @empty
@@ -182,41 +337,68 @@
 
                     {{-- Prescriptions --}}
                     <div class="tab-pane fade" id="rx" role="tabpanel" aria-labelledby="rx-tab">
-                        <div class="d-flex flex-column gap-2">
+                        <div class="d-flex flex-column">
                             @forelse($prescriptions as $rx)
-                                <div class="block">
-                                    <div class="d-flex justify-content-between align-items-start">
+                                @php
+                                    $created = \Carbon\Carbon::parse($rx->created_at)->format('M d, Y · g:ia');
+                                    $rxStat = strtolower($rx->status ?? 'pending'); // clinical status (e.g., active/expired)
+                                    $rxDisp = strtolower($rx->dispense_status ?? ''); // if you have it: pending/ready/picked
+                                    $statCls = match ($rxStat) {
+                                        'active' => 'b-ready',
+                                        'expired' => 'b-expired',
+                                        default => 'b-pending',
+                                    };
+                                    $dispCls = match ($rxDisp) {
+                                        'ready' => 'b-ready',
+                                        'picked' => 'b-picked',
+                                        'cancelled' => 'b-cancelled',
+                                        'pending' => 'b-pending',
+                                        default => '',
+                                    };
+                                    $enc = str_replace('_', ' ', $rx->encounter ?? 'consult');
+                                    $refills = (int) ($rx->refills ?? 0);
+                                @endphp
+
+                                <div class="blk">
+                                    <div class="blk-head">
                                         <div>
-                                            <div class="fw-semibold">Rx {{ $rx->code }}</div>
-                                            <div class="subtle small">
-                                                {{ \Carbon\Carbon::parse($rx->created_at)->format('M d, Y · g:ia') }}
-                                                • {{ ucfirst(str_replace('_', ' ', $rx->status)) }}
-                                                • {{ str_replace('_', ' ', $rx->encounter ?? 'consult') }}
-                                                @if (($rx->refills ?? 0) > 0)
-                                                    • Refills: {{ $rx->refills }}
+                                            <div class="blk-title">
+                                                <i class="fa-solid fa-prescription me-1"></i>Rx {{ $rx->code }}
+                                            </div>
+                                            <div class="blk-subtle mt-1">
+                                                {{ $created }} • {{ ucfirst($enc) }}
+                                                @if ($refills > 0)
+                                                    • Refills: {{ $refills }}
                                                 @endif
                                             </div>
                                         </div>
-                                        
+                                        <div class="text-end d-flex flex-column gap-1 align-items-end">
+                                            <span class="badge-soft {{ $statCls }}">{{ ucfirst($rxStat) }}</span>
+                                            @if ($rxDisp)
+                                                <span class="badge-soft {{ $dispCls }}">
+                                                    <i class="fa-solid fa-bag-shopping me-1"></i>{{ ucfirst($rxDisp) }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
 
-                                    {{-- items --}}
+                                    {{-- Items --}}
                                     @if ($rx->items->count())
-                                        <div class="mt-2 d-flex flex-column gap-1">
+                                        <div class="rx-items">
                                             @foreach ($rx->items as $it)
-                                                <div class="rx-item small">
-                                                    <strong>{{ $it->medicine }}</strong>
-                                                    @if ($it->dosage)
-                                                        • {{ $it->dosage }}
+                                                <div class="rx-chip">
+                                                    <strong>{{ $it->drug }}</strong>
+                                                    @if ($it->dose)
+                                                        • {{ $it->dose }}
                                                     @endif
                                                     @if ($it->frequency)
                                                         • {{ $it->frequency }}
                                                     @endif
-                                                    @if ($it->duration)
-                                                        • {{ $it->duration }}
+                                                    @if ($it->days)
+                                                        • {{ $it->days }}
                                                     @endif
-                                                    @if ($it->qty)
-                                                        • Qty: {{ $it->qty }}
+                                                    @if ($it->quantity)
+                                                        • Qty: {{ $it->quantity }}
                                                     @endif
                                                 </div>
                                             @endforeach
@@ -235,5 +417,6 @@
                 </div>
             </div>
         </div>
+
     </div>
 @endsection
