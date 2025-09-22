@@ -75,4 +75,58 @@ class DoctorPrescriptionController extends Controller
             'rx_id'   => $rx->id,
         ]);
     }
+
+    protected function baseQuery()
+    {
+        return Prescription::query()
+            ->with([
+                'patient:id,first_name,last_name,email',
+                'items:id,prescription_id,drug,dose,frequency,days,quantity',
+            ]);
+    }
+
+    public function index(Request $request)
+    {
+        $doctorId = Auth::id();
+
+        $q        = (string) $request->query('q', '');
+        $dateFrom = $request->query('from', '');
+        $dateTo   = $request->query('to', '');
+        $status   = (string) $request->query('status', ''); // optional: pending/ready/picked/cancelled
+
+        $rx = $this->baseQuery()->where('doctor_id', $doctorId);
+
+        if ($q !== '') {
+            $rx->where(function ($w) use ($q) {
+                $w->where('code', 'like', "%{$q}%")
+                    ->orWhereHas('patient', fn($p) => $p->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%"))
+                    ->orWhereHas('items', fn($i) => $i->where('drug', 'like', "%{$q}%")
+                        ->orWhere('drug', 'like', "%{$q}%"));
+            });
+        }
+
+        if (in_array($status, ['pending', 'ready', 'picked', 'cancelled'])) {
+            $rx->where('dispense_status', $status);
+        }
+
+        if ($dateFrom) $rx->whereDate('created_at', '>=', $dateFrom);
+        if ($dateTo)   $rx->whereDate('created_at', '<=', $dateTo);
+
+        $prescriptions = $rx->orderByDesc('created_at')->paginate(12)->withQueryString();
+
+        if ($request->ajax()) {
+            return view('doctor.prescriptions._list', compact('prescriptions'))->render();
+        }
+
+        return view('doctor.prescriptions.index', compact('prescriptions', 'q', 'dateFrom', 'dateTo', 'status'));
+    }
+
+    public function show(Prescription $rx)
+    {
+        abort_unless($rx->doctor_id === Auth::id(), 403);
+        $rx->loadMissing('patient', 'items');
+        return view('doctor.prescriptions.show', compact('rx'));
+    }
 }

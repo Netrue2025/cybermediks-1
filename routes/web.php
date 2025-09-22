@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Doctor\DoctorConversationQuickController;
 use App\Http\Controllers\Doctor\DoctorCredentialController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\Doctor\DoctorLocationController;
@@ -63,6 +64,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
 
     // DOCTORS
     Route::get('/doctors', [DoctorBrowseController::class, 'index'])->name('doctors.index');
+    Route::get('/doctors/{doctor}', [DoctorBrowseController::class, 'show'])->name('doctors.show'); // returns JSON
 
     // WALLETS
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
@@ -95,6 +97,8 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
 
 
     // PRESCRIPTIONS
+    Route::get('/prescriptions', [DoctorPrescriptionController::class, 'index'])->name('prescriptions.index'); // if you don’t have it yet
+    Route::get('/prescriptions/get/{rx}', [DoctorPrescriptionController::class, 'show'])->name('prescriptions.show');
     Route::get('/prescriptions/create', [DoctorPrescriptionController::class, 'create'])->name('prescriptions.create');
     Route::post('/prescriptions', [DoctorPrescriptionController::class, 'store'])->name('prescriptions.store');
 
@@ -131,7 +135,10 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
     Route::post('/profile/availability', [DoctorProfileController::class, 'availability'])->name('profile.availability');
     Route::post('/profile/quick', [DoctorProfileController::class, 'quickUpdate'])->name('profile.quick');
 
-
+    Route::post('/conversations/{conversation}/accept', [DoctorConversationQuickController::class, 'accept'])
+        ->name('conversations.accept');
+    Route::post('/conversations/{conversation}/close',  [DoctorConversationQuickController::class, 'close'])
+        ->name('conversations.close');
 
     Route::get('/queue', fn() => view('doctor.queue'))->name('queue');
 

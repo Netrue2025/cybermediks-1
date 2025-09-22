@@ -121,11 +121,11 @@ class User extends Authenticatable
 
     public function appointmentsAsPatient()
     {
-        return $this->hasMany(\App\Models\Appointment::class, 'patient_id');
+        return $this->hasMany(Appointment::class, 'patient_id');
     }
     public function appointmentsAsDoctor()
     {
-        return $this->hasMany(\App\Models\Appointment::class, 'doctor_id');
+        return $this->hasMany(Appointment::class, 'doctor_id');
     }
 
     // Nice helper for your name fields

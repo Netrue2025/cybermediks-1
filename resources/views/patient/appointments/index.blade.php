@@ -106,7 +106,7 @@
             // Book again (you can adjust route)
             $(document).on('click', '[data-book-again]', function() {
                 const doctorId = $(this).data('doctor-id');
-                window.location.href = `/patient/appointments/book?doctor_id=${doctorId}`;
+                window.location.href = `/patient/appointments/create?doctor_id=${doctorId}`;
             });
         })();
     </script>

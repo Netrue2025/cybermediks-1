@@ -303,14 +303,15 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Active Consultations</div>
-                        <div class="metric">{{ $activeConsultations }}</div>
+                        <div class="metric">{{ $activeConsultationsCount }}</div>
                     </div>
                     <div class="pill"><i class="fa-solid fa-comments fs-5" style="color:#86bcef;"></i></div>
                 </div>
             </div>
         </div>
+
         <div class="col-lg-4">
-            <div class="cardx">
+            <div class="cardx" style="cursor: pointer;" onclick="window.location.href='{{ route('doctor.prescriptions.index', ['from' => today()->toDateString(), 'to' => today()->toDateString()]) }}'">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Prescriptions Today</div>
@@ -320,6 +321,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <div class="cardx mt-3 cardx-soft">
@@ -353,32 +355,104 @@
 
     {{-- PENDING REQUESTS + ACTIVE CONSULTATIONS --}}
     <div class="row g-3 mt-1">
+
+        {{-- Pending Patient Requests --}}
         <div class="col-lg-6">
             <div class="cardx h-100">
-                <div class="sec-head"><i class="fa-solid fa-user-group"></i> <span>Pending Patient Requests</span></div>
-                <a href="{{ route('doctor.patients') }}" class="sec-wrap link-card">
-                    <div class="empty">
-                        <div class="ico"><i class="fa-solid fa-user-group"></i></div>
-                        <div>No new patient requests</div>
+                <div class="sec-head d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-user-group"></i> Pending Patient Requests</span>
+                    <a href="{{ route('doctor.patients', ['tab' => 'pending']) }}"
+                        class="text-decoration-none subtle small">
+                        View all <i class="fa-solid fa-arrow-right-long ms-1"></i>
+                    </a>
+                </div>
+
+                @if ($pendingConvs->isEmpty())
+                    <a href="{{ route('doctor.patients', ['tab' => 'pending']) }}" class="sec-wrap link-card">
+                        <div class="empty">
+                            <div class="ico"><i class="fa-solid fa-user-group"></i></div>
+                            <div>No new patient requests</div>
+                        </div>
+                        <span class="stretched-link"></span>
+                    </a>
+                @else
+                    <div class="d-flex flex-column gap-2">
+                        @foreach ($pendingConvs as $c)
+                            <div class="ps-row d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">{{ $c->patient?->first_name }} {{ $c->patient?->last_name }}
+                                    </div>
+                                    <div class="subtle small">Requested {{ $c->created_at?->diffForHumans() }}</div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-success btn-sm" data-accept="{{ $c->id }}">
+                                        <i class="fa-solid fa-check me-1"></i> Accept
+                                    </button>
+                                    <button class="btn btn-outline-light btn-sm" data-close="{{ $c->id }}">
+                                        <i class="fa-solid fa-xmark me-1"></i> Close
+                                    </button>
+                                    <a href="{{ route('doctor.messenger', ['conversation' => $c->id, 'filter' => 'pending']) }}"
+                                        class="btn btn-ghost btn-sm">Open</a>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <a href="{{ route('doctor.patients', ['tab' => 'pending']) }}" class="btn btn-ghost w-100">
+                            See all pending ({{ $pendingRequestsCount }})
+                        </a>
                     </div>
-                    <span class="stretched-link"></span>
-                </a>
+                @endif
             </div>
         </div>
 
+        {{-- Active Consultations --}}
         <div class="col-lg-6">
             <div class="cardx h-100">
-                <div class="sec-head"><i class="fa-solid fa-check-double" style="color:#22c55e;"></i> <span>Active
-                        Consultations</span></div>
-                <a href="{{ route('doctor.messenger') }}" class="sec-wrap link-card">
-                    <div class="empty">
-                        <div class="ico"><i class="fa-regular fa-message"></i></div>
-                        <div>No active consultations<br><span class="subtle">Accept a patient request to begin.</span></div>
+                <div class="sec-head d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-check-double" style="color:#22c55e;"></i> Active Consultations</span>
+                    <a href="{{ route('doctor.messenger', ['filter' => 'active']) }}"
+                        class="text-decoration-none subtle small">
+                        View all <i class="fa-solid fa-arrow-right-long ms-1"></i>
+                    </a>
+                </div>
+
+                @if ($activeConvs->isEmpty())
+                    <a href="{{ route('doctor.messenger', ['filter' => 'active']) }}" class="sec-wrap link-card">
+                        <div class="empty">
+                            <div class="ico"><i class="fa-regular fa-message"></i></div>
+                            <div>No active consultations<br>
+                                <span class="subtle">Accept a patient request to begin.</span>
+                            </div>
+                        </div>
+                        <span class="stretched-link"></span>
+                    </a>
+                @else
+                    <div class="d-flex flex-column gap-2">
+                        @foreach ($activeConvs as $c)
+                            <div class="ps-row d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">{{ $c->patient?->first_name }} {{ $c->patient?->last_name }}
+                                    </div>
+                                    <div class="subtle small">Active since {{ $c->updated_at?->diffForHumans() }}</div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('doctor.messenger', ['conversation' => $c->id, 'filter' => 'active']) }}"
+                                        class="btn btn-gradient btn-sm">Open Chat</a>
+                                    <button class="btn btn-outline-light btn-sm" data-close="{{ $c->id }}">
+                                        <i class="fa-solid fa-xmark me-1"></i> Close
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <a href="{{ route('doctor.messenger', ['filter' => 'active']) }}" class="btn btn-ghost w-100">
+                            See all active ({{ $activeConsultationsCount }})
+                        </a>
                     </div>
-                    <span class="stretched-link"></span>
-                </a>
+                @endif
             </div>
         </div>
+
     </div>
 
 
@@ -790,6 +864,45 @@
                     }
                 });
             });
+
+            // Accept (pending -> active)
+            $(document).on('click', '[data-accept]', function() {
+                const id = $(this).data('accept');
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('doctor.conversations.accept', ['conversation' => '__ID__']) }}`.replace(
+                        '__ID__', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Accepted');
+                        location.reload(); // simplest; or remove row & update counts dynamically
+                    })
+                    .fail(err => {
+                        flash('danger', err.responseJSON?.message || 'Failed to accept');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            // Close (pending/active -> closed)
+            $(document).on('click', '[data-close]', function() {
+                const id = $(this).data('close');
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('doctor.conversations.close', ['conversation' => '__ID__']) }}`.replace(
+                        '__ID__', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Closed');
+                        location.reload();
+                    })
+                    .fail(err => {
+                        flash('danger', err.responseJSON?.message || 'Failed to close');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
         })();
     </script>
 @endpush

@@ -1,4 +1,4 @@
-@extends('layouts.patient')
+@extends('layouts.doctor')
 @section('title', 'My Wallet')
 
 @push('styles')
@@ -37,9 +37,8 @@
                 <div class="display-6 fw-bold" id="balanceAmount">
                     $ {{ number_format($balance, 2, '.', ',') }}
                 </div>
-                <div class="d-grid gap-2 mt-3">
-                    <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#addFundsModal">Add Funds</button>
-                    <button class="btn btn-outline-light" id="btnWithdraw">Withdraw</button>
+                <div class="d-grid gap-2 mt-5">
+                    <button class="btn btn-gradient" id="btnWithdraw" >Withdraw</button>
                 </div>
             </div>
         </div>
@@ -56,25 +55,6 @@
         </div>
     </div>
 
-    {{-- Add Funds Modal --}}
-    <div class="modal fade" id="addFundsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background:#121a2c;border:1px solid var(--border);border-radius:18px;">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title">Add Funds</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <label class="form-label">Amount (USD)</label>
-                    <input id="addAmount" type="number" min="5" step="0.01" class="form-control"
-                        placeholder="50.00">
-                </div>
-                <div class="modal-footer border-0">
-                    <button class="btn btn-gradient" id="btnAddFunds"><span class="btn-text">Add</span></button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     {{-- Withdraw Prompt (simple) --}}
     <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
@@ -113,29 +93,6 @@
                 });
             }
 
-            $('#btnAddFunds').on('click', function() {
-                const $btn = $(this);
-                lockBtn($btn);
-                const amt = parseFloat($('#addAmount').val());
-                if (isNaN(amt) || amt < 5) {
-                    flash('danger', 'Enter at least $5');
-                    return unlockBtn($btn);
-                }
-                $.post(`{{ route('doctor.wallet.add') }}`, {
-                        _token: `{{ csrf_token() }}`,
-                        amount: amt,
-                        currency: 'USD'
-                    })
-                    .done(res => {
-                        flash('success', res.message || 'Funds added');
-                        $('#addFundsModal').modal('hide');
-                        refreshList();
-                    })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed to add funds');
-                    })
-                    .always(() => unlockBtn($btn));
-            });
 
             $('#btnWithdraw').on('click', function() {
                 new bootstrap.Modal(document.getElementById('withdrawModal')).show();

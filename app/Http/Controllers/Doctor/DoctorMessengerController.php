@@ -78,6 +78,10 @@ class DoctorMessengerController extends Controller
             'body' => 'required|string|max:5000',
         ]);
 
+        if ($conversation->status !== 'active') {
+            return response()->json(['status' => 'error', 'message' => 'Conversation is not active'], 422);
+        }
+
         $msg = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id'       => Auth::id(),
