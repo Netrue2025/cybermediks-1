@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\DoctorProfile;
 use App\Models\DoctorSpecialty;
+use App\Models\Specialty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,10 @@ class DoctorProfileController extends Controller
 
     public function show()
     {
-        return view('doctor.profile');
+        $profile = DoctorProfile::firstOrCreate(['doctor_id' => Auth::id()]);
+        $allSpecialties = Specialty::orderBy('name')->get(['id', 'name']);
+        $selectedSpecialtyIds = DoctorSpecialty::where('doctor_id', Auth::id())->pluck('specialty_id')->all();
+        return view('doctor.profile', compact('profile', 'allSpecialties', 'selectedSpecialtyIds'));
     }
 
     public function update(Request $r)

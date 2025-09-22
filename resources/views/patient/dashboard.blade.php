@@ -462,7 +462,7 @@
             const dot = d.available ? '#22c55e' : '#64748b';
             const specs = (d.specialties || []).join(', ');
             const next = d.next_slot_human ?
-                `<span class="badge bg-dark-subtle" style="border:1px solid var(--border); background:#0e162b; color:#cfe0ff;">
+                `<span class="badge" style="border:1px solid var(--border); background:transparent; color:#cfe0ff;">
                     Next: ${d.next_slot_human}
                 </span>` :
                 `<span class="text-secondary small">No upcoming slots</span>`;

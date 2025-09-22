@@ -61,10 +61,6 @@ class DoctorDashboardController extends Controller
             ->where('status', 'active')
             ->latest()->take(6)->get();
 
-        $profile = DoctorProfile::firstOrCreate(['doctor_id' => Auth::id()]);
-        $allSpecialties = Specialty::orderBy('name')->get(['id', 'name']);
-        $selectedSpecialtyIds = DoctorSpecialty::where('doctor_id', Auth::id())->pluck('specialty_id')->all();
-
         return view('doctor.dashboard', compact(
             'activeConsultationsCount',
             'pendingRequestsCount',
@@ -73,9 +69,6 @@ class DoctorDashboardController extends Controller
             'prescriptionsToday',
             'earnings',
             'videoQueueCount',
-            'profile',
-            'allSpecialties',
-            'selectedSpecialtyIds'
         ));
     }
 }
