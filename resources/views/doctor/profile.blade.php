@@ -280,106 +280,294 @@
 
                 {{-- TAB 2: Doctor Profile --}}
                 <div class="tab-pane fade" id="pane-doctor" role="tabpanel" aria-labelledby="tab-doctor">
-                    <div class="cardx h-100">
-                        {{-- Header --}}
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="pill-ghost"><i class="fa-solid fa-id-card-clip"></i></div>
-                                <div>
-                                    <h5 class="fw-bold mb-0">Doctor Profile</h5>
-                                    <div class="subtle small">Manage your public profile, specialties, and availability
-                                    </div>
-                                </div>
+                    @push('styles')
+                        <style>
+                            .hdr-bar {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 10px;
+                                background: #0e162b;
+                                border: 1px solid var(--border);
+                                border-radius: 12px;
+                                padding: 12px 14px;
+                                margin-bottom: 12px
+                            }
+
+                            .hdr-title {
+                                display: flex;
+                                align-items: center;
+                                gap: .6rem
+                            }
+
+                            .hdr-title .pill-ghost {
+                                width: 38px;
+                                height: 38px;
+                                border-radius: 999px;
+                                background: #0b1222;
+                                border: 1px solid var(--border);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center
+                            }
+
+                            .tile {
+                                background: #0f1a2e;
+                                border: 1px solid var(--border);
+                                border-radius: 12px;
+                                padding: 14px
+                            }
+
+                            .tile+.tile {
+                                margin-top: 12px
+                            }
+
+                            .tile-head {
+                                font-weight: 700;
+                                margin-bottom: 8px;
+                                display: flex;
+                                align-items: center;
+                                gap: .5rem
+                            }
+
+                            .mini {
+                                color: #9aa3b2;
+                                font-size: .9rem
+                            }
+
+                            .badge-soft {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: .35rem;
+                                padding: .22rem .6rem;
+                                border-radius: 999px;
+                                border: 1px solid var(--border);
+                                background: #0e162b;
+                                font-size: .85rem;
+                                color: #cfe0ff
+                            }
+
+                            .badge-on {
+                                background: rgba(34, 197, 94, .10);
+                                border-color: #1f6f43
+                            }
+
+                            .badge-off {
+                                background: rgba(239, 68, 68, .10);
+                                border-color: #6f2b2b
+                            }
+
+                            .input-icon {
+                                position: relative
+                            }
+
+                            .input-icon .input-icon-prefix {
+                                position: absolute;
+                                left: .6rem;
+                                top: 50%;
+                                transform: translateY(-50%);
+                                color: #9aa3b2
+                            }
+
+                            .input-icon .input-icon-suffix {
+                                position: absolute;
+                                right: .6rem;
+                                top: 50%;
+                                transform: translateY(-50%);
+                                color: #9aa3b2
+                            }
+
+                            .input-icon .form-control {
+                                padding-left: 1.6rem;
+                                padding-right: 2.2rem
+                            }
+
+                            /* specialties */
+                            .chips-wrap {
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: .4rem;
+                                min-height: 38px;
+                                padding: .35rem;
+                                background: #0d162a;
+                                border: 1px solid var(--border);
+                                border-radius: 10px
+                            }
+
+                            .chip2 {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: .4rem;
+                                background: #13203a;
+                                border: 1px solid #2a3854;
+                                border-radius: 999px;
+                                padding: .28rem .6rem;
+                                color: #cfe0ff;
+                                font-size: .85rem
+                            }
+
+                            .chip2 .x {
+                                opacity: .7;
+                                cursor: pointer
+                            }
+
+                            .chip2 .x:hover {
+                                opacity: 1
+                            }
+
+                            .spec-results {
+                                position: relative;
+                                margin-top: .25rem
+                            }
+
+                            .spec-results .menu {
+                                position: absolute;
+                                z-index: 10;
+                                width: 100%;
+                                background: #0f1a2e;
+                                border: 1px solid var(--border);
+                                border-radius: 10px;
+                                max-height: 240px;
+                                overflow: auto;
+                                box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+                            }
+
+                            .spec-results .item {
+                                padding: .5rem .6rem;
+                                border-bottom: 1px solid var(--border);
+                                cursor: pointer
+                            }
+
+                            .spec-results .item:hover {
+                                background: #111f37
+                            }
+
+                            /* sticky save bar */
+                            .savebar {
+                                position: sticky;
+                                bottom: 0;
+                                margin-top: 12px;
+                                background: linear-gradient(180deg, rgba(15, 22, 40, 0) 0%, #0f1628 35%);
+                                padding-top: 10px
+                            }
+
+                            .savebar .inner {
+                                background: #0f1a2e;
+                                border: 1px solid var(--border);
+                                border-radius: 12px;
+                                padding: 10px;
+                                display: flex;
+                                justify-content: flex-end
+                            }
+                        </style>
+                    @endpush
+
+                    <!-- Header -->
+                    <div class="hdr-bar">
+                        <div class="hdr-title">
+                            <div class="pill-ghost"><i class="fa-solid fa-id-card-clip"></i></div>
+                            <div>
+                                <h5 class="fw-bold m-0">Doctor Profile</h5>
+                                <div class="mini">Manage your public profile, specialties, and availability</div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row g-4">
-                            {{-- Left: Availability & Quick Edit --}}
-                            <div class="col-md-6">
-                                <div class="section-card mb-3">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <div>
-                                            <span
-                                                class="badge-soft {{ $profile?->is_available ?? false ? 'badge-on' : 'badge-off' }}"
-                                                id="availBadge">
-                                                <i
-                                                    class="fa-solid {{ $profile?->is_available ?? false ? 'fa-circle-check' : 'fa-circle-xmark' }} me-1"></i>
-                                                <span
-                                                    class="availableText">{{ $profile?->is_available ? 'Available' : 'Unavailable' }}</span>
-                                            </span>
-                                            <span class="subtle small ms-2">Patients can only book you when
-                                                available.</span>
-                                        </div>
-                                        <div class="form-check form-switch m-0">
-                                            <input class="form-check-input" type="checkbox" id="availSwitch"
-                                                {{ $profile?->is_available ?? false ? 'checked' : '' }}>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="section-card">
-                                    <div class="mb-3">
-                                        <label class="form-label small subtle mb-1">Title</label>
-                                        <input id="qTitle" class="form-control"
-                                            placeholder="e.g., Consultant Cardiologist" value="{{ $profile?->title }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label small subtle mb-1">Consult Fee</label>
-                                        <div class="input-icon">
-                                            <span class="input-icon-prefix">$</span>
-                                            <input id="qFee" type="number" min="0" step="0.01"
-                                                class="form-control pe-4" value="{{ $profile?->consult_fee }}">
-                                            <span class="input-icon-suffix subtle">USD</span>
-                                        </div>
-                                    </div>
+                    <div class="row g-4">
+                        {{-- LEFT: Availability & Quick Edit --}}
+                        <div class="col-md-6 d-flex flex-column">
+                            <div class="tile">
+                                <div class="d-flex align-items-center justify-content-between">
                                     <div>
-                                        <label class="form-label small subtle mb-1">Avg Duration</label>
-                                        <div class="input-icon">
-                                            <input id="qDuration" type="number" min="5" step="5"
-                                                class="form-control pe-5" value="{{ $profile?->avg_duration ?? 15 }}">
-                                            <span class="input-icon-suffix subtle">min</span>
-                                        </div>
+                                        <span
+                                            class="badge-soft {{ $profile?->is_available ?? false ? 'badge-on' : 'badge-off' }}"
+                                            id="availBadge">
+                                            <i
+                                                class="fa-solid {{ $profile?->is_available ?? false ? 'fa-circle-check' : 'fa-circle-xmark' }} me-1"></i>
+                                            <span
+                                                class="availableText">{{ $profile?->is_available ? 'Available' : 'Unavailable' }}</span>
+                                        </span>
+                                        <div class="mini mt-1">Patients can only book you when available.</div>
+                                    </div>
+                                    <div class="form-check form-switch m-0">
+                                        <input class="form-check-input" type="checkbox" id="availSwitch"
+                                            {{ $profile?->is_available ?? false ? 'checked' : '' }}>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Right: Specialties --}}
-                            <div class="col-md-6">
-                                <div class="section-card h-100 d-flex flex-column">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <label class="form-label small subtle m-0">Specialties</label>
-                                        <span class="subtle small" id="specCount"></span>
+                            <div class="tile">
+                                <div class="tile-head"><i class="fa-solid fa-sliders"></i> Quick Details</div>
+                                <div class="mb-3">
+                                    <label class="form-label small subtle mb-1">Title</label>
+                                    <input id="qTitle" class="form-control"
+                                        placeholder="e.g., Consultant Cardiologist" value="{{ $profile?->title }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small subtle mb-1">Consult Fee</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-prefix">$</span>
+                                        <input id="qFee" type="number" min="0" step="0.01"
+                                            class="form-control" value="{{ $profile?->consult_fee }}">
+                                        <span class="input-icon-suffix subtle">USD</span>
                                     </div>
-                                    <select id="qSpecialties" class="form-select d-none" multiple>
-                                        @foreach ($allSpecialties as $sp)
-                                            <option value="{{ $sp->id }}"
-                                                {{ in_array($sp->id, $selectedSpecialtyIds ?? []) ? 'selected' : '' }}>
-                                                {{ $sp->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <div id="specChips" class="chips-wrap mb-2"></div>
-                                    <div class="d-flex gap-2 mb-2">
-                                        <input id="specSearch" class="form-control" placeholder="Search specialties…">
-                                        <button type="button" class="btn btn-ghost" id="btnSpecAdd">
-                                            <i class="fa-solid fa-plus me-1"></i>Add
-                                        </button>
-                                    </div>
-                                    <div id="specResults" class="spec-results d-none"></div>
-                                    <div class="subtle small mt-auto">
-                                        Tip: You can add multiple specialties. Click a chip to remove it.
+                                </div>
+                                <div>
+                                    <label class="form-label small subtle mb-1">Avg Duration</label>
+                                    <div class="input-icon">
+                                        <input id="qDuration" type="number" min="5" step="5"
+                                            class="form-control" value="{{ $profile?->avg_duration ?? 15 }}">
+                                        <span class="input-icon-suffix subtle">min</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end mt-4">
+                        {{-- RIGHT: Specialties --}}
+                        <div class="col-md-6 d-flex flex-column">
+                            <div class="tile h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="tile-head m-0"><i class="fa-solid fa-stethoscope"></i> Specialties</div>
+                                    <span class="mini" id="specCount"></span>
+                                </div>
+
+                                <select id="qSpecialties" class="form-select d-none" multiple>
+                                    @foreach ($allSpecialties as $sp)
+                                        <option value="{{ $sp->id }}"
+                                            {{ in_array($sp->id, $selectedSpecialtyIds ?? []) ? 'selected' : '' }}>
+                                            {{ $sp->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <div id="specChips" class="chips-wrap mb-2"></div>
+
+                                <div class="d-flex gap-2 mb-2">
+                                    <input id="specSearch" class="form-control" placeholder="Search specialties…">
+                                    <button type="button" class="btn btn-ghost" id="btnSpecAdd">
+                                        <i class="fa-solid fa-plus me-1"></i>Add
+                                    </button>
+                                </div>
+
+                                <div id="specResults" class="spec-results d-none"></div>
+
+                                <div class="mini mt-auto">
+                                    Tip: Add multiple specialties. Click a chip to remove it.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sticky Save -->
+                    <div class="savebar">
+                        <div class="inner">
                             <button class="btn btn-gradient px-4" id="btnQuickSave">
                                 <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
                             </button>
                         </div>
                     </div>
                 </div>
+
 
                 {{-- TAB 3: Credentials --}}
                 <div class="tab-pane fade" id="pane-creds" role="tabpanel" aria-labelledby="tab-creds">
