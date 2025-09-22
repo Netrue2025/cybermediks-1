@@ -20,7 +20,7 @@ class DoctorBrowseController extends Controller
         $q = User::query()
             ->where('role', 'doctor')
             ->with([
-                'doctorProfile:id,doctor_id,is_available,title',
+                'doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration',
                 'specialties:id,name',
             ])
             ->withCasts(['doctor_profile.is_available' => 'boolean']);
@@ -101,6 +101,8 @@ class DoctorBrowseController extends Controller
                     'first_name'    => $d->first_name,
                     'last_name'     => $d->last_name,
                     'initials'      => $initials,
+                    'charges'       => $d->doctorProfile?->consult_fee ?? 0,
+                    'duration'      => $d->doctorProfile?->avg_duration ?? 15,
                     'title'         => optional($d->doctorProfile)->title,
                     'available'     => (bool)optional($d->doctorProfile)->is_available,
                     'specialties'   => $d->specialties->pluck('name')->all(),

@@ -484,6 +484,8 @@
                 </span>
                 ${specs ? `<span class="chip ms-2">${specs}</span>` : ''}
                 <div class="mt-2">${next}</div>
+                <div class="mt-2">Charges: $${d.charges}</div>
+                <div class="mt-2">Duration: ${d.duration} mins</div>
             </div>
             <div class="d-flex gap-2">
                 <button class="btn btn-gradient" data-doc-view="${d.id}">
