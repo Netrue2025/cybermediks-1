@@ -39,13 +39,9 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
-        // Generate verification code & (optionally) email it
-        $code = OneTimeCode::make($user->email, 'verify', 15);
-
-        // TODO: send mail here (see Mail section below)
-        // Mail::to($user->email)->send(new \App\Mail\VerificationCodeMail($code));
-
         Auth::login($user);
+        (new VerificationController())->sendVerifyCode();
+
         return response()->json([
             'ok' => true,
             'message' => 'Account created. Verification code sent to your email.',

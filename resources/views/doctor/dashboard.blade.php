@@ -311,7 +311,8 @@
         </div> --}}
 
         <div class="col-lg-6">
-            <div class="cardx" style="cursor: pointer;" onclick="window.location.href='{{ route('doctor.prescriptions.index', ['from' => today()->toDateString(), 'to' => today()->toDateString()]) }}'">
+            <div class="cardx" style="cursor: pointer;"
+                onclick="window.location.href='{{ route('doctor.prescriptions.index', ['from' => today()->toDateString(), 'to' => today()->toDateString()]) }}'">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Prescriptions Today</div>
@@ -350,11 +351,34 @@
 
 
         <a href="{{ route('doctor.queue') }}" class="sec-wrap link-card">
-            <div class="empty">
-                <div class="ico"><i class="fa-solid fa-users"></i></div>
-                <div>No patients in the video call queue.</div>
-            </div>
-            <span class="stretched-link"></span>
+            @if ($videoQueueCount > 0)
+                <div class="d-flex flex-column gap-2">
+                    @foreach ($videoQueue as $appt)
+                        <div class="ps-row d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">{{ $appt->patient?->first_name }} {{ $appt->patient?->last_name }}
+                                </div>
+                                <div class="subtle small">Reason: {{ $appt->reason }}</div>
+                                <div class="subtle small">Scheduled at:
+                                    {{ $appt->scheduled_at ? $appt->scheduled_at->format('M d, Y h:i A') : 'As soon as possible' }}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-info">Video</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="empty">
+                    <div class="ico"><i class="fa-solid fa-users"></i></div>
+                    <div>No patients in the video call queue.</div>
+                </div>
+            @endif
+
+            <a href="{{ route('doctor.queue') }}" class="btn btn-ghost w-100">
+                See all in queue ({{ $videoQueueCount }})
+            </a>
         </a>
     </div>
 
@@ -461,57 +485,6 @@
 
     </div>
 
-
-    {{-- QUICK ACTIONS --}}
-    {{-- <div class="row g-3">
-        <div class="col-lg-4">
-            <a href="{{ route('doctor.prescriptions.create') }}"
-                class="qa-card link-card d-flex gap-3 text-decoration-none">
-                <div class="pill" style="width:38px;height:38px;"><i class="fa-solid fa-file-medical"></i></div>
-                <div>
-                    <div class="qa-title">New Prescription</div>
-                    <div class="qa-note">Issue a new e-prescription for a patient.</div>
-                </div>
-                <span class="stretched-link"></span>
-            </a>
-        </div>
-
-        <div class="col-lg-4">
-            <a href="{{ route('doctor.schedule') }}" class="qa-card link-card d-flex gap-3 text-decoration-none">
-                <div class="pill" style="width:38px;height:38px;"><i class="fa-solid fa-calendar-check"></i></div>
-                <div>
-                    <div class="qa-title">Manage Schedule</div>
-                    <div class="qa-note">Set your availability and manage appointments.</div>
-                </div>
-                <span class="stretched-link"></span>
-            </a>
-        </div>
-
-        <div class="col-lg-4">
-            <a href="{{ route('doctor.patients') }}" class="qa-card link-card d-flex gap-3 text-decoration-none">
-                <div class="pill" style="width:38px;height:38px;"><i class="fa-solid fa-user-doctor"></i></div>
-                <div>
-                    <div class="qa-title">View Patients</div>
-                    <div class="qa-note">Access records of your patient history.</div>
-                </div>
-                <span class="stretched-link"></span>
-            </a>
-        </div>
-
-        <div class="col-lg-4">
-            <a href="{{ route('doctor.messenger') }}" class="qa-card link-card d-flex gap-3 text-decoration-none">
-                <div class="pill" style="width:38px;height:38px;"><i class="fa-regular fa-comment-dots"></i></div>
-                <div>
-                    <div class="qa-title">Open Messenger</div>
-                    <div class="qa-note">Continue conversations with your patients.</div>
-                </div>
-                <span class="stretched-link"></span>
-            </a>
-        </div>
-    </div> --}}
-
-
-    {{-- PROFILE & SETTINGS + CREDENTIAL MANAGEMENT --}}
 
 @endsection
 

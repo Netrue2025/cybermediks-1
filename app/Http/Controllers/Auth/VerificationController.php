@@ -38,7 +38,7 @@ class VerificationController extends Controller
         return view('auth.verify');
     }
 
-    public function sendVerifyCode(Request $r)
+    public function sendVerifyCode()
     {
         abort_unless(Auth::check(), 403);
 

@@ -44,11 +44,13 @@ class DoctorDashboardController extends Controller
         $earnings = Auth::user()->wallet_balance;
 
         // Optional: “Video Call Queue” – upcoming video consults starting soon (next 15 min)
-        $videoQueueCount = Appointment::where('doctor_id', $docId)
+
+        $videoQueue = Appointment::where('doctor_id', $docId)
             ->where('type', 'video')
-            ->where('status', 'scheduled')
-            ->whereBetween('scheduled_at', [$now, $now->copy()->addMinutes(15)])
-            ->count();
+            ->where('status', 'pending')
+            ->get();
+
+        $videoQueueCount = $videoQueue->count();
 
 
         $pendingConvs = Conversation::with(['patient:id,first_name,last_name'])
@@ -68,6 +70,7 @@ class DoctorDashboardController extends Controller
             'activeConvs',
             'prescriptionsToday',
             'earnings',
+            'videoQueue',
             'videoQueueCount',
         ));
     }
