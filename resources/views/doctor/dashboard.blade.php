@@ -287,12 +287,12 @@
 @section('content')
     {{-- METRICS --}}
     <div class="row g-3">
-        <div class="col-lg-4">
+        {{-- <div class="col-lg-4">
             <div class="cardx">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Pending Requests</div>
-                        <div class="metric">{{ $pendingRequests }}</div>
+                        <div class="metric">{{ $pendingRequestsCount }}</div>
                     </div>
                     <div class="pill"><i class="fa-solid fa-users fs-5" style="color:#efed86;"></i></div>
                 </div>
@@ -308,9 +308,9 @@
                     <div class="pill"><i class="fa-solid fa-comments fs-5" style="color:#86bcef;"></i></div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
-        <div class="col-lg-4">
+        <div class="col-lg-12">
             <div class="cardx" style="cursor: pointer;" onclick="window.location.href='{{ route('doctor.prescriptions.index', ['from' => today()->toDateString(), 'to' => today()->toDateString()]) }}'">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>

@@ -22,8 +22,13 @@ use App\Http\Controllers\Patient\PatientProfileController;
 use App\Http\Controllers\Patient\PrescriptionController;
 use App\Http\Controllers\Patient\WalletController;
 use App\Http\Controllers\Pharmacy\PharmacyDashboardController;
+use App\Http\Controllers\Pharmacy\PharmacyDispensedController;
+use App\Http\Controllers\Pharmacy\PharmacyInventoryController;
 use App\Http\Controllers\Pharmacy\PharmacyPrescriptionController;
 use App\Http\Controllers\Pharmacy\PharmacyProfileController;
+use App\Http\Controllers\Pharmacy\PharmacyReportsController;
+use App\Http\Controllers\Pharmacy\PharmacySettingsController;
+use App\Http\Controllers\Pharmacy\PharmacyWalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -43,7 +48,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset',   [PasswordController::class, 'reset'])->name('reset');
 });
 
-/** Patient Auth (authed) */
+/** Auth (authed) */
 Route::middleware('auth')->group(function () {
     Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
@@ -175,12 +180,31 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     Route::get('/orders/{order}', [PharmacyDashboardController::class, 'orderShow'])->name('orders.show');
 
 
-    // list pages these tiles link to (stub if not built yet)
-    Route::view('/inventory', 'pharmacy.inventory.index')->name('inventory.index');
-    Route::view('/reports',   'pharmacy.reports.index')->name('reports.index');
-    Route::view('/settings',  'pharmacy.settings.index')->name('settings.index');
+    // Inventory
+    Route::get('/inventory', [PharmacyInventoryController::class, 'index'])->name('inventory.index');
+    Route::post('/inventory', [PharmacyInventoryController::class, 'store'])->name('inventory.store');
+    Route::patch('/inventory/{item}', [PharmacyInventoryController::class, 'update'])->name('inventory.update');
+    Route::post('/inventory/{item}/adjust', [PharmacyInventoryController::class, 'adjust'])->name('inventory.adjust');
+    Route::delete('/inventory/{item}', [PharmacyInventoryController::class, 'destroy'])->name('inventory.destroy');
 
-    Route::get('/profile', [PharmacyProfileController::class, 'show'])->name('profile');
-    Route::post('/profile', [PharmacyProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/password', [PharmacyProfileController::class, 'updatePassword'])->name('profile.password');
+    // Reports
+    Route::get('/reports', [PharmacyReportsController::class, 'index'])->name('reports.index');
+
+    // Settings
+    Route::get('/settings', [PharmacySettingsController::class, 'show'])->name('settings.show');
+    Route::post('/settings', [PharmacySettingsController::class, 'update'])->name('settings.update');
+
+    // PROFILE
+    Route::get('/profile', [PharmacySettingsController::class, 'showProfile'])->name('profile');
+    Route::post('/profile', [PharmacySettingsController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/password', [PharmacySettingsController::class, 'updatePassword'])->name('profile.password');
+
+     // WALLETS
+    Route::get('/wallet', [PharmacyWalletController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/withdraw', [PharmacyWalletController::class, 'withdraw'])->name('wallet.withdraw');
+
+    Route::get('/dispensed', [PharmacyDispensedController::class, 'index'])->name('dispensed.index');
+      Route::post('/dispensed/{rx}/undo', [PharmacyDispensedController::class, 'undo'])->name('dispensed.undo'); // set back to 'ready'
+      // optional: receipt
+      Route::get('/dispensed/{rx}/receipt', [PharmacyDispensedController::class, 'receipt'])->name('dispensed.receipt');
 });

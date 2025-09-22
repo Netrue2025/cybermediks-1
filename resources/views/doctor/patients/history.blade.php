@@ -197,12 +197,7 @@
                                                 @endif
                                             </div>
                                         </div>
-                                        <div>
-                                            <a class="btn btn-outline-light btn-sm"
-                                                href="{{ route('patient.prescriptions.index') }}#rx-{{ $rx->id }}">
-                                                View
-                                            </a>
-                                        </div>
+                                        
                                     </div>
 
                                     {{-- items --}}

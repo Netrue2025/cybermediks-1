@@ -345,7 +345,7 @@
             </a>
         </div>
         <div class="col-lg-4">
-            <a href="{{ route('pharmacy.settings.index') }}" class="qa-card link-card d-flex gap-3 text-decoration-none">
+            <a href="{{ route('pharmacy.settings.show') }}" class="qa-card link-card d-flex gap-3 text-decoration-none">
                 <div class="pill" style="width:38px;height:38px;"><i class="fa-solid fa-gear"></i></div>
                 <div>
                     <div class="qa-title">Settings</div>

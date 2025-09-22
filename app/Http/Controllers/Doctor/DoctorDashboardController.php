@@ -22,10 +22,6 @@ class DoctorDashboardController extends Controller
 
         // === Metric definitions (adjust if your schema differs) ===
         // Pending Requests: upcoming appointments not yet started (scheduled in the future).
-        $pendingRequests = Appointment::where('doctor_id', $docId)
-            ->where('status', 'scheduled')
-            ->where('scheduled_at', '>', $now)
-            ->count();
 
 
         $pendingRequestsCount = Conversation::where('doctor_id', auth()->id())
@@ -70,7 +66,6 @@ class DoctorDashboardController extends Controller
         $selectedSpecialtyIds = DoctorSpecialty::where('doctor_id', Auth::id())->pluck('specialty_id')->all();
 
         return view('doctor.dashboard', compact(
-            'pendingRequests',
             'activeConsultationsCount',
             'pendingRequestsCount',
             'pendingConvs',

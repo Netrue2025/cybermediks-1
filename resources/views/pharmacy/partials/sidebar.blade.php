@@ -32,7 +32,7 @@
                 <i class="fa-solid fa-file-prescription"></i><span>Pending Prescriptions</span>
             </a>
 
-            <a class="item {{ request()->routeIs('pharmacy.orders.index') ? 'active' : '' }}" href="{{ route('pharmacy.orders.index') }}">
+            <a class="item {{ request()->routeIs('pharmacy.dispensed.index') ? 'active' : '' }}" href="{{ route('pharmacy.dispensed.index') }}">
                 <i class="fa-solid fa-clock-rotate-left"></i><span>Dispensed Orders</span>
             </a>
 
