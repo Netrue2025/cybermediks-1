@@ -32,7 +32,6 @@
                 <button class="btn btn-outline-light btn-sm" data-history="{{ $p->id }}">
                     <i class="fa-regular fa-file-lines me-1"></i> History
                 </button>
-                <button class="btn btn-gradient btn-sm" data-consult="{{ $p->id }}">Start Consult</button>
             </div>
         </div>
     @empty

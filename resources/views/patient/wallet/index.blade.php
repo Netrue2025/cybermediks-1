@@ -39,7 +39,6 @@
                 </div>
                 <div class="d-grid gap-2 mt-3">
                     <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#addFundsModal">Add Funds</button>
-                    <button class="btn btn-outline-light" id="btnWithdraw">Withdraw</button>
                 </div>
             </div>
         </div>
@@ -76,25 +75,6 @@
         </div>
     </div>
 
-    {{-- Withdraw Prompt (simple) --}}
-    <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background:#121a2c;border:1px solid var(--border);border-radius:18px;">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title">Withdraw</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <label class="form-label">Amount (USD)</label>
-                    <input id="wdAmount" type="number" min="5" step="0.01" class="form-control"
-                        placeholder="20.00">
-                </div>
-                <div class="modal-footer border-0">
-                    <button class="btn btn-gradient" id="btnDoWithdraw">Request Withdrawal</button>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
@@ -137,33 +117,7 @@
                     .always(() => unlockBtn($btn));
             });
 
-            $('#btnWithdraw').on('click', function() {
-                new bootstrap.Modal(document.getElementById('withdrawModal')).show();
-            });
-
-            $('#btnDoWithdraw').on('click', function() {
-                const $btn = $(this);
-                lockBtn($btn);
-                const amt = parseFloat($('#wdAmount').val());
-                if (isNaN(amt) || amt < 5) {
-                    flash('danger', 'Enter at least $5');
-                    return unlockBtn($btn);
-                }
-                $.post(`{{ route('patient.wallet.withdraw') }}`, {
-                        _token: `{{ csrf_token() }}`,
-                        amount: amt,
-                        currency: 'USD'
-                    })
-                    .done(res => {
-                        flash('success', res.message || 'Withdrawal requested');
-                        $('#withdrawModal').modal('hide');
-                        refreshList();
-                    })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Withdrawal failed');
-                    })
-                    .always(() => unlockBtn($btn));
-            });
+           
         })();
     </script>
 @endpush

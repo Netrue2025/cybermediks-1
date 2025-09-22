@@ -310,7 +310,7 @@
             </div>
         </div> --}}
 
-        <div class="col-lg-12">
+        <div class="col-lg-6">
             <div class="cardx" style="cursor: pointer;" onclick="window.location.href='{{ route('doctor.prescriptions.index', ['from' => today()->toDateString(), 'to' => today()->toDateString()]) }}'">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -322,14 +322,20 @@
             </div>
         </div>
 
+        <div class="col-lg-6">
+            <div class="cardx">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="subtle">Total Earnings</div>
+                        <div class="metric">$ {{ number_format($earnings, 2, '.', ',') }}</div>
+                    </div>
+                    <div class="pill"><i class="fa-solid fa-dollar-sign fs-5" style="color:#86bcef;"></i></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="cardx mt-3 cardx-soft">
-        <div class="d-flex align-items-center justify-content-between">
-            <div class="subtle">Total Earnings</div>
-            <div class="fw-bold">$ {{ number_format($earnings, 2, '.', ',') }}</div>
-        </div>
-    </div>
 
 
     {{-- VIDEO CALL QUEUE --}}
@@ -457,7 +463,7 @@
 
 
     {{-- QUICK ACTIONS --}}
-    <div class="row g-3">
+    {{-- <div class="row g-3">
         <div class="col-lg-4">
             <a href="{{ route('doctor.prescriptions.create') }}"
                 class="qa-card link-card d-flex gap-3 text-decoration-none">
@@ -502,7 +508,7 @@
                 <span class="stretched-link"></span>
             </a>
         </div>
-    </div>
+    </div> --}}
 
 
     {{-- PROFILE & SETTINGS + CREDENTIAL MANAGEMENT --}}

@@ -37,12 +37,12 @@
 
             <a class="item {{ request()->routeIs('doctor.messenger') ? 'active' : '' }}"
                 href="{{ route('doctor.messenger') }}">
-                <i class="fa-solid fa-message"></i><span>Messenger</span>
+                <i class="fa-solid fa-message"></i><span>Chat</span>
             </a>
 
-            <a class="item {{ request()->routeIs('doctor.prescriptions.create') ? 'active' : '' }}"
-                href="{{ route('doctor.prescriptions.create') }}">
-                <i class="fa-solid fa-file-prescription"></i><span>Create Prescription</span>
+            <a class="item {{ request()->routeIs('doctor.schedule') ? 'active' : '' }}"
+                href="{{ route('doctor.schedule') }}">
+                <i class="fa-solid fa-calendar-check"></i><span>Manage Schedule</span>
             </a>
         </nav>
     </div>
