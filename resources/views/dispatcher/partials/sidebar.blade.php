@@ -1,0 +1,55 @@
+<aside class="sidebar">
+    {{-- Top brand / back --}}
+    <div class="sb-head d-flex align-items-center justify-content-between">
+        <a href="{{ url('/') }}" class="sb-back d-flex align-items-center text-decoration-none">
+            <img src="{{ asset('images/logo.webp') }}" width="40" alt="">
+            <span class="brand-gradient fw-bold">{{ strtoupper(config('app.name', 'CYBERMEDIKS')) }}</span>
+        </a>
+    </div>
+
+    {{-- User --}}
+   <center>
+     <div class="sb-user align-items-center gap-3">
+        <div class="avatar">{{ strtoupper(substr(auth()->user()->first_name, 0, 1)) . strtoupper(substr(auth()->user()->last_name, 0, 1)) }}</div>
+        <div>
+            <div class="fw-semibold text-white">{{ auth()->user()->first_name. ' '. auth()->user()->last_name }}</div>
+            <div class="sb-role">Dispatcher</div>
+        </div>
+    </div>
+   </center>
+
+    {{-- Menu (scrollable) --}}
+    <div class="sb-scroll">
+        <nav class="menu">
+            <div class="section">Main</div>
+
+            <a class="item {{ request()->routeIs('dispatcher.dashboard') ? 'active' : '' }}"
+                href="{{ route('dispatcher.dashboard') }}">
+                <i class="fa-solid fa-gauge"></i><span>Dashboard</span>
+            </a>
+
+            <a class="item {{ request()->routeIs('dispatcher.deliveries.index') ? 'active' : '' }}" href="{{ route('dispatcher.deliveries.index') }}">
+                <i class="fa-solid fa-truck"></i><span>Deliveries</span>
+            </a>
+
+            <a class="item {{ request()->routeIs('dispatcher.wallet.index') ? 'active' : '' }}" href="{{ route('dispatcher.wallet.index') }}">
+                <i class="fa-solid fa-wallet"></i><span>My wallet</span>
+            </a>
+
+        </nav>
+    </div>
+
+    {{-- Bottom actions --}}
+    <div class="sb-bottom">
+        <a class="item {{ request()->routeIs('dispatcher.profile') ? 'active' : '' }} mb-4" href="{{ route('dispatcher.profile') }}">
+            <i class="fa-solid fa-gear"></i><span>Profile Settings</span>
+        </a>
+
+        <form action="{{ route('logout') }}" method="POST" class="mb-2">
+            @csrf
+            <button class="item btn-as-link text-end w-100 logout">
+                <i class="fa-solid fa-right-from-bracket"></i><span>Log Out</span>
+            </button>
+        </form>
+    </div>
+</aside>

@@ -23,7 +23,7 @@ class DispatcherMiddleware
             return redirect()->route('login')->with('error', 'Please login first.');
         }
 
-        if (!$user->role || $user->role !== 'doctor') {
+        if (!$user->role || $user->role !== 'dispatcher') {
             $dashboardRoute = '';
 
             switch ($user->role) {

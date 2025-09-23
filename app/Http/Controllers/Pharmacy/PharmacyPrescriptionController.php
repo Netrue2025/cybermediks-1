@@ -99,6 +99,10 @@ class PharmacyPrescriptionController extends Controller
             return response()->json(['message' => 'Set and confirm price before marking ready'], 422);
         }
 
+        if ($to === 'picked' && is_null($rx->dispatcher_id)) {
+            return response()->json(['message' => 'A dispatcher must be assigned before marking picked'], 422);
+        }
+
         $rx->dispense_status = $to;
         $rx->save();
 

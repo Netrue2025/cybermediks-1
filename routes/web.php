@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Dispatcher\DispatcherDashboardController;
+use App\Http\Controllers\Dispatcher\DispatcherPrescriptionController;
 use App\Http\Controllers\Doctor\DoctorConversationQuickController;
 use App\Http\Controllers\Doctor\DoctorCredentialController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
@@ -212,4 +214,26 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     Route::post('/dispensed/{rx}/undo', [PharmacyDispensedController::class, 'undo'])->name('dispensed.undo'); // set back to 'ready'
     // optional: receipt
     Route::get('/dispensed/{rx}/receipt', [PharmacyDispensedController::class, 'receipt'])->name('dispensed.receipt');
+});
+
+/** Dispatcher Dashboard (authed + verified) */
+
+Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified', 'dispatcher'])->group(function () {
+
+    Route::get('/dashboard', [DispatcherDashboardController::class, 'index'])->name('dashboard');
+
+    // Prescriptions
+    Route::post('/prescriptions/{rx}/accept', [DispatcherPrescriptionController::class, 'accept'])->name('prescriptions.accept');
+
+    Route::get('/deliveries', [DispatcherDashboardController::class, 'deliveriesIndex'])->name('deliveries.index');
+
+    // PROFILE
+    Route::get('/profile', [DispatcherDashboardController::class, 'showProfile'])->name('profile');
+    Route::post('/profile', [DispatcherDashboardController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/password', [DispatcherDashboardController::class, 'updatePassword'])->name('profile.password');
+
+    // WALLETS
+    Route::get('/wallet', [DispatcherDashboardController::class, 'walletIndex'])->name('wallet.index');
+    Route::post('/wallet/withdraw', [DispatcherDashboardController::class, 'withdraw'])->name('wallet.withdraw');
+
 });
