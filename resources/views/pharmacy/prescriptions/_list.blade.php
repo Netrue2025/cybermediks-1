@@ -2,13 +2,14 @@
     function statusBadge($s)
     {
         $cls = match ($s) {
-            'pending' => 'badge-pending',
+            'price_assigned' => 'badge-pending',
+            'price_confirmed' => 'badge-ready',
             'ready' => 'badge-ready',
             'picked' => 'badge-picked',
             'cancelled' => 'badge-cancelled',
-            default => 'badge-pending',
+            default => 'badge-pending', // pending or unknown
         };
-        return "<span class='badge-soft {$cls}'>" . ucfirst($s ?? 'pending') . '</span>';
+        return "<span class='badge-soft {$cls}'>" . ucfirst(str_replace('_', ' ', $s)) . '</span>';
     }
 @endphp
 
@@ -58,16 +59,31 @@
                 </div>
 
                 {{-- Amount --}}
+                @php
+                    $canEditAmount = ($rx->dispense_status ?? 'pending') === 'pending';
+                @endphp
                 <div class="rx-col">
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-icon" style="width:160px">
                             <span class="input-icon-prefix">$</span>
                             <input type="number" step="0.01" min="0" class="form-control"
-                                data-amount-input="{{ $rx->id }}" value="{{ $rx->total_amount }}">
+                                data-amount-input="{{ $rx->id }}" value="{{ $rx->total_amount }}"
+                                {{ $canEditAmount ? '' : 'disabled' }}>
                         </div>
-                        <button class="btn btn-outline-light btn-sm" data-save-amount
-                            data-id="{{ $rx->id }}">Save</button>
+
+                        @if ($canEditAmount)
+                            <button class="btn btn-outline-light btn-sm" data-save-amount
+                                data-id="{{ $rx->id }}">
+                                Save
+                            </button>
+                        @else
+                            <button class="btn btn-outline-light btn-sm" disabled>Save</button>
+                        @endif
                     </div>
+
+                    @if (($rx->dispense_status ?? 'pending') === 'price_assigned')
+                        <div class="rx-cell-sub mt-1">Awaiting patient confirmation</div>
+                    @endif
                 </div>
 
                 {{-- Status --}}
@@ -80,25 +96,28 @@
                     </a>
 
                     @if ($rx->dispense_status === 'pending')
-                        <button class="btn btn-success btn-sm" data-status data-id="{{ $rx->id }}"
-                            data-status="ready">
-                            <i class="fa-solid fa-boxes-packing me-1"></i> Ready
-                        </button>
-                        <button class="btn btn-outline-light btn-sm" data-status data-id="{{ $rx->id }}"
-                            data-status="cancelled">
+                        {{-- can enter price and cancel --}}
+                        <button class="btn btn-outline-light btn-sm" data-id="{{ $rx->id }}" data-status="cancelled">
                             Cancel
                         </button>
-                    @elseif($rx->dispense_status === 'ready')
-                        <button class="btn btn-outline-light btn-sm" data-status data-id="{{ $rx->id }}"
-                            data-status="pending">
-                            Back
+                    @elseif ($rx->dispense_status === 'price_assigned')
+                        {{-- price set; waiting for patient; allow cancel only --}}
+                        <button class="btn btn-outline-light btn-sm" data-id="{{ $rx->id }}" data-status="cancelled">
+                            Cancel
                         </button>
-                        <button class="btn btn-success btn-sm" data-status data-id="{{ $rx->id }}"
-                            data-status="picked">
+                    @elseif ($rx->dispense_status === 'price_confirmed')
+                        {{-- now pharmacy can mark ready, or cancel --}}
+                        <button class="btn btn-success btn-sm" data-status="ready" data-id="{{ $rx->id }}">
+                            <i class="fa-solid fa-boxes-packing me-1"></i> Ready
+                        </button>
+                        <button class="btn btn-outline-light btn-sm" data-status="cancelled" data-id="{{ $rx->id }}">
+                            Cancel
+                        </button>
+                    @elseif ($rx->dispense_status === 'ready')
+                        <button class="btn btn-success btn-sm" data-status="picked" data-id="{{ $rx->id }}">
                             Picked
                         </button>
-                        <button class="btn btn-outline-light btn-sm" data-status data-id="{{ $rx->id }}"
-                            data-status="cancelled">
+                        <button class="btn btn-outline-light btn-sm" data-status="cancelled" data-id="{{ $rx->id }}">
                             Cancel
                         </button>
                     @else

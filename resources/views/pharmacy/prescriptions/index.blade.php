@@ -238,10 +238,38 @@
             });
 
             // Status & amount actions (delegated)
+            $(document).on('click', '[data-save-amount]', function() {
+                const id = $(this).data('id');
+                const $btn = $(this);
+                const $input = $(`[data-amount-input="${id}"]`);
+                const amt = parseFloat($input.val());
+
+                if (isNaN(amt) || amt < 0) {
+                    return flash('danger', 'Enter a valid amount');
+                }
+
+                lockBtn($btn);
+                $.post(`{{ url('/pharmacy/prescriptions') }}/${id}/amount`, {
+                        _token: `{{ csrf_token() }}`,
+                        amount: amt
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Price saved');
+                        // easy refresh of current page/list (if you render via ajax, call your fetch)
+                        location.reload();
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to save amount');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            // Change status with server-side guards
             $(document).on('click', '[data-status]', function() {
                 const id = $(this).data('id');
                 const to = $(this).data('status');
                 const $btn = $(this);
+
                 lockBtn($btn);
                 $.post(`{{ url('/pharmacy/prescriptions') }}/${id}/status`, {
                         _token: `{{ csrf_token() }}`,
@@ -249,28 +277,10 @@
                     })
                     .done(res => {
                         flash('success', res.message || 'Updated');
-                        $('#rxFilter').trigger('submit');
+                        location.reload();
                     })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed');
-                    })
-                    .always(() => unlockBtn($btn));
-            });
-
-            $(document).on('click', '[data-save-amount]', function() {
-                const id = $(this).data('id');
-                const val = $(`[data-amount-input="${id}"]`).val();
-                const $btn = $(this);
-                lockBtn($btn);
-                $.post(`{{ url('/pharmacy/prescriptions') }}/${id}/amount`, {
-                        _token: `{{ csrf_token() }}`,
-                        total_amount: val
-                    })
-                    .done(res => {
-                        flash('success', res.message || 'Saved');
-                    })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed');
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Update failed');
                     })
                     .always(() => unlockBtn($btn));
             });

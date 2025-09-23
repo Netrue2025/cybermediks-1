@@ -64,7 +64,11 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::get('/dashboard', [PatientDashboardController::class, 'index'])->name('dashboard');
     Route::get('/store', fn() => view('patient.store'))->name('store');
     Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
-    Route::get('/appointments', [PatientAppointmentController::class, 'index'])->name('appointments.index');
+    Route::get('/prescriptions/{rx}/pharmacies', [PrescriptionController::class, 'list'])->name('prescriptions.pharmacies');
+    Route::post('/prescriptions/{rx}/assign-pharmacy', [PrescriptionController::class, 'assign'])->name('prescriptions.assignPharmacy');
+    Route::post('/patient/prescriptions/{rx}/confirm-price', [PrescriptionController::class, 'confirm'])->name('prescriptions.confirmPrice');
+
+
     Route::get('/pharmacies', fn() => view('patient.pharmacies'))->name('pharmacies');
 
     // DOCTORS
@@ -91,6 +95,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::post('/messages/start', [PatientMessageController::class, 'start'])->name('messages.start'); // AJAX (start convo with a doctor)
 
     // Appointments
+    Route::get('/appointments', [PatientAppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');
     Route::post('/appointments', [PatientAppointmentController::class, 'store'])->name('appointments.store'); // AJAX
 });
@@ -199,12 +204,12 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     Route::post('/profile', [PharmacySettingsController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/password', [PharmacySettingsController::class, 'updatePassword'])->name('profile.password');
 
-     // WALLETS
+    // WALLETS
     Route::get('/wallet', [PharmacyWalletController::class, 'index'])->name('wallet.index');
     Route::post('/wallet/withdraw', [PharmacyWalletController::class, 'withdraw'])->name('wallet.withdraw');
 
     Route::get('/dispensed', [PharmacyDispensedController::class, 'index'])->name('dispensed.index');
-      Route::post('/dispensed/{rx}/undo', [PharmacyDispensedController::class, 'undo'])->name('dispensed.undo'); // set back to 'ready'
-      // optional: receipt
-      Route::get('/dispensed/{rx}/receipt', [PharmacyDispensedController::class, 'receipt'])->name('dispensed.receipt');
+    Route::post('/dispensed/{rx}/undo', [PharmacyDispensedController::class, 'undo'])->name('dispensed.undo'); // set back to 'ready'
+    // optional: receipt
+    Route::get('/dispensed/{rx}/receipt', [PharmacyDispensedController::class, 'receipt'])->name('dispensed.receipt');
 });

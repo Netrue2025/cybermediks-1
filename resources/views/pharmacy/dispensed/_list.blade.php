@@ -32,7 +32,7 @@
                     <div class="subtle small">{{ $rx->created_at?->format('M d, Y') }}</div>
                 </div>
                 <div>
-                    <div class="fw-semibold">{{ $rx->patient?->first_name }} {{ $rx->patient?->last_name }}</div>
+                    <div class="fw-semibold">Patient: {{ $rx->patient?->first_name }} {{ $rx->patient?->last_name }}</div>
                     <div class="subtle small">Doctor: {{ $rx->doctor?->first_name }} {{ $rx->doctor?->last_name }}</div>
                 </div>
                 <div class="subtle">{{ $preview ?: '—' }}</div>
@@ -42,8 +42,6 @@
                         {{ $pickedAt }}</span>
                     <a class="btn-ico" title="Receipt" href="{{ route('pharmacy.dispensed.receipt', $rx) }}"><i
                             class="fa-regular fa-file-lines"></i></a>
-                    <button class="btn-ico" title="Undo to Ready" data-undo="{{ $rx->id }}"><i
-                            class="fa-solid fa-rotate-left"></i></button>
                 </div>
             </div>
         @endforeach

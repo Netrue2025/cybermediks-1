@@ -81,13 +81,45 @@
                         View
                     </button>
 
+                    @php
+                        $canBuy = !in_array($rx->dispense_status ?? 'pending', ['picked', 'cancelled'], true);
+                        $pharmacyName = $rx->pharmacy?->first_name
+                            ? $rx->pharmacy->first_name . ' ' . $rx->pharmacy->last_name
+                            : $rx->pharmacy?->name;
+                    @endphp
+
+                    @if ($canBuy)
+                        <button class="btn btn-success btn-sm" data-rx-buy="{{ $rx->id }}">
+                            <i class="fa-solid fa-cart-shopping me-1"></i>
+                            {{ $rx->pharmacy_id ? 'Change Pharmacy' : 'Buy' }}
+                        </button>
+                    @else
+                        <button class="btn btn-outline-light btn-sm" disabled>Buy</button>
+                    @endif
+
+                    @if (($rx->dispense_status ?? 'pending') === 'price_assigned')
+                        <button class="btn btn-success" id="btnConfirmPrice" data-id="{{ $rx->id }}">
+                            Confirm Price ({{ $rx->total_amount ? '$' . number_format($rx->total_amount, 2) : '—' }})
+                        </button>
+                    @endif
+
+
                     {{-- Refill only when it makes sense (example rule: not cancelled) --}}
-                    @if ($dispense !== 'cancelled')
+                    {{-- @if ($dispense !== 'cancelled')
                         <button class="btn btn-gradient btn-sm" data-rx-refill="{{ $rx->id }}">Refill</button>
                     @else
                         <button class="btn btn-outline-light btn-sm" disabled>Refill</button>
-                    @endif
+                    @endif --}}
                 </div>
+
+                @if ($rx->pharmacy_id)
+                    <div class="mt-2">
+                        <span class="badge-soft">
+                            <i class="fa-solid fa-store me-1"></i>
+                            {{ $pharmacyName ?? 'Selected pharmacy' }}
+                        </span>
+                    </div>
+                @endif
             </div>
         </div>
     @empty

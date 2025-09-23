@@ -110,6 +110,41 @@
             </div>
         </div>
     </div>
+
+    <!-- Choose Pharmacy Modal -->
+    <div class="modal fade" id="pharmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background:var(--card); color:var(--text);">
+                <div class="modal-header">
+                    <h6 class="modal-title"><i class="fa-solid fa-store me-1"></i> Choose a Pharmacy</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-8">
+                            <input id="pharmSearch" class="form-control" placeholder="Search pharmacy by name…">
+                        </div>
+                        <div class="col-md-4">
+                            <select id="pharmFilter" class="form-select">
+                                <option value="">All</option>
+                                <option value="24_7">Open 24/7</option>
+                                <option value="delivery">Has delivery</option> {{-- optional, if you track this --}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="pharmList" class="d-flex flex-column gap-2">
+                        <div class="text-center text-secondary py-3">Searching…</div>
+                    </div>
+
+                    <div class="d-grid mt-3">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -141,15 +176,15 @@
                 const rx = typeof payload === 'string' ? JSON.parse(payload) : payload;
 
                 let html = `
-            <div class="mb-2"><span class="rx-badge">Rx ${rx.code}</span>
-            <span class="rx-status ms-2">${rx.status.replace('_',' ')}</span></div>
-            <div class="mb-2"><strong>Doctor:</strong> ${rx.doctor}</div>
-            ${rx.notes ? `<div class="mb-3"><strong>Notes:</strong> ${rx.notes}</div>` : ``}
-            <div class="mb-2"><strong>Items</strong></div>
-            <ul class="mb-0">
-                ${rx.items.map(i => `<li>${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}</li>`).join('')}
-            </ul>
-        `;
+                    <div class="mb-2"><span class="rx-badge">Rx ${rx.code}</span>
+                    <span class="rx-status ms-2">${rx.status.replace('_',' ')}</span></div>
+                    <div class="mb-2"><strong>Doctor:</strong> ${rx.doctor}</div>
+                    ${rx.notes ? `<div class="mb-3"><strong>Notes:</strong> ${rx.notes}</div>` : ``}
+                    <div class="mb-2"><strong>Items</strong></div>
+                    <ul class="mb-0">
+                        ${rx.items.map(i => `<li>${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}</li>`).join('')}
+                    </ul>
+                `;
                 $('#rxViewBody').html(html);
                 new bootstrap.Modal(document.getElementById('rxViewModal')).show();
             });
@@ -158,6 +193,85 @@
             $(document).on('click', '[data-rx-refill]', function() {
                 const id = $(this).data('rx-refill');
                 window.location.href = `/patient/prescriptions/${id}/refill`; // implement when ready
+            });
+
+
+            let currentRxId = null;
+            const $pharmModal = $('#pharmModal');
+            const $pharmList = $('#pharmList');
+            const $pharmSearch = $('#pharmSearch');
+            const $pharmFilter = $('#pharmFilter');
+            let searchTimer = null;
+
+            // Open modal and load pharmacies
+            $(document).on('click', '[data-rx-buy]', function() {
+                currentRxId = $(this).data('rx-buy');
+                if (!currentRxId) return;
+                $pharmModal.modal('show');
+                loadPharmacies();
+            });
+
+            $pharmSearch.on('input', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(loadPharmacies, 300);
+            });
+            $pharmFilter.on('change', loadPharmacies);
+
+            function loadPharmacies() {
+                const q = $pharmSearch.val() || '';
+                const filter = $pharmFilter.val() || '';
+                $pharmList.html(`<div class="text-center text-secondary py-3">Loading…</div>`);
+                $.get(`{{ route('patient.prescriptions.pharmacies', ['rx' => '__ID__']) }}`.replace('__ID__',
+                        currentRxId), {
+                        q,
+                        filter
+                    })
+                    .done(html => $pharmList.html(html))
+                    .fail(() => $pharmList.html(
+                        `<div class="text-center text-danger py-3">Failed to load pharmacies</div>`));
+            }
+
+            // Select pharmacy -> assign to prescription
+            $(document).on('click', '[data-pharm-select]', function() {
+                const pharmId = $(this).data('pharm-select');
+                const $btn = $(this);
+                if (!pharmId || !currentRxId) return;
+
+                lockBtn($btn);
+                $.post(`{{ route('patient.prescriptions.assignPharmacy', ['rx' => '__ID__']) }}`.replace(
+                        '__ID__', currentRxId), {
+                        _token: `{{ csrf_token() }}`,
+                        pharmacy_id: pharmId
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Pharmacy selected');
+                        $pharmModal.modal('hide');
+                        // refresh the list below (re-use your existing helper):
+                        try {
+                            (typeof fetchList === 'function') && fetchList();
+                        } catch (e) {}
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to assign pharmacy');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            $(document).on('click', '#btnConfirmPrice', function() {
+                const id = $(this).data('id');
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('patient.prescriptions.confirmPrice', '__ID__') }}`.replace('__ID__', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Confirmed');
+                        location.reload();
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed');
+                    })
+                    .always(() => unlockBtn($btn));
             });
         })();
     </script>

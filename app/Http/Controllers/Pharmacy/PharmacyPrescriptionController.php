@@ -70,39 +70,73 @@ class PharmacyPrescriptionController extends Controller
         return view('pharmacy.prescriptions.show', compact('rx'));
     }
 
-    public function updateStatus(Request $request, Prescription $rx)
+    public function updateStatus(Request $r, Prescription $rx)
     {
-        $this->ensureOwned($rx);
-        $data = $request->validate([
-            'status' => 'required|in:pending,ready,picked,cancelled',
-        ]);
+        if ($rx->pharmacy_id && $rx->pharmacy_id !== Auth::id()) {
+            return response()->json(['message' => 'Not your prescription'], 403);
+        }
 
-        // simple guardrails for forward-only flow
-        $current = $rx->dispense_status;
-        $next    = $data['status'];
+        $r->validate(['status' => 'required|string|in:pending,price_assigned,price_confirmed,ready,picked,cancelled']);
 
-        $allowed = [
-            'pending'  => ['ready', 'cancelled'],
-            'ready'    => ['picked', 'cancelled', 'pending'],
-            'picked'   => [],             // terminal
-            'cancelled' => [],             // terminal
-        ];
-        abort_unless(in_array($next, $allowed[$current] ?? []), 422, 'Invalid status transition');
+        $from = $rx->dispense_status ?? 'pending';
+        $to   = (string) $r->input('status'); // <-- cast to plain string
 
-        $rx->update(['dispense_status' => $next]);
+        $allowed = match ($from) {
+            'pending'         => ['cancelled'],            // price is set via saveAmount()
+            'price_assigned'  => ['cancelled'],            // waiting for patient
+            'price_confirmed' => ['ready', 'cancelled'],   // now you can prepare
+            'ready'           => ['picked', 'cancelled'],  // handover or cancel
+            'picked'          => [],                       // terminal
+            'cancelled'       => [],                       // terminal
+            default           => [],
+        };
 
-        return response()->json(['status' => 'success', 'message' => "Status updated to {$next}."]);
+        if (!in_array($to, $allowed, true)) {
+            return response()->json(['message' => "Transition $from → $to not allowed"], 422);
+        }
+
+        if ($to === 'ready' && is_null($rx->total_amount)) {
+            return response()->json(['message' => 'Set and confirm price before marking ready'], 422);
+        }
+
+        $rx->dispense_status = $to;
+        $rx->save();
+
+        return response()->json(['status' => 'ok', 'message' => 'Status updated']);
     }
 
-    public function updateAmount(Request $request, Prescription $rx)
+
+    public function updateAmount(Request $r, Prescription $rx)
     {
-        $this->ensureOwned($rx);
-        $data = $request->validate([
-            'total_amount' => 'nullable|numeric|min:0|max:9999999.99',
-        ]);
-        $rx->update(['total_amount' => $data['total_amount']]);
-        return response()->json(['status' => 'success', 'message' => 'Amount saved.']);
+        // auth: ensure this Rx belongs to this pharmacy, or pharmacy is assigned, or allow any pharmacy? Choose policy.
+        // Example: allow if pharmacy_id matches current user (or is null):
+        if ($rx->pharmacy_id && $rx->pharmacy_id !== Auth::id()) {
+            return response()->json(['message' => 'Not your prescription'], 403);
+        }
+
+        $r->validate(['amount' => 'required|numeric|min:0']);
+
+        if (($rx->dispense_status ?? 'pending') !== 'pending') {
+            return response()->json(['message' => 'Price can only be set while pending'], 422);
+        }
+
+        $rx->total_amount   = $r->amount;
+        $rx->pharmacy_id    = $rx->pharmacy_id ?: Auth::id(); // capture ownership on first pricing
+        $rx->dispense_status = 'price_assigned';
+        $rx->save();
+
+        return response()->json(['status' => 'ok', 'message' => 'Price assigned, awaiting patient confirmation']);
     }
+
+    // public function updateAmount(Request $request, Prescription $rx)
+    // {
+    //     $this->ensureOwned($rx);
+    //     $data = $request->validate([
+    //         'total_amount' => 'nullable|numeric|min:0|max:9999999.99',
+    //     ]);
+    //     $rx->update(['total_amount' => $data['total_amount']]);
+    //     return response()->json(['status' => 'success', 'message' => 'Amount saved.']);
+    // }
 
     // optional: claim unassigned (if you want to support this)
     public function claim(Prescription $rx)
