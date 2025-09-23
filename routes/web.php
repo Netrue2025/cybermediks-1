@@ -1,5 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminAppointmentsController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminDispatchersController;
+use App\Http\Controllers\Admin\AdminDoctorsController;
+use App\Http\Controllers\Admin\AdminPharmaciesController;
+use App\Http\Controllers\Admin\AdminPrescriptionsController;
+use App\Http\Controllers\Admin\AdminsController;
+use App\Http\Controllers\Admin\AdminSpecialtiesController;
+use App\Http\Controllers\Admin\AdminTransactionsController;
+use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
@@ -235,5 +245,44 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
     // WALLETS
     Route::get('/wallet', [DispatcherDashboardController::class, 'walletIndex'])->name('wallet.index');
     Route::post('/wallet/withdraw', [DispatcherDashboardController::class, 'withdraw'])->name('wallet.withdraw');
-
 });
+
+
+Route::middleware(['auth', 'verified', 'admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
+        Route::post('/users/{user}/toggle', [AdminUsersController::class, 'toggleActive'])->name('users.toggle');
+
+        Route::get('/doctors', [AdminDoctorsController::class, 'index'])->name('doctors.index');
+        Route::get('/doctors/{doctor}/credentials', [AdminDoctorsController::class, 'credentials'])->name('doctors.credentials');
+        Route::post('/doctors/{id}/availability', [AdminDoctorsController::class, 'availability'])->name('doctors.availability');
+        Route::post('/doctors/{id}/approve-credential', [AdminDoctorsController::class, 'approveCredential'])->name('doctors.approveCredential');
+
+        Route::get('/pharmacies', [AdminPharmaciesController::class, 'index'])->name('pharmacies.index');
+        Route::get('/pharmacies/{pharmacy}/profile', [AdminPharmaciesController::class, 'profile'])->name('pharmacies.profile');
+        Route::post('/pharmacies/{pharmacy}/toggle24', [AdminPharmaciesController::class, 'toggle24'])->name('pharmacies.toggle24');
+        Route::post('/pharmacies/{pharmacy}/radius', [AdminPharmaciesController::class, 'updateRadius'])->name('pharmacies.updateRadius');
+
+        Route::get('/prescriptions', [AdminPrescriptionsController::class, 'index'])->name('prescriptions.index');
+        Route::post('/prescriptions/{rx}/reassign-pharmacy', [AdminPrescriptionsController::class, 'reassignPharmacy'])->name('prescriptions.reassignPharmacy');
+        Route::post('/prescriptions/{rx}/assign-dispatcher', [AdminPrescriptionsController::class, 'assignDispatcher'])->name('prescriptions.assignDispatcher');
+
+        Route::get('/appointments', [AdminAppointmentsController::class, 'index'])->name('appointments.index');
+
+        Route::get('/transactions', [AdminTransactionsController::class, 'index'])->name('transactions.index');
+
+        Route::get('/dispatchers', [AdminDispatchersController::class, 'index'])->name('dispatchers.index');
+        Route::get('/dispatchers/{dispatcher}/profile', [AdminDispatchersController::class, 'profile'])->name('dispatchers.profile');
+
+        Route::get('/specialties', [AdminSpecialtiesController::class, 'index'])->name('specialties.index');
+        Route::resource('specialties', AdminSpecialtiesController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
+
+        // Admin management
+        Route::get('/admins', [AdminsController::class, 'index'])->name('admins.index');
+        Route::post('/admins', [AdminsController::class, 'store'])->name('admins.store');
+        Route::delete('/admins/{id}', [AdminsController::class, 'destroy'])->name('admins.destroy');
+    });
