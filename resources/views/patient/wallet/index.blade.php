@@ -96,28 +96,40 @@
             $('#btnAddFunds').on('click', function() {
                 const $btn = $(this);
                 lockBtn($btn);
+
                 const amt = parseFloat($('#addAmount').val());
                 if (isNaN(amt) || amt < 5) {
                     flash('danger', 'Enter at least $5');
                     return unlockBtn($btn);
                 }
-                $.post(`{{ route('patient.wallet.add') }}`, {
-                        _token: `{{ csrf_token() }}`,
-                        amount: amt,
-                        currency: 'USD'
+
+                $.ajax({
+                        url: `{{ route('patient.wallet.pay') }}`,
+                        method: 'POST',
+                        dataType: 'json',
+                        data: {
+                            _token: `{{ csrf_token() }}`,
+                            amount: amt,
+                            currency: 'USD'
+                        }
                     })
                     .done(res => {
-                        flash('success', res.message || 'Funds added');
-                        $('#addFundsModal').modal('hide');
-                        refreshList();
+                        if (res?.ok && res.url) {
+                            // You can either replace the page or open a new tab:
+                            window.location.href = res.url; // or: window.open(res.url, '_blank');
+                        } else {
+                            flash('danger', res?.message || 'Failed to initialize payment');
+                        }
                     })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed to add funds');
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to initialize payment');
                     })
                     .always(() => unlockBtn($btn));
             });
 
-           
+
+
+
         })();
     </script>
 @endpush

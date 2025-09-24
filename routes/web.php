@@ -110,6 +110,9 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::get('/appointments', [PatientAppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');
     Route::post('/appointments', [PatientAppointmentController::class, 'store'])->name('appointments.store'); // AJAX
+
+    Route::post('/wallet/pay', [WalletController::class, 'startFlutterwave'])->name('wallet.pay');           // create payment link
+    Route::get('/wallet/callback', [WalletController::class, 'flutterwaveCallback'])->name('wallet.callback');   // user returns here
 });
 
 

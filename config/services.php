@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'flutterwave' => [
+        'public'   => env('FLW_PUBLIC_KEY'),
+        'secret'   => env('FLW_SECRET_KEY'),
+        'encrypt'  => env('FLW_ENCRYPTION_KEY'),
+        'base_url' => env('FLW_BASE_URL', 'https://api.flutterwave.com/v3'),
+        'webhook'  => [
+            'hash' => env('FLW_WEBHOOK_HASH'),
+        ],
+    ],
+
 ];
