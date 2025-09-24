@@ -88,7 +88,7 @@
                             <div class="input-group">
                                 <input class="form-control" value="{{ auth()->user()->email }}" disabled>
                                 @if (!auth()->user()->email_verified_at)
-                                    <a class="btn btn-outline-light" href="{{ route('patient.verify.show') }}">Verify</a>
+                                    <a class="btn btn-outline-light" href="{{ route('verify.show') }}">Verify</a>
                                 @endif
                             </div>
                             <div class="mt-1">
