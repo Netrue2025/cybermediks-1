@@ -350,10 +350,11 @@
         </div>
 
 
-        <a href="{{ route('doctor.queue') }}" class="sec-wrap link-card">
-            @if ($videoQueueCount > 0)
-                <div class="d-flex flex-column gap-2">
-                    @foreach ($videoQueue as $appt)
+
+        @if ($videoQueueCount > 0)
+            <div class="d-flex flex-column gap-2">
+                @foreach ($videoQueue as $appt)
+                    <a href="{{ route('doctor.messenger') }}?patient_id={{ $appt->patient?->id }}" style="text-decoration: none; color: inherit;">
                         <div class="ps-row d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="fw-semibold">{{ $appt->patient?->first_name }} {{ $appt->patient?->last_name }}
@@ -367,18 +368,18 @@
                                 <span class="badge bg-info">Video</span>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="empty">
-                    <div class="ico"><i class="fa-solid fa-users"></i></div>
-                    <div>No patients in the video call queue.</div>
-                </div>
-            @endif
+                    </a>
+                @endforeach
+            </div>
+        @else
+            <div class="empty">
+                <div class="ico"><i class="fa-solid fa-users"></i></div>
+                <div>No patients in the video call queue.</div>
+            </div>
+        @endif
 
-            <a href="{{ route('doctor.queue') }}" class="btn btn-ghost w-100">
-                See all in queue ({{ $videoQueueCount }})
-            </a>
+        <a href="{{ route('doctor.queue') }}" class="btn btn-ghost w-100">
+            See all in queue ({{ $videoQueueCount }})
         </a>
     </div>
 

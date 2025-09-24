@@ -35,4 +35,15 @@ class DoctorConversationQuickController extends Controller
         $conversation->update(['status' => 'closed']);
         return response()->json(['status' => 'success', 'message' => 'Conversation closed ✅']);
     }
+
+    public function reopen(Conversation $conversation)
+    {
+        $this->ensureOwned($conversation);
+        // allow reopening from closed
+        if ($conversation->status !== 'closed') {
+            return response()->json(['status' => 'error', 'message' => 'Not closed'], 422);
+        }
+        $conversation->update(['status' => 'active']);
+        return response()->json(['status' => 'success', 'message' => 'Conversation reopened ✅']);
+    }
 }

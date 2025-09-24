@@ -390,6 +390,9 @@
                         <button class="btn btn-gradient" id="btnSend"><i class="fa-solid fa-paper-plane"></i></button>
                     </form>
                     @if ($isClosed)
+                    <br>
+                    <button class="btn btn-gradient" id="btnReopen">Reopen Conversation</button>
+                    <br>
                         <div class="disabled-note">This conversation is closed. You can reopen it from the patient card.
                         </div>
                     @endif
@@ -469,6 +472,25 @@
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     $('#msgForm').trigger('submit');
                 }
+            });
+
+            // reopen button
+            $('#btnReopen').on('click', function() {
+                const id = $('#convId').val();
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('doctor.conversations.reopen', ['conversation' => '__ID__']) }}`.replace(
+                    '__ID__', id), {
+                    _token: `{{ csrf_token() }}`
+                }).done(res => {
+                    flash('success', res.message || 'Reopened');
+                    loadThread(id);
+                    $msgForm.show();
+                    $btn.hide();
+                    $(".disabled-note").remove();
+                }).fail(xhr => {
+                    flash('danger', xhr.responseJSON?.message || 'Failed to reopen');
+                }).always(() => unlockBtn($btn));
             });
 
             // filter tabs (client-side quick filter + optional server reload)

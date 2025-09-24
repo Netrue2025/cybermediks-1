@@ -159,6 +159,8 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
 
     Route::post('/conversations/{conversation}/accept', [DoctorConversationQuickController::class, 'accept'])
         ->name('conversations.accept');
+    Route::post('/conversations/{conversation}/reopen', [DoctorConversationQuickController::class, 'reopen'])
+        ->name('conversations.reopen');
     Route::post('/conversations/{conversation}/close',  [DoctorConversationQuickController::class, 'close'])
         ->name('conversations.close');
 
