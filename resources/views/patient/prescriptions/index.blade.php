@@ -273,6 +273,24 @@
                     })
                     .always(() => unlockBtn($btn));
             });
+
+            // NEW: Confirm Dispatcher Delivery Fee
+            $(document).on('click', '[data-dsp-confirm]', function() {
+                const id = $(this).data('dsp-confirm');
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('patient.confirmDeliveryFee', ':id') }}`.replace(':id', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Delivery fee confirmed');
+                        location.reload();
+                    })
+                    .fail(err => {
+                        flash('danger', err.responseJSON?.message || 'Failed');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
         })();
     </script>
 @endpush

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dispatcher;
 use App\Http\Controllers\Controller;
 use App\Models\Prescription;
 use App\Models\WalletTransaction;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -17,25 +18,41 @@ class DispatcherDashboardController extends Controller
     {
         $dispatcherId = Auth::id();
 
-        // READY & no dispatcher yet => pending claims
+        // PENDING (unassigned): Include all unassigned dispatchable states
+        // ready → dispatcher_price_set → dispatcher_price_confirm
         $pending = Prescription::with(['patient', 'pharmacy', 'items'])
-            ->where('dispense_status', 'ready')
             ->whereNull('dispatcher_id')
+            ->whereIn('dispense_status', [
+                'ready',
+                'dispatcher_price_set',
+                'dispatcher_price_confirm', // <- include this so you can see fee-confirmed but unclaimed jobs
+            ])
             ->latest()
             ->paginate(10, ['*'], 'pending_page');
 
-        // READY & assigned to me => active deliveries
+        // ACTIVE (assigned to me): include all live dispatch states
+        // ready / dispatcher_price_set / dispatcher_price_confirm / picked (in transit)
         $active = Prescription::with(['patient', 'pharmacy', 'items'])
-            ->where('dispense_status', 'ready')
             ->where('dispatcher_id', $dispatcherId)
+            ->whereIn('dispense_status', [
+                'ready',
+                'dispatcher_price_set',
+                'dispatcher_price_confirm',
+                'picked',              // <- include this to keep it visible after pickup until delivered
+            ])
             ->latest()
             ->paginate(10, ['*'], 'active_page');
 
         $pendingCount = $pending->total();
         $activeCount  = $active->total();
 
-        // If you want, compute real revenue from deliveries today; for now, your wallet:
-        $revenueToday = Auth::user()->wallet_balance ?? 0;
+        // Revenue today: sum dispatcher fees for deliveries you completed today.
+        // If later you add a dedicated delivered_at, switch the date column accordingly.
+        $today = Carbon::today();
+        $revenueToday = Prescription::where('dispatcher_id', $dispatcherId)
+            ->where('dispense_status', 'delivered') // delivered is what you actually completed
+            ->whereDate('updated_at', $today)
+            ->sum('dispatcher_price');
 
         return view('dispatcher.dashboard', compact(
             'pending',

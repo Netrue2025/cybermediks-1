@@ -107,4 +107,24 @@ class PrescriptionController extends Controller
 
         return response()->json(['status' => 'ok', 'message' => 'Price confirmed']);
     }
+
+    public function confirmDeliveryFee(Request $r, Prescription $rx)
+    {
+        if ($rx->patient_id !== Auth::id()) {
+            return response()->json(['message' => 'Not your prescription'], 403);
+        }
+
+        if ($rx->dispense_status !== 'dispatcher_price_set') {
+            return response()->json(['message' => 'No dispatcher fee pending confirmation'], 422);
+        }
+
+        if (is_null($rx->dispatcher_price)) {
+            return response()->json(['message' => 'Dispatcher price missing'], 422);
+        }
+
+        $rx->dispense_status = 'dispatcher_price_confirm';
+        $rx->save();
+
+        return response()->json(['status' => 'ok', 'message' => 'Delivery fee confirmed']);
+    }
 }

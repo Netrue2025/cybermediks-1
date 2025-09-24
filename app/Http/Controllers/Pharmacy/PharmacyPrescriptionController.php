@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
 use App\Models\Prescription;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -76,7 +77,7 @@ class PharmacyPrescriptionController extends Controller
             return response()->json(['message' => 'Not your prescription'], 403);
         }
 
-        $r->validate(['status' => 'required|string|in:pending,price_assigned,price_confirmed,ready,picked,cancelled']);
+        $r->validate(['status' => 'required|string|in:pending,price_assigned,price_confirmed,ready,dispatcher_price_set,dispatcher_price_confirmed,picked,delivered,cancelled']);
 
         $from = $rx->dispense_status ?? 'pending';
         $to   = (string) $r->input('status'); // <-- cast to plain string
@@ -86,7 +87,10 @@ class PharmacyPrescriptionController extends Controller
             'price_assigned'  => ['cancelled'],            // waiting for patient
             'price_confirmed' => ['ready', 'cancelled'],   // now you can prepare
             'ready'           => ['picked', 'cancelled'],  // handover or cancel
+            'dispatcher_price_set'      => ['cancelled'],                       // patient must confirm dispatcher fee
+            'dispatcher_price_confirm' => ['picked', 'cancelled'],
             'picked'          => [],                       // terminal
+            'delivered'       => [],
             'cancelled'       => [],                       // terminal
             default           => [],
         };
@@ -101,6 +105,49 @@ class PharmacyPrescriptionController extends Controller
 
         if ($to === 'picked' && is_null($rx->dispatcher_id)) {
             return response()->json(['message' => 'A dispatcher must be assigned before marking picked'], 422);
+        }
+
+        if ($to === 'picked') {
+
+            if ($from !== 'dispatcher_price_confirm') {
+                return response()->json(['message' => 'Can only mark picked after delivery fee is confirmed'], 422);
+            }
+            if (is_null($rx->dispatcher_id)) {
+                return response()->json(['message' => 'Attach a dispatcher before marking picked'], 422);
+            }
+
+
+            $patient = $rx->patient;
+            $pharmcy = $rx->pharmacy;
+            $fee = $rx->total_amount;
+            if ($fee && $patient && $pharmcy) {
+                // Charge the patient
+                $patient->wallet_balance -= $fee;
+                $patient->save();
+
+                // Pay the pharmacy
+                $pharmcy->wallet_balance += $fee;
+                $pharmcy->save();
+
+                // Log the transaction (pseudo-code, implement as needed)
+                WalletTransaction::create([
+                    'user_id' => $patient->id,
+                    'amount' => -$fee,
+                    'currency' => 'USD',
+                    'type' => 'debit',
+                    'reference' => uniqid('txn_'),
+                    'purpose' => "Payment for prescription ID {$rx->id}",
+                ]);
+
+                WalletTransaction::create([
+                    'user_id' => $pharmcy->id,
+                    'amount' => $fee,
+                    'currency' => 'USD',
+                    'type' => 'credit',
+                    'reference' => uniqid('txn_'),
+                    'purpose' => "Payment received for prescription ID {$rx->id}",
+                ]);
+            }
         }
 
         $rx->dispense_status = $to;

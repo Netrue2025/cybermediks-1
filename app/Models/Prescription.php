@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Prescription extends Model
 {
-    protected $fillable = ['appointment_id', 'patient_id', 'doctor_id', 'code', 'status', 'refills', 'notes', 'pharmacy_id', 'dispatcher_id', 'dispense_status', 'total_amount'];
+    protected $fillable = ['appointment_id', 'patient_id', 'doctor_id', 'code', 'status', 'refills', 'notes', 'pharmacy_id', 'dispatcher_id', 'dispense_status', 'total_amount', 'dispatcher_price'];
     protected $casts = ['refills' => 'int'];
     public function appointment()
     {
@@ -25,6 +25,11 @@ class Prescription extends Model
     public function pharmacy()
     {
         return $this->belongsTo(User::class, 'pharmacy_id');
+    }
+
+    public function dispatcher()
+    {
+        return $this->belongsTo(User::class, 'dispatcher_id');
     }
 
     public function items()

@@ -47,11 +47,21 @@
             background: rgba(239, 68, 68, .08)
         }
 
+        .badge-delivered {
+            border-color: #1f6f43;
+            background: rgba(34, 197, 94, .22)
+        }
+
         .rx-item {
             background: #0c1529;
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 10px;
+        }
+
+        .hint {
+            color: #9aa3b2;
+            font-size: .85rem
         }
     </style>
 @endpush
@@ -70,7 +80,8 @@
                         </div>
                     </div>
                     <div>
-                        <span class="badge-soft badge-{{ $rx->dispense_status }}">{{ ucfirst($rx->dispense_status) }}</span>
+                        @php $st = $rx->dispense_status ?? 'pending'; @endphp
+                        <span class="badge-soft badge-{{ $st }}">{{ ucwords(str_replace('_', ' ', $st)) }}</span>
                     </div>
                 </div>
 
@@ -106,26 +117,78 @@
             <div class="cardx">
                 <div class="fw-bold mb-2">Fulfillment</div>
 
+                {{-- Amount (editable only when pending) --}}
+                @php $st = $rx->dispense_status ?? 'pending'; @endphp
                 <div class="mb-2">
                     <label class="form-label small subtle">Total Amount</label>
                     <div class="input-icon">
                         <span class="input-icon-prefix">$</span>
                         <input class="form-control" id="totalAmount" type="number" step="0.01" min="0"
-                            value="{{ $rx->total_amount }}">
+                            value="{{ $rx->total_amount }}" {{ $st === 'pending' ? '' : 'disabled' }}>
                     </div>
-                    <button class="btn btn-outline-light btn-sm mt-2" id="btnSaveAmount">Save Amount</button>
+                    <button class="btn btn-outline-light btn-sm mt-2" id="btnSaveAmount"
+                        {{ $st === 'pending' ? '' : 'disabled' }}>
+                        Save Amount
+                    </button>
+                    @if ($st === 'price_assigned')
+                        <div class="hint mt-1">Waiting for patient to confirm price.</div>
+                    @endif
                 </div>
 
+                {{-- Dispatcher context --}}
+                @if ($rx->dispatcher_id && $rx->dispatcher)
+                    <div class="hint mb-2">
+                        <i class="fa-solid fa-motorcycle me-1"></i>
+                        Dispatcher: {{ $rx->dispatcher->first_name }} {{ $rx->dispatcher->last_name }}
+                        @if ($rx->dispatcher->phone)
+                            • <a class="link-light text-decoration-none"
+                                href="tel:{{ $rx->dispatcher->phone }}">{{ $rx->dispatcher->phone }}</a>
+                        @endif
+                        @if (!is_null($rx->dispatcher_price))
+                            • Delivery fee: ${{ number_format($rx->dispatcher_price, 2, '.', ',') }}
+                        @endif
+                    </div>
+                @endif
+
+                {{-- Actions by status --}}
                 <div class="mt-3 d-flex flex-wrap gap-2">
-                    @if ($rx->dispense_status === 'pending')
-                        <button class="btn btn-success" data-status="ready">Mark Ready</button>
+                    @if ($st === 'pending')
+                        {{-- set amount (Save) then wait for patient (price_assigned) --}}
                         <button class="btn btn-outline-light" data-status="cancelled">Cancel</button>
-                    @elseif($rx->dispense_status === 'ready')
-                        <button class="btn btn-outline-light" data-status="pending">Back to Pending</button>
-                        <button class="btn btn-success" data-status="picked">Mark Picked</button>
+                    @elseif ($st === 'price_assigned')
+                        {{-- patient must confirm --}}
                         <button class="btn btn-outline-light" data-status="cancelled">Cancel</button>
-                    @else
-                        <div class="subtle">No further actions.</div>
+                    @elseif ($st === 'price_confirmed')
+                        {{-- pharmacy can make it ready --}}
+                        <button class="btn btn-success" data-status="ready">
+                            <i class="fa-solid fa-boxes-packing me-1"></i> Mark Ready
+                        </button>
+                        <button class="btn btn-outline-light" data-status="cancelled">Cancel</button>
+                    @elseif ($st === 'ready')
+                        <div class="hint">Waiting for dispatcher to propose delivery fee.</div>
+                        <button class="btn btn-outline-light" data-status="cancelled">Cancel</button>
+                    @elseif ($st === 'dispatcher_price_set')
+                        <div class="hint">Delivery fee proposed; waiting for patient confirmation.</div>
+                        <button class="btn btn-outline-light" data-status="cancelled">Cancel</button>
+                    @elseif ($st === 'dispatcher_price_confirm')
+                        @php $hasDispatcher = !is_null($rx->dispatcher_id); @endphp
+                        @if ($hasDispatcher)
+                            <button class="btn btn-success" data-status="picked">
+                                <i class="fa-solid fa-box-check me-1"></i> Mark Picked
+                            </button>
+                        @else
+                            <button class="btn btn-success" disabled title="Assign a dispatcher first">
+                                <i class="fa-solid fa-box-check me-1"></i> Mark Picked
+                            </button>
+                            <div class="w-100 hint">Attach a dispatcher before marking picked.</div>
+                        @endif
+                        <button class="btn btn-outline-light" data-status="cancelled">Cancel</button>
+                    @elseif ($st === 'picked')
+                        <div class="hint">With dispatcher — awaiting delivery.</div>
+                    @elseif ($st === 'delivered')
+                        <div class="hint">Delivered — no further actions.</div>
+                    @elseif ($st === 'cancelled')
+                        <div class="hint">Cancelled — no further actions.</div>
                     @endif
                 </div>
             </div>
@@ -140,12 +203,17 @@
 
             $('#btnSaveAmount').on('click', function() {
                 const $btn = $(this);
+                if ($btn.is(':disabled')) return;
                 lockBtn($btn);
                 $.post(`{{ route('pharmacy.prescriptions.amount', $rx) }}`, {
                         _token: `{{ csrf_token() }}`,
-                        total_amount: $('#totalAmount').val()
+                        amount: $('#totalAmount').val()
                     })
-                    .done(res => flash('success', res.message || 'Amount saved'))
+                    .done(res => {
+                        // After saving amount while status=pending, backend should move to price_assigned.
+                        flash('success', res.message || 'Amount saved (awaiting patient confirmation)');
+                        location.reload();
+                    })
                     .fail(err => flash('danger', err.responseJSON?.message || 'Failed'))
                     .always(() => unlockBtn($btn));
             });
@@ -167,7 +235,6 @@
                     })
                     .always(() => unlockBtn($btn));
             });
-
         })();
     </script>
 @endpush

@@ -78,8 +78,8 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
     Route::get('/prescriptions/{rx}/pharmacies', [PrescriptionController::class, 'list'])->name('prescriptions.pharmacies');
     Route::post('/prescriptions/{rx}/assign-pharmacy', [PrescriptionController::class, 'assign'])->name('prescriptions.assignPharmacy');
-    Route::post('/patient/prescriptions/{rx}/confirm-price', [PrescriptionController::class, 'confirm'])->name('prescriptions.confirmPrice');
-
+    Route::post('/prescriptions/{rx}/confirm-price', [PrescriptionController::class, 'confirm'])->name('prescriptions.confirmPrice');
+    Route::post('/prescriptions/{rx}/confirm-delivery-fee', [PrescriptionController::class, 'confirmDeliveryFee'])->name('confirmDeliveryFee');
 
     Route::get('/pharmacies', fn() => view('patient.pharmacies'))->name('pharmacies');
 
@@ -236,7 +236,9 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
 
     // Prescriptions
     Route::post('/prescriptions/{rx}/accept', [DispatcherPrescriptionController::class, 'accept'])->name('prescriptions.accept');
-
+    Route::post('/prescriptions/{rx}/set-delivery-fee', [DispatcherPrescriptionController::class, 'setDeliveryFee'])->name('setDeliveryFee');
+    
+    Route::post('/prescriptions/{rx}/deliver', [DispatcherPrescriptionController::class, 'markDelivered'])->name('prescriptions.deliver');
     Route::get('/deliveries', [DispatcherDashboardController::class, 'deliveriesIndex'])->name('deliveries.index');
 
     // PROFILE

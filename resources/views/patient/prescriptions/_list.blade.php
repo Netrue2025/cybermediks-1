@@ -76,10 +76,10 @@
                     </div>
                 </div>
 
+                {{-- ... inside the action buttons area ... --}}
                 <div class="d-flex gap-2">
-                    <button class="btn btn-outline-light btn-sm" data-rx-view='@json($viewPayload)'>
-                        View
-                    </button>
+                    <button class="btn btn-outline-light btn-sm"
+                        data-rx-view='@json($viewPayload)'>View</button>
 
                     @php
                         $canBuy = !in_array($rx->dispense_status ?? 'pending', ['picked', 'cancelled'], true);
@@ -97,20 +97,33 @@
                         <button class="btn btn-outline-light btn-sm" disabled>Buy</button>
                     @endif
 
+                    {{-- Patient price confirmation (pharmacy) --}}
                     @if (($rx->dispense_status ?? 'pending') === 'price_assigned')
-                        <button class="btn btn-success" id="btnConfirmPrice" data-id="{{ $rx->id }}">
+                        <button class="btn btn-success btn-sm" data-pharm-confirm="{{ $rx->id }}">
                             Confirm Price ({{ $rx->total_amount ? '$' . number_format($rx->total_amount, 2) : '—' }})
                         </button>
                     @endif
 
-
-                    {{-- Refill only when it makes sense (example rule: not cancelled) --}}
-                    {{-- @if ($dispense !== 'cancelled')
-                        <button class="btn btn-gradient btn-sm" data-rx-refill="{{ $rx->id }}">Refill</button>
-                    @else
-                        <button class="btn btn-outline-light btn-sm" disabled>Refill</button>
-                    @endif --}}
+                    {{-- NEW: Patient confirms dispatcher fee --}}
+                    @if (($rx->dispense_status ?? 'pending') === 'dispatcher_price_set')
+                        <button class="btn btn-success btn-sm" data-dsp-confirm="{{ $rx->id }}">
+                            Confirm Delivery Fee
+                            ({{ $rx->dispatcher_price ? '$' . number_format($rx->dispatcher_price, 2) : '—' }})
+                        </button>
+                    @endif
                 </div>
+
+                {{-- Delivery chip if confirmed --}}
+                @if (($rx->dispense_status ?? 'pending') === 'dispatcher_price_confirmed')
+                    <div class="mt-2">
+                        <span class="badge-soft">
+                            <i class="fa-solid fa-truck me-1"></i>
+                            Delivery fee confirmed:
+                            {{ $rx->dispatcher_price ? '$' . number_format($rx->dispatcher_price, 2) : '—' }}
+                        </span>
+                    </div>
+                @endif
+
 
                 @if ($rx->pharmacy_id)
                     <div class="mt-2">

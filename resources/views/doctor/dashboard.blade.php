@@ -354,7 +354,8 @@
         @if ($videoQueueCount > 0)
             <div class="d-flex flex-column gap-2">
                 @foreach ($videoQueue as $appt)
-                    <a href="{{ route('doctor.messenger') }}?patient_id={{ $appt->patient?->id }}" style="text-decoration: none; color: inherit;">
+                    <a href="{{ route('doctor.messenger') }}?patient_id={{ $appt->patient?->id }}"
+                        style="text-decoration: none; color: inherit;">
                         <div class="ps-row d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="fw-semibold">{{ $appt->patient?->first_name }} {{ $appt->patient?->last_name }}
