@@ -23,6 +23,12 @@ class PatientDashboardController extends Controller
             ->orderBy('scheduled_at')
             ->first();
 
+        $acceptedAppt = Appointment::with('doctor')
+            ->where('patient_id', auth()->id())
+            ->where('status', 'accepted')
+            ->whereNotNull('meeting_link')
+            ->orderByDesc('updated_at')
+            ->first();
         // Active prescriptions
         $activeRxCount = Prescription::where('patient_id', $userId)
             ->where('status', 'active')->count();
@@ -53,6 +59,7 @@ class PatientDashboardController extends Controller
             'activeRxCount'  => $activeRxCount,
             'nearbyCount'    => $nearbyCount,
             'specialties'    => $specialties,
+            'acceptedAppt'   => $acceptedAppt
         ]);
     }
 }

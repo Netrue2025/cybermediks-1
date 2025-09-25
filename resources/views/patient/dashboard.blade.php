@@ -355,6 +355,69 @@
     <div class="d-grid mt-3">
         <button class="btn btn-outline-light d-none" id="btnMore"><span class="btn-text">Load more</span></button>
     </div>
+
+    @if (!empty($acceptedAppt))
+        <!-- Accepted Appointment Modal -->
+        <div class="modal fade" id="apAcceptedModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="background:#121a2c;border:1px solid var(--border);border-radius:18px;">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title">
+                            <i class="fa-solid fa-video me-2"></i>Appointment Accepted
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-2">
+                            <div class="subtle small">Doctor</div>
+                            <div id="apModalDoctor" class="fw-semibold">
+                                {{ $acceptedAppt->doctor?->full_name ?? ($acceptedAppt->doctor?->name ?? '—') }}
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="subtle small">Scheduled time</div>
+                            <div id="apModalWhen" class="fw-semibold">
+                                {{ optional($acceptedAppt->scheduled_at)->format('M d, Y · g:ia') ?? '—' }}
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="subtle small">Meeting link</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <input id="apModalLink" class="form-control" readonly
+                                    value="{{ $acceptedAppt->meeting_link }}">
+                                <button class="btn btn-ghost" id="apCopyLink">
+                                    <i class="fa-regular fa-copy me-1"></i> Copy
+                                </button>
+                                <a class="btn btn-gradient" id="apOpenLink" target="_blank" rel="noopener"
+                                    href="{{ $acceptedAppt->meeting_link }}">
+                                    <i class="fa-solid fa-up-right-from-square me-1"></i> Open
+                                </a>
+                            </div>
+                            <div class="small mt-1" id="apCopyNote" style="display:none;">Copied!</div>
+                        </div>
+
+                        <div class="alert alert-info mt-3 mb-0 small"
+                            style="background:#0f1a2e;border:1px solid var(--border);color:#cfe0ff;">
+                            Make sure you’re ready a few minutes early. Test your mic/camera before joining.
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0">
+                        <a id="apJoinNow" href="{{ $acceptedAppt->meeting_link }}" target="_blank" rel="noopener"
+                            class="btn btn-gradient">
+                            <i class="fa-solid fa-video me-1"></i> Join meeting
+                        </a>
+                        <button class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
 @endsection
 
 @push('scripts')
@@ -566,5 +629,24 @@
                 });
             }
         @endif
+
+        // Auto-open if modal exists on the page
+        const modalEl = document.getElementById('apAcceptedModal');
+        if (modalEl) new bootstrap.Modal(modalEl).show();
+
+        // Copy link
+        const copyBtn = document.getElementById('apCopyLink');
+        const linkInput = document.getElementById('apModalLink');
+        const copyNote = document.getElementById('apCopyNote');
+        if (copyBtn && linkInput) {
+            copyBtn.addEventListener('click', function() {
+                const val = linkInput.value || '';
+                if (!val) return;
+                navigator.clipboard.writeText(val).then(() => {
+                    copyNote.style.display = 'block';
+                    setTimeout(() => (copyNote.style.display = 'none'), 1200);
+                });
+            });
+        }
     </script>
 @endpush
