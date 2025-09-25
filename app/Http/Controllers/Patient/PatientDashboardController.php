@@ -16,7 +16,7 @@ class PatientDashboardController extends Controller
         $userId = $r->user()->id;
 
         // Next accepted appointment in the future (video/chat/in_person)
-        $pendingappointment = Appointment::where('patient_id', $userId)
+        $pendingAppointments = Appointment::where('patient_id', $userId)
             ->whereIn('status', ['pending'])
             ->count();
 
@@ -52,7 +52,7 @@ class PatientDashboardController extends Controller
         }
 
         return view('patient.dashboard', [
-            'pendingappointment'   => $pendingappointment,
+            'pendingAppointments'   => $pendingAppointments,
             'activeRxCount'  => $activeRxCount,
             'nearbyCount'    => $nearbyCount,
             'specialties'    => $specialties,

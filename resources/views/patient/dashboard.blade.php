@@ -180,9 +180,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="section-subtle">Pending Appointment</div>
-                        <div class="mt-2">
-                            {{ $pendingAppointments }}
-                        </div>
+                        <div class="metric">{{ $pendingAppointments }}</div>
                     </div>
                     <i class="fa-regular fa-calendar-days fs-2" style="color:#cbd5e1;"></i>
                 </div>
