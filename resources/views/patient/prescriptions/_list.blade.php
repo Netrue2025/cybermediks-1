@@ -109,7 +109,7 @@ $buyLabel = $rx->pharmacy_id
 
                     {{-- keep your confirm buttons below as-is --}}
                     @if ($st === 'price_assigned')
-                        <button class="btn btn-success btn-sm" data-pharm-confirm="{{ $rx->id }}">
+                        <button class="btn btn-success btn-sm" data-id="{{ $rx->id }}" id="btnConfirmPrice">
                             Confirm Price ({{ $rx->total_amount ? '$' . number_format($rx->total_amount, 2) : '—' }})
                         </button>
                     @endif
