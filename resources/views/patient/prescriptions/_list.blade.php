@@ -81,7 +81,7 @@
                     $st = $rx->dispense_status ?? 'pending';
 
                     // Allow picking/changing a pharmacy unless it's already picked or delivered:
-$canBuy = !in_array($st, ['picked', 'delivered'], true);
+$canBuy = !in_array($st, ['picked', 'delivered', 'ready'], true);
 
 $pharmacyName = $rx->pharmacy?->first_name
     ? $rx->pharmacy->first_name . ' ' . $rx->pharmacy->last_name
