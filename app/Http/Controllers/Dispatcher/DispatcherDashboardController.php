@@ -194,4 +194,62 @@ class DispatcherDashboardController extends Controller
         $user->update(['password' => Hash::make($r->password)]);
         return response()->json(['ok' => true, 'message' => 'Password updated']);
     }
+
+    public function getDeliveries(Request $request)
+    {
+        $dispatcherId = Auth::id();
+
+        $q       = trim((string) $request->get('q'));
+        $status  = (string) $request->get('status'); // '', picked, delivered, cancelled, etc
+        $from    = $request->date('from');
+        $to      = $request->date('to');
+
+        // Past by default
+        $pastStatuses = ['picked', 'delivered', 'cancelled'];
+
+        $rx = Prescription::with(['patient', 'pharmacy', 'items'])
+            ->where('dispatcher_id', $dispatcherId)
+            ->when($status !== '', fn($w) => $w->where('dispense_status', $status))
+            ->when($status === '', fn($w) => $w->whereIn('dispense_status', $pastStatuses));
+
+        if ($q !== '') {
+            $rx->where(function ($w) use ($q) {
+                $w->where('code', 'like', "%{$q}%")
+                    ->orWhereHas('patient', fn($p) => $p
+                        ->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%"))
+                    ->orWhereHas('pharmacy', fn($ph) => $ph
+                        ->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%"))
+                    ->orWhereHas('items', fn($i) => $i->where('drug', 'like', "%{$q}%"));
+            });
+        }
+
+        if ($from) $rx->whereDate('updated_at', '>=', $from);
+        if ($to)   $rx->whereDate('updated_at', '<=', $to);
+
+        $deliveries = $rx->orderByDesc('updated_at')->paginate(15)->withQueryString();
+
+        // Summary cards
+        $countPicked    = (clone $rx)->where('dispense_status', 'picked')->count();
+        $countDelivered = (clone $rx)->where('dispense_status', 'delivered')->count();
+        $countCancelled = (clone $rx)->where('dispense_status', 'cancelled')->count();
+
+        // Revenue sum for the filtered list (dispatcher fees)
+        $sumFees = (clone $rx)->sum('dispatcher_price');
+
+        return view('dispatcher.deliveries.index', compact(
+            'deliveries',
+            'q',
+            'status',
+            'from',
+            'to',
+            'countPicked',
+            'countDelivered',
+            'countCancelled',
+            'sumFees'
+        ));
+    }
 }

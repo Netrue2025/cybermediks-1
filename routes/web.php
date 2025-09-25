@@ -242,7 +242,7 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
     Route::post('/prescriptions/{rx}/set-delivery-fee', [DispatcherPrescriptionController::class, 'setDeliveryFee'])->name('setDeliveryFee');
     
     Route::post('/prescriptions/{rx}/deliver', [DispatcherPrescriptionController::class, 'markDelivered'])->name('prescriptions.deliver');
-    Route::get('/deliveries', [DispatcherDashboardController::class, 'deliveriesIndex'])->name('deliveries.index');
+     Route::get('/deliveries', [DispatcherDashboardController::class, 'getDeliveries'])->name('deliveries.index');
 
     // PROFILE
     Route::get('/profile', [DispatcherDashboardController::class, 'showProfile'])->name('profile');
