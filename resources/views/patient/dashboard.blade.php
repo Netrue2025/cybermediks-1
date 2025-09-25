@@ -283,10 +283,8 @@
                 <div class="modal-footer border-0 d-flex justify-content-between">
                     <div class="text-secondary small">Tip: select a slot on the booking page.</div>
                     <div class="d-flex gap-2">
-                        <a id="docChatBtn" href="#" class="btn btn-outline-light"><i
-                                class="fa-regular fa-message me-1"></i> Chat</a>
-                        <a id="docBookBtn" href="#" class="btn btn-success"><i class="fa-solid fa-video me-1"></i>
-                            Book Video</a>
+                        <a id="docBookBtn" href="#" class="btn btn-success"><i class="fa-solid fa-file me-1"></i>
+                            Book Appointment</a>
                     </div>
                 </div>
             </div>
@@ -434,7 +432,7 @@
             $m.find('#docDuration').text('—');
             $m.find('#docBio').text('');
             $m.find('#docSlots').html('<span class="text-secondary">Loading…</span>');
-            $m.find('#docChatBtn,#docBookBtn').attr('href', '#');
+            $m.find('#docBookBtn').attr('href', '#');
 
             $m.modal('show');
 
@@ -476,7 +474,6 @@
                         `${d.appointment_url}${d.appointment_url.includes('?')?'&':'?'}date=${encodeURIComponent(pickedDate)}` :
                         d.appointment_url;
                     $('#docBookBtn').attr('href', bookUrl);
-                    $('#docChatBtn').attr('href', d.chat_url);
                 })
                 .fail(function() {
                     flash('danger', 'Failed to load doctor details');
