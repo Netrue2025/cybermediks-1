@@ -67,28 +67,30 @@ class PrescriptionController extends Controller
         return view('patient.prescriptions._pharmacy_list', compact('pharmacies'))->render();
     }
 
-    public function assign(Request $r, Prescription $rx)
+    public function assign(Request $request, Prescription $rx)
     {
-        abort_unless($rx->patient_id === Auth::id(), 403);
-        $r->validate([
-            'pharmacy_id' => ['required', 'integer', 'exists:users,id'],
+        // Ensure this is the patient's own prescription
+        if ($rx->patient_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $data = $request->validate([
+            'pharmacy_id' => 'required|exists:users,id', // assuming pharmacies live in users table with role=pharmacy
         ]);
 
-        // Can only assign if not already picked/cancelled
-        if (in_array(($rx->dispense_status ?? 'pending'), ['picked', 'cancelled'], true)) {
-            return response()->json(['message' => 'This prescription can no longer be assigned.'], 422);
-        }
+        // Re-start flow if pharmacy is changed OR if previously cancelled etc.
+        $rx->pharmacy_id            = $data['pharmacy_id'];
+        $rx->dispense_status        = 'pending';
+        $rx->total_amount           = null;
 
-        // Ensure target user is a pharmacy
-        $pharmacy = User::where('id', $r->pharmacy_id)->where('role', 'pharmacy')->first();
-        if (!$pharmacy) {
-            return response()->json(['message' => 'Invalid pharmacy.'], 422);
-        }
+        // Clear delivery-related fields
+        $rx->dispatcher_id          = null;
+        $rx->dispatcher_price       = null;
 
-        $rx->pharmacy_id = $pharmacy->id;
+
         $rx->save();
 
-        return response()->json(['status' => 'ok', 'message' => 'Pharmacy assigned.']);
+        return response()->json(['ok' => true, 'message' => 'Pharmacy selected. We’ll notify them now.']);
     }
 
     public function confirm(Request $r, Prescription $rx)

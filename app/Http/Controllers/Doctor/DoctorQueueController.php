@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -49,6 +50,39 @@ class DoctorQueueController extends Controller
 
         $appointment->status = 'completed';
         $appointment->save();
+
+        $patient = $appointment->patient;
+        $doctor = $appointment->doctor;
+        $doctorProfile = $doctor->doctorProfile;
+        $fee = $doctorProfile?->consult_fee;
+        if ($fee && $patient) {
+            // Charge the patient
+            $patient->wallet_balance -= $fee;
+            $patient->save();
+
+            // Pay the doctor
+            $doctor->wallet_balance += $fee;
+            $doctor->save();
+
+            // Log the transaction (pseudo-code, implement as needed)
+            WalletTransaction::create([
+                'user_id' => $patient->id,
+                'amount' => -$fee,
+                'currency' => 'USD',
+                'type' => 'debit',
+                'reference' => uniqid('txn_'),
+                'purpose' => "Consultation fee for appointment ID {$appointment->id}",
+            ]);
+
+            WalletTransaction::create([
+                'user_id' => $doctor->id,
+                'amount' => $fee,
+                'currency' => 'USD',
+                'type' => 'credit',
+                'reference' => uniqid('txn_'),
+                'purpose' => "Consultation fee received for appointment ID {$appointment->id}",
+            ]);
+        }
 
         return response()->json(['ok' => true, 'message' => 'Request completed']);
     }

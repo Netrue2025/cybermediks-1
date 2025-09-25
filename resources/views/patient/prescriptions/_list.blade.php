@@ -77,35 +77,44 @@
                 </div>
 
                 {{-- ... inside the action buttons area ... --}}
+                @php
+                    $st = $rx->dispense_status ?? 'pending';
+
+                    // Allow picking/changing a pharmacy unless it's already picked or delivered:
+$canBuy = !in_array($st, ['picked', 'delivered'], true);
+
+$pharmacyName = $rx->pharmacy?->first_name
+    ? $rx->pharmacy->first_name . ' ' . $rx->pharmacy->last_name
+    : $rx->pharmacy?->name;
+
+// Better label when the current pharmacy cancelled:
+$buyLabel = $rx->pharmacy_id
+    ? ($st === 'cancelled'
+        ? 'Choose New Pharmacy'
+        : 'Change Pharmacy')
+    : 'Buy';
+                @endphp
+
                 <div class="d-flex gap-2">
                     <button class="btn btn-outline-light btn-sm"
                         data-rx-view='@json($viewPayload)'>View</button>
 
-                    @php
-                        $canBuy = !in_array($rx->dispense_status ?? 'pending', ['picked', 'cancelled'], true);
-                        $pharmacyName = $rx->pharmacy?->first_name
-                            ? $rx->pharmacy->first_name . ' ' . $rx->pharmacy->last_name
-                            : $rx->pharmacy?->name;
-                    @endphp
-
                     @if ($canBuy)
                         <button class="btn btn-success btn-sm" data-rx-buy="{{ $rx->id }}">
-                            <i class="fa-solid fa-cart-shopping me-1"></i>
-                            {{ $rx->pharmacy_id ? 'Change Pharmacy' : 'Buy' }}
+                            <i class="fa-solid fa-cart-shopping me-1"></i>{{ $buyLabel }}
                         </button>
                     @else
                         <button class="btn btn-outline-light btn-sm" disabled>Buy</button>
                     @endif
 
-                    {{-- Patient price confirmation (pharmacy) --}}
-                    @if (($rx->dispense_status ?? 'pending') === 'price_assigned')
+                    {{-- keep your confirm buttons below as-is --}}
+                    @if ($st === 'price_assigned')
                         <button class="btn btn-success btn-sm" data-pharm-confirm="{{ $rx->id }}">
                             Confirm Price ({{ $rx->total_amount ? '$' . number_format($rx->total_amount, 2) : '—' }})
                         </button>
                     @endif
 
-                    {{-- NEW: Patient confirms dispatcher fee --}}
-                    @if (($rx->dispense_status ?? 'pending') === 'dispatcher_price_set')
+                    @if ($st === 'dispatcher_price_set')
                         <button class="btn btn-success btn-sm" data-dsp-confirm="{{ $rx->id }}">
                             Confirm Delivery Fee
                             ({{ $rx->dispatcher_price ? '$' . number_format($rx->dispatcher_price, 2) : '—' }})
