@@ -16,12 +16,9 @@ class PatientDashboardController extends Controller
         $userId = $r->user()->id;
 
         // Next accepted appointment in the future (video/chat/in_person)
-        $nextAppt = Appointment::where('patient_id', $userId)
-            ->whereIn('status', ['accepted'])
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '>=', now())
-            ->orderBy('scheduled_at')
-            ->first();
+        $pendingappointment = Appointment::where('patient_id', $userId)
+            ->whereIn('status', ['pending'])
+            ->count();
 
         $acceptedAppt = Appointment::with('doctor')
             ->where('patient_id', auth()->id())
@@ -55,7 +52,7 @@ class PatientDashboardController extends Controller
         }
 
         return view('patient.dashboard', [
-            'nextAppt'       => $nextAppt,
+            'pendingappointment'   => $pendingappointment,
             'activeRxCount'  => $activeRxCount,
             'nearbyCount'    => $nearbyCount,
             'specialties'    => $specialties,

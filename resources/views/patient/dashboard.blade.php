@@ -179,13 +179,9 @@
             <div class="cardx h-100">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="section-subtle">Next Appointment</div>
+                        <div class="section-subtle">Pending Appointment</div>
                         <div class="mt-2">
-                            @if ($nextAppt)
-                                {{ $nextAppt->scheduled_at->format('D, M j · g:i A') }}
-                            @else
-                                No upcoming appointments.
-                            @endif
+                            {{ $pendingAppointments }}
                         </div>
                     </div>
                     <i class="fa-regular fa-calendar-days fs-2" style="color:#cbd5e1;"></i>
