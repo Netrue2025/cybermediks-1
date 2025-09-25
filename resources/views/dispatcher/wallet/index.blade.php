@@ -38,7 +38,7 @@
                     $ {{ number_format($balance, 2, '.', ',') }}
                 </div>
                 <div class="d-grid gap-2 mt-5">
-                    <button class="btn btn-gradient" id="btnWithdraw" >Withdraw</button>
+                    <button class="btn btn-gradient" id="btnWithdraw">Withdraw</button>
                 </div>
             </div>
         </div>
@@ -65,9 +65,42 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <label class="form-label">Amount (USD)</label>
-                    <input id="wdAmount" type="number" min="5" step="0.01" class="form-control"
-                        placeholder="20.00">
+                    <div class="mb-3">
+                        <label class="form-label">Amount (USD)</label>
+                        <input id="wdAmount" type="number" min="5" step="0.01" class="form-control"
+                            placeholder="20.00">
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Bank Name</label>
+                            <input id="wdBankName" class="form-control" placeholder="e.g., Chase Bank">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bank Code (Flutterwave)</label>
+                            <input id="wdBankCode" class="form-control" placeholder="Bank code for USD route">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Account Number</label>
+                            <input id="wdAccountNumber" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Account Name</label>
+                            <input id="wdAccountName" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Routing Number (optional)</label>
+                            <input id="wdRouting" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">SWIFT (optional)</label>
+                            <input id="wdSwift" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="small subtle mt-2">
+                        * Ensure details are correct. International USD routes may require routing and/or SWIFT.
+                    </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button class="btn btn-gradient" id="btnDoWithdraw">Request Withdrawal</button>
@@ -101,26 +134,33 @@
             $('#btnDoWithdraw').on('click', function() {
                 const $btn = $(this);
                 lockBtn($btn);
-                const amt = parseFloat($('#wdAmount').val());
-                if (isNaN(amt) || amt < 5) {
+                const payload = {
+                    _token: `{{ csrf_token() }}`,
+                    amount: parseFloat($('#wdAmount').val()),
+                    currency: 'USD',
+                    bank_name: $('#wdBankName').val(),
+                    bank_code: $('#wdBankCode').val(),
+                    account_number: $('#wdAccountNumber').val(),
+                    account_name: $('#wdAccountName').val(),
+                    routing_number: $('#wdRouting').val(),
+                    swift_code: $('#wdSwift').val(),
+                };
+                if (isNaN(payload.amount) || payload.amount < 5) {
                     flash('danger', 'Enter at least $5');
                     return unlockBtn($btn);
                 }
-                $.post(`{{ route('dispatcher.wallet.withdraw') }}`, {
-                        _token: `{{ csrf_token() }}`,
-                        amount: amt,
-                        currency: 'USD'
-                    })
+                $.post(`{{ route('wallet.withdraw') }}`, payload)
                     .done(res => {
                         flash('success', res.message || 'Withdrawal requested');
                         $('#withdrawModal').modal('hide');
-                        refreshList();
+                        location.reload();
                     })
                     .fail(err => {
                         flash('danger', err.responseJSON?.message || 'Withdrawal failed');
                     })
                     .always(() => unlockBtn($btn));
             });
+
         })();
     </script>
 @endpush

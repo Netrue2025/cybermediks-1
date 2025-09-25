@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminsController;
 use App\Http\Controllers\Admin\AdminSpecialtiesController;
 use App\Http\Controllers\Admin\AdminTransactionsController;
 use App\Http\Controllers\Admin\AdminUsersController;
+use App\Http\Controllers\Admin\AdminWithdrawalRequestController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\Pharmacy\PharmacyProfileController;
 use App\Http\Controllers\Pharmacy\PharmacyReportsController;
 use App\Http\Controllers\Pharmacy\PharmacySettingsController;
 use App\Http\Controllers\Pharmacy\PharmacyWalletController;
+use App\Http\Controllers\WithdrawalRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -69,6 +71,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/verify',   [VerificationController::class, 'showVerify'])->name('verify.show');
     Route::post('/verify/send', [VerificationController::class, 'sendVerifyCode'])->middleware('throttle:5,1')->name('verify.send');
     Route::post('/verify',       [VerificationController::class, 'verify'])->name('verify');
+
+    Route::post('/wallet/withdraw', [WithdrawalRequestController::class, 'requestWithdraw'])->name('wallet.withdraw');
 });
 
 /** Patient Dashboard (authed + verified) */
@@ -94,8 +98,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::post('/wallet/withdraw', [WalletController::class, 'withdraw'])->name('wallet.withdraw');
 
 
-    Route::post('/location', [PatientLocationController::class, 'store'])
-        ->name('location.update');
+    Route::post('/location', [PatientLocationController::class, 'store'])->name('location.update');
     Route::get('/profile', [PatientProfileController::class, 'show'])->name('profile');
     Route::post('/profile', [PatientProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/password', [PatientProfileController::class, 'updatePassword'])->name('profile.password');
@@ -258,41 +261,45 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
 });
 
 
-Route::middleware(['auth', 'verified', 'admin'])
-    ->prefix('admin')->name('admin.')
-    ->group(function () {
-        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
-        Route::post('/users/{user}/toggle', [AdminUsersController::class, 'toggleActive'])->name('users.toggle');
+    Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
+    Route::post('/users/{user}/toggle', [AdminUsersController::class, 'toggleActive'])->name('users.toggle');
 
-        Route::get('/doctors', [AdminDoctorsController::class, 'index'])->name('doctors.index');
-        Route::get('/doctors/{doctor}/credentials', [AdminDoctorsController::class, 'credentials'])->name('doctors.credentials');
-        Route::post('/doctors/{id}/availability', [AdminDoctorsController::class, 'availability'])->name('doctors.availability');
-        Route::post('/doctors/{id}/approve-credential', [AdminDoctorsController::class, 'approveCredential'])->name('doctors.approveCredential');
+    Route::get('/doctors', [AdminDoctorsController::class, 'index'])->name('doctors.index');
+    Route::get('/doctors/{doctor}/credentials', [AdminDoctorsController::class, 'credentials'])->name('doctors.credentials');
+    Route::post('/doctors/{id}/availability', [AdminDoctorsController::class, 'availability'])->name('doctors.availability');
+    Route::post('/doctors/{id}/approve-credential', [AdminDoctorsController::class, 'approveCredential'])->name('doctors.approveCredential');
 
-        Route::get('/pharmacies', [AdminPharmaciesController::class, 'index'])->name('pharmacies.index');
-        Route::get('/pharmacies/{pharmacy}/profile', [AdminPharmaciesController::class, 'profile'])->name('pharmacies.profile');
-        Route::post('/pharmacies/{pharmacy}/toggle24', [AdminPharmaciesController::class, 'toggle24'])->name('pharmacies.toggle24');
-        Route::post('/pharmacies/{pharmacy}/radius', [AdminPharmaciesController::class, 'updateRadius'])->name('pharmacies.updateRadius');
+    Route::get('/pharmacies', [AdminPharmaciesController::class, 'index'])->name('pharmacies.index');
+    Route::get('/pharmacies/{pharmacy}/profile', [AdminPharmaciesController::class, 'profile'])->name('pharmacies.profile');
+    Route::post('/pharmacies/{pharmacy}/toggle24', [AdminPharmaciesController::class, 'toggle24'])->name('pharmacies.toggle24');
+    Route::post('/pharmacies/{pharmacy}/radius', [AdminPharmaciesController::class, 'updateRadius'])->name('pharmacies.updateRadius');
 
-        Route::get('/prescriptions', [AdminPrescriptionsController::class, 'index'])->name('prescriptions.index');
-        Route::post('/prescriptions/{rx}/reassign-pharmacy', [AdminPrescriptionsController::class, 'reassignPharmacy'])->name('prescriptions.reassignPharmacy');
-        Route::post('/prescriptions/{rx}/assign-dispatcher', [AdminPrescriptionsController::class, 'assignDispatcher'])->name('prescriptions.assignDispatcher');
+    Route::get('/prescriptions', [AdminPrescriptionsController::class, 'index'])->name('prescriptions.index');
+    Route::post('/prescriptions/{rx}/reassign-pharmacy', [AdminPrescriptionsController::class, 'reassignPharmacy'])->name('prescriptions.reassignPharmacy');
+    Route::post('/prescriptions/{rx}/assign-dispatcher', [AdminPrescriptionsController::class, 'assignDispatcher'])->name('prescriptions.assignDispatcher');
 
-        Route::get('/appointments', [AdminAppointmentsController::class, 'index'])->name('appointments.index');
+    Route::get('/appointments', [AdminAppointmentsController::class, 'index'])->name('appointments.index');
 
-        Route::get('/transactions', [AdminTransactionsController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions', [AdminTransactionsController::class, 'index'])->name('transactions.index');
 
-        Route::get('/dispatchers', [AdminDispatchersController::class, 'index'])->name('dispatchers.index');
-        Route::get('/dispatchers/{dispatcher}/profile', [AdminDispatchersController::class, 'profile'])->name('dispatchers.profile');
+    Route::get('/dispatchers', [AdminDispatchersController::class, 'index'])->name('dispatchers.index');
+    Route::get('/dispatchers/{dispatcher}/profile', [AdminDispatchersController::class, 'profile'])->name('dispatchers.profile');
 
-        Route::get('/specialties', [AdminSpecialtiesController::class, 'index'])->name('specialties.index');
-        Route::resource('specialties', AdminSpecialtiesController::class)
-            ->only(['index', 'store', 'update', 'destroy']);
+    Route::get('/specialties', [AdminSpecialtiesController::class, 'index'])->name('specialties.index');
+    Route::resource('specialties', AdminSpecialtiesController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
 
-        // Admin management
-        Route::get('/admins', [AdminsController::class, 'index'])->name('admins.index');
-        Route::post('/admins', [AdminsController::class, 'store'])->name('admins.store');
-        Route::delete('/admins/{id}', [AdminsController::class, 'destroy'])->name('admins.destroy');
-    });
+    // Admin management
+    Route::get('/admins', [AdminsController::class, 'index'])->name('admins.index');
+    Route::post('/admins', [AdminsController::class, 'store'])->name('admins.store');
+    Route::delete('/admins/{id}', [AdminsController::class, 'destroy'])->name('admins.destroy');
+
+    // WITHDRAWAL REQUEST
+    Route::get('/withdrawals', [AdminWithdrawalRequestController::class, 'index'])->name('withdrawals.index');
+    Route::post('/withdrawals/{wd}/approve', [AdminWithdrawalRequestController::class, 'approve'])->name('withdrawals.approve');
+    Route::post('/withdrawals/{wd}/payout',  [AdminWithdrawalRequestController::class, 'payout'])->name('withdrawals.payout');
+    Route::post('/withdrawals/{wd}/reject',  [AdminWithdrawalRequestController::class, 'reject'])->name('withdrawals.reject');
+});
