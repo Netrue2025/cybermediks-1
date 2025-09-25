@@ -46,6 +46,7 @@ class PatientAppointmentController extends Controller
             'payment_status'=> 'unpaid',
             'reason'        => $data['reason'] ?? null,
         ]);
+        $redirect = route('patient.appointments.index');
 
         if ($data['type'] === 'chat')
         {
@@ -63,12 +64,13 @@ class PatientAppointmentController extends Controller
             } else {
                 $conversation->update(['status' => 'pending']);
             }
+            $redirect = route('patient.messages').'?c='.$conversation->id;
         }
 
         return response()->json([
             'ok' => true,
             'message' => 'Appointment request submitted.',
-            'redirect' => route('patient.messages').'?c='.$conversation->id, // nudge to chat while waiting, tweak as you like
+            'redirect' =>  $redirect
         ]);
     }
 
