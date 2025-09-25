@@ -30,7 +30,8 @@ class DoctorQueueController extends Controller
     {
         $this->authorizeAppointment($appointment);
 
-        if ($appointment->status !== 'pending') {
+        if (!in_array($appointment->status, ['pending', 'accepted']))
+        {
             return response()->json(['message' => 'Only pending requests can be rejected'], 422);
         }
 

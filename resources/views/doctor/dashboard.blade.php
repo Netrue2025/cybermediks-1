@@ -393,6 +393,10 @@
                                     </button>
                                 </div>
 
+                                <button class="btn btn-outline-light btn-sm" data-reject-appt="{{ $appt->id }}">
+                                    <i class="fa-solid fa-xmark me-1"></i> Reject
+                                </button>
+
                                 @if (!empty($appt->meeting_link))
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-success btn-sm" data-completed-appt="{{ $appt->id }}">
