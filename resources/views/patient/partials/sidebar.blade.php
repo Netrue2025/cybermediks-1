@@ -47,6 +47,10 @@
             <a class="item {{ request()->routeIs('patient.pharmacies') ? 'active' : '' }}" href="{{ route('patient.pharmacies') }}">
                 <i class="fa-solid fa-location-dot"></i><span>Nearby Pharmacies</span>
             </a>
+
+            <a class="item {{ request()->routeIs('patient.messages') ? 'active' : '' }}" href="{{ route('patient.messages') }}">
+                <i class="fa-solid fa-message"></i><span>Chat</span>
+            </a>
         </nav>
     </div>
 

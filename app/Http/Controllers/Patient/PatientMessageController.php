@@ -70,6 +70,11 @@ class PatientMessageController extends Controller
 
         $data = $r->validate(['body' => ['required', 'string', 'max:4000']]);
 
+        if ($conversation->status === 'closed')
+        {
+            return response()->json(['message' => 'Conversation has been closed'], 422);
+        }
+
         $msg = $conversation->messages()->create([
             'sender_id' => $r->user()->id,
             'body'      => $data['body'],
