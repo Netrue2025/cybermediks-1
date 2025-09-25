@@ -15,6 +15,11 @@
                 {{ $t->currency === 'USD' ? '$' : $t->currency . ' ' }}
                 {{ number_format((float) $t->amount, 2, '.', ',') }}
             </div>
+            <div>
+                <span class="badge {{ $t->status === 'completed' ? 'bg-success' : ($t->status === 'pending' ? 'bg-warning text-dark' : 'bg-secondary') }}">
+                    {{ ucfirst($t->status) }}
+                </span>
+            </div>
         </div>
     @empty
         <div class="section-subtle">No transactions yet.</div>
