@@ -323,7 +323,7 @@
             </div>
         </div>
 
-        <div class="col-lg-6">
+        <div class="col-lg-6" style="cursor: pointer;" onclick="window.location.href='{{ route('doctor.wallet.index') }}'">
             <div class="cardx">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
