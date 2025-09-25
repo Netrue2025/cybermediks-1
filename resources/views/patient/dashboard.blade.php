@@ -175,7 +175,7 @@
 @section('content')
     {{-- Metrics --}}
     <div class="row g-3">
-        <div class="col-lg-4">
+        <div class="col-lg-4" style="cursor:pointer;" onclick="window.location ='{{ route('patient.appointments.index') }}'">
             <div class="cardx h-100">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -187,14 +187,14 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-4" style="cursor:pointer;" onclick="window.location ='{{ route('patient.prescriptions.index') }}'">
             <div class="cardx h-100">
                 <div class="section-subtle">Active Prescriptions</div>
                 <div class="metric">{{ $activeRxCount }}</div>
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-lg-4" style="cursor:pointer;" onclick="window.location ='{{ route('patient.pharmacies') }}'">
             <div class="cardx h-100">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
