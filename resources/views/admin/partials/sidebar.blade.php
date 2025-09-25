@@ -63,6 +63,11 @@
                 <i class="fa-solid fa-wallet"></i><span>Transactions</span>
             </a>
 
+            <a class="item {{ request()->routeIs('admin.withdrawals.*') ? 'active' : '' }}"
+                href="{{ route('admin.withdrawals.index') }}">
+                <i class="fa-solid fa-wallet"></i><span>Withdrawals</span>
+            </a>
+
             <div class="section">Configuration</div>
             <a class="item {{ request()->routeIs('admin.specialties.*') ? 'active' : '' }}"
                 href="{{ route('admin.specialties.index') }}">
