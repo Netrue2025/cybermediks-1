@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Conversation;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
@@ -23,7 +24,29 @@ class DoctorConversationQuickController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Not in pending state'], 422);
         }
         $conversation->update(['status' => 'active']);
+        $appointment = Appointment::where('id', $conversation->appointment_id)->first();
+        if ($appointment)
+        {
+            $appointment->update(['status' => 'accepted']);
+        }
         return response()->json(['status' => 'success', 'message' => 'Request accepted ✅']);
+    }
+
+    public function reject(Conversation $conversation)
+    {
+        $this->ensureOwned($conversation);
+        // allow closing from pending or active
+        if (!in_array($conversation->status, ['pending'])) {
+            return response()->json(['status' => 'error', 'message' => 'Already closed'], 422);
+        }
+
+        $conversation->update(['status' => 'rejected']);
+        $appointment = Appointment::where('id', $conversation->appointment_id)->first();
+        if ($appointment)
+        {
+            $appointment->update(['status' => 'rejected']);
+        }
+        return response()->json(['status' => 'success', 'message' => 'Request rejected ✅']);
     }
 
     public function close(Conversation $conversation)
@@ -69,6 +92,11 @@ class DoctorConversationQuickController extends Controller
         }
 
         $conversation->update(['status' => 'closed']);
+        $appointment = Appointment::where('id', $conversation->appointment_id)->first();
+        if ($appointment)
+        {
+            $appointment->update(['status' => 'completed']);
+        }
         return response()->json(['status' => 'success', 'message' => 'Conversation closed ✅']);
     }
 

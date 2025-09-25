@@ -20,7 +20,7 @@
 <div class="d-flex flex-column gap-3">
     @forelse ($appointments as $a)
         @php
-            $when = $a->scheduled_at ? Carbon::parse($a->scheduled_at)->format('M d, Y · g:ia') : '—';
+            $when = $a->scheduled_at ? Carbon::parse($a->scheduled_at)->format('M d, Y · g:ia') : 'Appointment';
             $type = str_replace('_', ' ', $a->type ?? 'consult');
             $status = $a->status ?? 'scheduled';
             // If you used the controller I shared earlier, video calls may store $a->meeting_link

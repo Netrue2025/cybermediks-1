@@ -161,12 +161,10 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
     Route::post('/profile/availability', [DoctorProfileController::class, 'availability'])->name('profile.availability');
     Route::post('/profile/quick', [DoctorProfileController::class, 'quickUpdate'])->name('profile.quick');
 
-    Route::post('/conversations/{conversation}/accept', [DoctorConversationQuickController::class, 'accept'])
-        ->name('conversations.accept');
-    Route::post('/conversations/{conversation}/reopen', [DoctorConversationQuickController::class, 'reopen'])
-        ->name('conversations.reopen');
-    Route::post('/conversations/{conversation}/close',  [DoctorConversationQuickController::class, 'close'])
-        ->name('conversations.close');
+    Route::post('/conversations/{conversation}/accept', [DoctorConversationQuickController::class, 'accept'])->name('conversations.accept');
+    Route::post('/conversations/{conversation}/reject', [DoctorConversationQuickController::class, 'reject'])->name('conversations.reject');
+    Route::post('/conversations/{conversation}/reopen', [DoctorConversationQuickController::class, 'reopen'])->name('conversations.reopen');
+    Route::post('/conversations/{conversation}/close',  [DoctorConversationQuickController::class, 'close'])->name('conversations.close');
 
     Route::get('/queue', fn() => view('doctor.queue'))->name('queue');
     Route::post('/queue/{appointment}/accept', [DoctorQueueController::class, 'accept'])->name('queue.accept');

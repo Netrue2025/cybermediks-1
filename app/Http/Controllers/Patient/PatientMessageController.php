@@ -11,13 +11,6 @@ class PatientMessageController extends Controller
 {
     public function index(Request $r)
     {
-        if ($r->filled('doctor_id')) {
-            $conv = Conversation::firstOrCreate(
-                ['patient_id' => $r->user()->id, 'doctor_id' => $r->integer('doctor_id'), 'appointment_id' => null],
-                []
-            );
-            return redirect()->route('patient.messages', ['c' => $conv->id]);
-        }
         return view('patient.messages');
     }
 

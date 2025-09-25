@@ -461,11 +461,9 @@
                                     <button class="btn btn-success btn-sm" data-accept="{{ $c->id }}">
                                         <i class="fa-solid fa-check me-1"></i> Accept
                                     </button>
-                                    <button class="btn btn-outline-light btn-sm" data-close="{{ $c->id }}">
-                                        <i class="fa-solid fa-xmark me-1"></i> Close
+                                    <button class="btn btn-danger btn-sm" data-reject="{{ $c->id }}">
+                                        <i class="fa-solid fa-xmark me-1"></i> Reject
                                     </button>
-                                    <a href="{{ route('doctor.messenger', ['conversation' => $c->id, 'filter' => 'pending']) }}"
-                                        class="btn btn-ghost btn-sm">Open</a>
                                 </div>
                             </div>
                         @endforeach
@@ -551,6 +549,25 @@
                     })
                     .fail(err => {
                         flash('danger', err.responseJSON?.message || 'Failed to accept');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            // Reject (pending -> rejected)
+            $(document).on('click', '[data-reject]', function() {
+                const id = $(this).data('reject');
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('doctor.conversations.reject', ['conversation' => '__ID__']) }}`.replace(
+                        '__ID__', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Rejected');
+                        location.reload();
+                    })
+                    .fail(err => {
+                        flash('danger', err.responseJSON?.message || 'Failed to reject');
                     })
                     .always(() => unlockBtn($btn));
             });

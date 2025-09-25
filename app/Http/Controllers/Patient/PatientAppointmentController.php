@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,10 +47,28 @@ class PatientAppointmentController extends Controller
             'reason'        => $data['reason'] ?? null,
         ]);
 
+        if ($data['type'] === 'chat')
+        {
+            // check if there is a previous convo with the doctor
+            $conversation = Conversation::where('patient_id', $r->user()->id)->where('doctor_id', $data['doctor_id'])->first();
+
+            if (!$conversation)
+            {
+                $conversation = Conversation::create([
+                    'patient_id' => $r->user()->id,
+                    'doctor_id' => $data['doctor_id'],
+                    'appointment_id' => $appt->id,
+                    'status' => 'pending'
+                ]);
+            } else {
+                $conversation->update(['status' => 'pending']);
+            }
+        }
+
         return response()->json([
             'ok' => true,
             'message' => 'Appointment request submitted.',
-            'redirect' => route('patient.messages').'?doctor='.$doctor->id, // nudge to chat while waiting, tweak as you like
+            'redirect' => route('patient.messages').'?c='.$conversation->id, // nudge to chat while waiting, tweak as you like
         ]);
     }
 
