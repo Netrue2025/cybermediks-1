@@ -23,6 +23,7 @@ use App\Http\Controllers\Doctor\DoctorMessengerController;
 use App\Http\Controllers\Doctor\DoctorPatientController;
 use App\Http\Controllers\Doctor\DoctorPrescriptionController;
 use App\Http\Controllers\Doctor\DoctorProfileController;
+use App\Http\Controllers\Doctor\DoctorQueueController;
 use App\Http\Controllers\Doctor\DoctorScheduleController;
 use App\Http\Controllers\Doctor\DoctorWalletController;
 use App\Http\Controllers\Patient\DoctorBrowseController;
@@ -168,6 +169,10 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
         ->name('conversations.close');
 
     Route::get('/queue', fn() => view('doctor.queue'))->name('queue');
+    Route::post('/queue/{appointment}/accept', [DoctorQueueController::class, 'accept'])->name('queue.accept');
+    Route::post('/queue/{appointment}/completed', [DoctorQueueController::class, 'completed'])->name('queue.completed');
+    Route::post('/queue/{appointment}/reject', [DoctorQueueController::class, 'reject'])->name('queue.reject');
+    Route::post('/queue/{appointment}/meeting-link', [DoctorQueueController::class, 'saveMeetingLink'])->name('queue.saveLink');
 
 
     Route::get('/consultations', fn() => view('doctor.consultations'))->name('consultations');
@@ -240,9 +245,9 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
     // Prescriptions
     Route::post('/prescriptions/{rx}/accept', [DispatcherPrescriptionController::class, 'accept'])->name('prescriptions.accept');
     Route::post('/prescriptions/{rx}/set-delivery-fee', [DispatcherPrescriptionController::class, 'setDeliveryFee'])->name('setDeliveryFee');
-    
+
     Route::post('/prescriptions/{rx}/deliver', [DispatcherPrescriptionController::class, 'markDelivered'])->name('prescriptions.deliver');
-     Route::get('/deliveries', [DispatcherDashboardController::class, 'getDeliveries'])->name('deliveries.index');
+    Route::get('/deliveries', [DispatcherDashboardController::class, 'getDeliveries'])->name('deliveries.index');
 
     // PROFILE
     Route::get('/profile', [DispatcherDashboardController::class, 'showProfile'])->name('profile');

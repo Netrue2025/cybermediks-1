@@ -17,7 +17,8 @@ class Appointment extends Model
         'price',
         'payment_status',
         'reason',
-        'notes'
+        'notes',
+        'meeting_link'
     ];
     protected $casts = [
         'scheduled_at' => 'datetime',

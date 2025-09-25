@@ -47,7 +47,7 @@ class DoctorDashboardController extends Controller
 
         $videoQueue = Appointment::where('doctor_id', $docId)
             ->where('type', 'video')
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'accepted'])
             ->get();
 
         $videoQueueCount = $videoQueue->count();

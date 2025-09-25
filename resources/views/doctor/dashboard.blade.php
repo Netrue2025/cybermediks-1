@@ -354,22 +354,59 @@
         @if ($videoQueueCount > 0)
             <div class="d-flex flex-column gap-2">
                 @foreach ($videoQueue as $appt)
-                    <a href="{{ route('doctor.messenger') }}?patient_id={{ $appt->patient?->id }}"
-                        style="text-decoration: none; color: inherit;">
-                        <div class="ps-row d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-semibold">{{ $appt->patient?->first_name }} {{ $appt->patient?->last_name }}
-                                </div>
-                                <div class="subtle small">Reason: {{ $appt->reason }}</div>
-                                <div class="subtle small">Scheduled at:
-                                    {{ $appt->scheduled_at ? $appt->scheduled_at->format('M d, Y h:i A') : 'As soon as possible' }}
-                                </div>
+                    <div class="ps-row d-flex justify-content-between align-items-center">
+                        <div class="me-2">
+                            <div class="fw-semibold">
+                                {{ $appt->patient?->first_name }} {{ $appt->patient?->last_name }}
+                                <span class="badge bg-info ms-2">Video</span>
                             </div>
-                            <div>
-                                <span class="badge bg-info">Video</span>
+                            <div class="subtle small">Reason: {{ $appt->reason }}</div>
+                            <div class="subtle small">Scheduled at:
+                                {{ $appt->scheduled_at ? $appt->scheduled_at->format('M d, Y h:i A') : 'As soon as possible' }}
                             </div>
+                            @if (!empty($appt->meeting_link))
+                                <div class="subtle small mt-1">
+                                    Meeting: <a class="link-light text-decoration-none" href="{{ $appt->meeting_link }}"
+                                        target="_blank">
+                                        Open link
+                                    </a>
+                                </div>
+                            @endif
                         </div>
-                    </a>
+
+                        <div class="d-flex flex-column align-items-end gap-2" style="min-width:260px;">
+                            @if ($appt->status === 'pending')
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-success btn-sm" data-accept-appt="{{ $appt->id }}">
+                                        <i class="fa-solid fa-check me-1"></i> Accept
+                                    </button>
+                                    <button class="btn btn-outline-light btn-sm" data-reject-appt="{{ $appt->id }}">
+                                        <i class="fa-solid fa-xmark me-1"></i> Reject
+                                    </button>
+                                </div>
+                            @elseif (in_array($appt->status, ['accepted', 'scheduled']))
+                                <div class="input-group input-group-sm">
+                                    <input type="url" class="form-control" id="meet{{ $appt->id }}"
+                                        value="{{ $appt->meeting_link }}" placeholder="https://... meeting link">
+                                    <button class="btn btn-outline-light" data-save-link="{{ $appt->id }}">
+                                        Save
+                                    </button>
+                                </div>
+
+                                @if (!empty($appt->meeting_link))
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-success btn-sm" data-completed-appt="{{ $appt->id }}">
+                                            <i class="fa-solid fa-check me-1"></i> Mark Completed
+                                        </button>
+                                    </div>
+                                @endif
+                                <div class="subtle small">The patient will automatically see this link</div>
+                            @else
+                                <span class="subtle small text-uppercase">{{ ucfirst($appt->status) }}</span>
+                            @endif
+
+                        </div>
+                    </div>
                 @endforeach
             </div>
         @else
@@ -529,6 +566,81 @@
                     })
                     .fail(err => {
                         flash('danger', err.responseJSON?.message || 'Failed to close');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            // Accept video call
+            $(document).on('click', '[data-accept-appt]', function() {
+                const id = $(this).data('accept-appt');
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('doctor.queue.accept', '__ID__') }}`.replace('__ID__', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Accepted');
+                        location.reload();
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to accept');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            // mark completed
+            $(document).on('click', '[data-completed-appt]', function() {
+                const id = $(this).data('completed-appt');
+                const $btn = $(this);
+                lockBtn($btn);
+                $.post(`{{ route('doctor.queue.completed', '__ID__') }}`.replace('__ID__', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Accepted');
+                        location.reload();
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to accept');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            // Reject video call
+            $(document).on('click', '[data-reject-appt]', function() {
+                const id = $(this).data('reject-appt');
+                const $btn = $(this);
+                if (!confirm('Reject this request?')) return;
+                lockBtn($btn);
+                $.post(`{{ route('doctor.queue.reject', '__ID__') }}`.replace('__ID__', id), {
+                        _token: `{{ csrf_token() }}`
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Rejected');
+                        location.reload();
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to reject');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            // Save meeting link
+            $(document).on('click', '[data-save-link]', function() {
+                const id = $(this).data('save-link');
+                const $btn = $(this);
+                const val = $(`#meet${id}`).val().trim();
+                if (!val) return flash('danger', 'Enter a meeting link');
+                lockBtn($btn);
+                $.post(`{{ route('doctor.queue.saveLink', '__ID__') }}`.replace('__ID__', id), {
+                        _token: `{{ csrf_token() }}`,
+                        meeting_link: val
+                    })
+                    .done(res => {
+                        flash('success', res.message || 'Meeting link saved');
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to save link');
                     })
                     .always(() => unlockBtn($btn));
             });
