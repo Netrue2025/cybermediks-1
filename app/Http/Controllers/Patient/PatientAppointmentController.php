@@ -64,7 +64,7 @@ class PatientAppointmentController extends Controller
                     'status' => 'pending'
                 ]);
             } else {
-                $conversation->update(['status' => 'pending']);
+                $conversation->update(['status' => 'pending', 'appointment_id' => $appt->id]);
             }
             $redirect = route('patient.messages').'?c='.$conversation->id;
         }
