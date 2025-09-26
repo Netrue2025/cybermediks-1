@@ -15,13 +15,13 @@ class DoctorPrescriptionController extends Controller
     {
         // Load patients you’re allowed to prescribe for.
         // Adjust the query if you have a dedicated patient-doctor relation.
-        $patients = User::query()
-            ->where('role', 'patient') // if you use role column; otherwise adapt
-            ->orderBy('first_name')
-            ->limit(200)
-            ->get(['id', 'first_name', 'last_name']);
+        $patient = User::where('role', 'patient')->where('id', $request->patient_id)->first();
 
-        return view('doctor.prescriptions.create', compact('patients'));
+        if (!$patient) {
+            return back()->with('error', 'Patient not found');
+        }
+
+        return view('doctor.prescriptions.create', compact('patient'));
     }
 
     public function store(Request $request)
@@ -52,6 +52,7 @@ class DoctorPrescriptionController extends Controller
             'notes'          => $data['notes'] ?? null,
             'encounter'      => $data['encounter'],
             'refills'        => (int)($data['refills'] ?? 0),
+            'dispense_status' => ''
         ]);
 
         // Map items

@@ -31,14 +31,8 @@
         <div class="row g-3">
             <div class="col-lg-6">
                 <label class="form-label">Patient</label>
-                <select class="form-select" name="patient_id" required>
-                    <option value="">Choose patient…</option>
-                    @foreach ($patients as $p)
-                        <option value="{{ $p->id }}">
-                            {{ $p->first_name }} {{ $p->last_name }} (ID: {{ $p->id }})
-                        </option>
-                    @endforeach
-                </select>
+                <input type="text" name="patient_id" hidden value="{{ $patient->id }}">
+                <h3>{{ $patient->first_name }} {{ $patient->last_name }} (ID: {{ $patient->id }})</h3>
 
             </div>
             <div class="col-lg-3">

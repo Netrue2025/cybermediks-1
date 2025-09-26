@@ -62,7 +62,9 @@ class DoctorConversationQuickController extends Controller
         $doctor = $conversation->doctor;
         $doctorProfile = $doctor->doctorProfile;
         $fee = $doctorProfile?->consult_fee;
-        if ($fee && $patient) {
+        $appointment = Appointment::where('id', $conversation->appointment_id)->first();
+
+        if ($fee && $patient && $appointment->status != 'completed') {
             // Charge the patient
             $patient->wallet_balance -= $fee;
             $patient->save();
@@ -92,7 +94,6 @@ class DoctorConversationQuickController extends Controller
         }
 
         $conversation->update(['status' => 'closed']);
-        $appointment = Appointment::where('id', $conversation->appointment_id)->first();
         if ($appointment)
         {
             $appointment->update(['status' => 'completed']);
