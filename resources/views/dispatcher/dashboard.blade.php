@@ -149,7 +149,7 @@
                                             </button>
                                         </div>
                                         <div class="text-end subtle small">
-                                            {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Propose a delivery fee to the patient' }}
+                                            {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Please call patient to negotiate price' }}
                                         </div>
                                     @endif
 
