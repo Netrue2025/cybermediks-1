@@ -75,6 +75,11 @@ class PatientMessageController extends Controller
             return response()->json(['message' => 'Conversation has been closed'], 422);
         }
 
+        if ($conversation->status === 'rejected')
+        {
+            return response()->json(['message' => 'Chat appointment has been rejected'], 422);
+        }
+
         $msg = $conversation->messages()->create([
             'sender_id' => $r->user()->id,
             'body'      => $data['body'],
