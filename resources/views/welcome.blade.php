@@ -152,8 +152,8 @@
                 <ul class="navbar-nav ms-auto gap-3">
                     <li class="nav-item"><a class="nav-link" href="#"><i
                                 class="fa-solid fa-cart-shopping"></i></a></li>
-                    <li class="nav-item"><a class="btn btn-sm btn-dark" href="#">Login</a></li>
-                    <li class="nav-item"><a class="btn btn-sm btn-success" href="#">Sign Up</a></li>
+                    <li class="nav-item"><a class="btn btn-sm btn-dark" href="{{ route('login.show') }}">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-sm btn-success" href="{{ route('register.show') }}">Sign Up</a></li>
                 </ul>
             </div>
 
@@ -170,9 +170,9 @@
             <p class="lead-sub mb-4">Instant access to certified doctors, online prescriptions, and medication delivery.
                 All from the comfort of your home.</p>
             <div class="d-flex justify-content-center gap-2">
-                <a href="#" class="btn btn-lg btn-gradient"><i
+                <a href="{{ route('register.show') }}" class="btn btn-lg btn-gradient"><i
                         class="fa-solid fa-arrow-right-to-bracket me-2"></i>Get Started</a>
-                <a href="#" class="btn btn-lg btn-ghost">Sign In</a>
+                <a href="{{ route('login.show') }}" class="btn btn-lg btn-ghost">Sign In</a>
             </div>
         </div>
     </section>
