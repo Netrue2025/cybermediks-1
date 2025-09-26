@@ -377,7 +377,7 @@
                     <button class="btn btn-sm btn-outline-light d-lg-none" id="btnSidebar">
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    <span class="fw-semibold">Pharmacy</span>
+                    <span class="fw-semibold">Dispatcher</span>
                 </div>
             </div>
 
