@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Conversation;
 use App\Models\User;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class PatientAppointmentController extends Controller
@@ -99,5 +101,59 @@ class PatientAppointmentController extends Controller
         }
 
         return view('patient.appointments.index', compact('appointments'));
+    }
+
+    public function close($id)
+    {
+        $user = Auth::user();
+
+        $appointment = Appointment::with(['patient', 'doctor'])->where('id', $id)->where('patient_id', $user->id)->first();
+
+        if (!$appointment)
+        {
+            return response()->json(['message' => 'Appointment not found'], 422);
+        }
+
+        if ($appointment->status !== 'accepted') {
+            return response()->json(['message' => 'Only accepted requests can be closed'], 422);
+        }
+
+        $appointment->status = 'completed';
+        $appointment->save();
+
+        $patient = $appointment->patient;
+        $doctor = $appointment->doctor;
+        $doctorProfile = $doctor->doctorProfile;
+        $fee = $doctorProfile?->consult_fee;
+        if ($fee && $patient) {
+            // Charge the patient
+            $patient->wallet_balance -= $fee;
+            $patient->save();
+
+            // Pay the doctor
+            $doctor->wallet_balance += $fee;
+            $doctor->save();
+
+            // Log the transaction (pseudo-code, implement as needed)
+            WalletTransaction::create([
+                'user_id' => $patient->id,
+                'amount' => -$fee,
+                'currency' => 'USD',
+                'type' => 'debit',
+                'reference' => uniqid('txn_'),
+                'purpose' => "Consultation fee for appointment ID {$appointment->id}",
+            ]);
+
+            WalletTransaction::create([
+                'user_id' => $doctor->id,
+                'amount' => $fee,
+                'currency' => 'USD',
+                'type' => 'credit',
+                'reference' => uniqid('txn_'),
+                'purpose' => "Consultation fee received for appointment ID {$appointment->id}",
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'message' => 'Appointment closed']);
     }
 }

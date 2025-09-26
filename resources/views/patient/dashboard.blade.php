@@ -187,7 +187,8 @@
             </div>
         </div>
 
-        <div class="col-lg-4" style="cursor:pointer;" onclick="window.location ='{{ route('patient.prescriptions.index') }}'">
+        <div class="col-lg-4" style="cursor:pointer;"
+            onclick="window.location ='{{ route('patient.prescriptions.index') }}'">
             <div class="cardx h-100">
                 <div class="section-subtle">Active Prescriptions</div>
                 <div class="metric">{{ $activeRxCount }}</div>
@@ -402,7 +403,8 @@
                             class="btn btn-gradient">
                             <i class="fa-solid fa-video me-1"></i> Join meeting
                         </a>
-                        <button class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                        <button style="display: none" id="closeModal" data-bs-dismiss="modal"></button>
+                        <button class="btn btn-outline-light" id="endAppointment" data-apt-id="{{ $acceptedAppt->id }}">End Appointment</button>
                     </div>
                 </div>
             </div>
@@ -639,5 +641,19 @@
                 });
             });
         }
+
+        $("#endAppointment").on('click', function() {
+            const $btn = $("#endAppointment");
+            const id = $("#endAppointment").data('apt-id')
+            lockBtn($btn);
+
+            $.post(`{{ url('patient/appointments/close') }}/${id}`)
+                .done(res => {
+                    flash('success', res.message || 'Appointment closed');
+                    $("#closeModal").trigger('click');
+                })
+                .fail(xhr => flash('danger', xhr.responseJSON?.message || 'Failed to send'))
+                .always(() => unlockBtn($btn));
+        });
     </script>
 @endpush
