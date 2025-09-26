@@ -89,7 +89,7 @@ class PatientAppointmentController extends Controller
             })
             ->onDate($request->get('date'))
             ->search($request->get('q'))
-            ->orderByDesc('scheduled_at')
+            ->orderByDesc('updated_at')
             ->paginate(10)
             ->withQueryString();
 

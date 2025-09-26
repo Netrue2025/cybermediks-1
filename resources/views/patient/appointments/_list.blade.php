@@ -44,7 +44,7 @@
                         <span>{!! ap_status_badge($status) !!}</span>
 
                         {{-- Meeting link (video only) --}}
-                        @if ($a->type === 'video' && $meeting)
+                        @if ($a->type === 'video' && $meeting && $a->status != 'completed')
                             <a class="btn btn-outline-light btn-sm" href="{{ $meeting }}" target="_blank"
                                 rel="noopener">
                                 <i class="fa-solid fa-video me-1"></i> Open Meeting
