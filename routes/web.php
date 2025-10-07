@@ -27,6 +27,7 @@ use App\Http\Controllers\Doctor\DoctorProfileController;
 use App\Http\Controllers\Doctor\DoctorQueueController;
 use App\Http\Controllers\Doctor\DoctorScheduleController;
 use App\Http\Controllers\Doctor\DoctorWalletController;
+use App\Http\Controllers\Health\HealthDashboardController;
 use App\Http\Controllers\Patient\DoctorBrowseController;
 use App\Http\Controllers\Patient\PatientAppointmentController;
 use App\Http\Controllers\Patient\PatientDashboardController;
@@ -115,7 +116,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');
     Route::post('/appointments', [PatientAppointmentController::class, 'store'])->name('appointments.store'); // AJAX
     Route::post('/appointments/close/{id}', [PatientAppointmentController::class, 'close'])->name('appointments.close'); // AJAX
-    
+
 
     Route::post('/wallet/pay', [WalletController::class, 'startFlutterwave'])->name('wallet.pay');           // create payment link
     Route::get('/wallet/callback', [WalletController::class, 'flutterwaveCallback'])->name('wallet.callback');   // user returns here
@@ -185,7 +186,7 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
 });
 
 
-/** Pharmacy Dashboard (authed + verified) */
+// PHARMACY ROUTES
 
 Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'pharmacy'])->group(function () {
 
@@ -239,7 +240,7 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     Route::get('/dispensed/{rx}/receipt', [PharmacyDispensedController::class, 'receipt'])->name('dispensed.receipt');
 });
 
-/** Dispatcher Dashboard (authed + verified) */
+// DISPATCHER ROUTES
 
 Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified', 'dispatcher'])->group(function () {
 
@@ -262,6 +263,8 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
     Route::post('/wallet/withdraw', [DispatcherDashboardController::class, 'withdraw'])->name('wallet.withdraw');
 });
 
+
+// ADMIN ROUTES
 
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -304,4 +307,22 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/withdrawals/{wd}/approve', [AdminWithdrawalRequestController::class, 'approve'])->name('withdrawals.approve');
     Route::post('/withdrawals/{wd}/payout',  [AdminWithdrawalRequestController::class, 'payout'])->name('withdrawals.payout');
     Route::post('/withdrawals/{wd}/reject',  [AdminWithdrawalRequestController::class, 'reject'])->name('withdrawals.reject');
+});
+
+// HEALTH ROUTES
+
+Route::middleware(['auth', 'verified', 'health'])->prefix('health')->name('health.')->group(function () {
+    Route::get('/', [HealthDashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
+    Route::post('/users/{user}/toggle', [AdminUsersController::class, 'toggleActive'])->name('users.toggle');
+
+    Route::get('/doctors', [HealthDashboardController::class, 'doctorIndex'])->name('doctors.index');
+    Route::get('/doctors/{doctor}/credentials', [HealthDashboardController::class, 'credentials'])->name('doctors.credentials');
+    Route::post('/doctors/{id}/approve-credential', [HealthDashboardController::class, 'approveCredential'])->name('doctors.approveCredential');
+    Route::post('/doctors/{id}/reject-credential', [HealthDashboardController::class, 'rejectCredential'])->name('doctors.rejectCredential');
+
+    Route::get('/profile', [HealthDashboardController::class, 'showProfile'])->name('profile');
+    Route::post('/profile', [HealthDashboardController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/password', [HealthDashboardController::class, 'updatePassword'])->name('profile.password');
 });
