@@ -399,7 +399,7 @@
                             <textarea class="form-control" name="body" rows="1"
                                 placeholder="{{ $isClosed ? 'Conversation is closed' : 'Type a message…' }}" autocomplete="off"></textarea>
 
-                            <button type="button" class="btn btn-primary" id="btnSend">
+                            <button type="submit" class="btn btn-primary" id="btnSend">
                                 <i class="fa-solid fa-paper-plane"></i>
                             </button>
                         </div>
