@@ -635,9 +635,9 @@
                                 <div class="d-flex gap-2">
                                     <a href="{{ route('doctor.messenger', ['conversation' => $c->id, 'filter' => 'active']) }}"
                                         class="btn btn-gradient btn-sm">Open Chat</a>
-                                    <button class="btn btn-outline-light btn-sm" data-close="{{ $c->id }}">
+                                    {{-- <button class="btn btn-outline-light btn-sm" data-close="{{ $c->id }}">
                                         <i class="fa-solid fa-xmark me-1"></i> Close
-                                    </button>
+                                    </button> --}}
                                 </div>
                             </div>
                         @endforeach
