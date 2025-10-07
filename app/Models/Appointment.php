@@ -18,12 +18,14 @@ class Appointment extends Model
         'payment_status',
         'reason',
         'notes',
-        'meeting_link'
+        'meeting_link',
+        'prescription_issued'
     ];
     protected $casts = [
         'scheduled_at' => 'datetime',
         'duration' => 'int',
-        'price' => 'decimal:2'
+        'price' => 'decimal:2',
+        'prescription_issued' => 'boolean'
     ];
     public function patient()
     {

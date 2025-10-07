@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\DoctorProfile;
+use App\Models\User;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DoctorQueueController extends Controller
 {
@@ -19,7 +22,27 @@ class DoctorQueueController extends Controller
             return response()->json(['message' => 'Only pending requests can be accepted'], 422);
         }
 
-        $appointment->status = 'accepted'; // you can use 'scheduled' if that’s your canonical status
+        $doctorProfile = DoctorProfile::where('doctor_id', Auth::id())->first();
+
+        if (!$doctorProfile) {
+            return response()->json(['message' => 'Please setup doctor profile before accepting appointment'], 422);
+        }
+
+        if (!$doctorProfile->meeting_link || $doctorProfile->meeting_link == '') {
+            return response()->json(['message' => 'Please add meeting link in doctor profile before accepting appointment'], 422);
+        }
+
+        // check if link is still valid
+
+        if (!$doctorProfile?->link_updated_at || !$doctorProfile->link_updated_at->isToday()) {
+            return response()->json([
+                'message' => 'Meeting link expired, please update it in Doctors Profile before accepting appointment'
+            ], 422);
+        }
+
+        $appointment->meeting_link = $doctorProfile->meeting_link;
+
+        $appointment->status = 'accepted';
         $appointment->save();
 
         return response()->json(['ok' => true, 'message' => 'Request accepted']);
@@ -30,8 +53,7 @@ class DoctorQueueController extends Controller
     {
         $this->authorizeAppointment($appointment);
 
-        if (!in_array($appointment->status, ['pending', 'accepted']))
-        {
+        if (!in_array($appointment->status, ['pending', 'accepted'])) {
             return response()->json(['message' => 'Only pending requests can be rejected'], 422);
         }
 
@@ -47,6 +69,11 @@ class DoctorQueueController extends Controller
 
         if ($appointment->status !== 'accepted') {
             return response()->json(['message' => 'Only accepted requests can be completed'], 422);
+        }
+
+        // check ifprescription was issued
+        if (!$appointment->prescription_issued) {
+            return response()->json(['message' => 'You need to issue a prescrition before completing this appointment'], 422);
         }
 
         $appointment->status = 'completed';

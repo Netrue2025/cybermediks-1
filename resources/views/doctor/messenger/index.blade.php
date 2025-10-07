@@ -372,7 +372,7 @@
 
                 <div class="chat-body" id="chatBody">
                     @if ($active)
-                        {!! view('doctor.messenger._thread', ['conversation' => $active, 'messages' => []])->render() !!}
+                        {!! view('doctor.messenger._thread', ['conversation' => $active, 'messages' => [], 'patientId' => $patientId, 'patientDetails' => $patientDetails, 'appointmentId' => $appointmentId])->render() !!}
                     @else
                         <div class="small-muted">Select a conversation to start.</div>
                     @endif
@@ -383,22 +383,103 @@
                     <form id="msgForm" class="composer" {{ $active && !$isClosed ? '' : 'style=display:none' }}>
                         @csrf
                         <input type="hidden" id="convId" name="conv_id" value="{{ $active->id ?? '' }}">
-                        <button type="button" class="btn btn-ghost" id="btnAttach" title="Attach"><i
-                                class="fa-solid fa-paperclip"></i></button>
+                        <button type="button" class="btn btn-ghost" id="btnPrescription" title="Attach"><i
+                                class="fa-solid fa-tablets"></i></button>
                         <textarea class="form-control" name="body"
                             placeholder="{{ $isClosed ? 'Conversation is closed' : 'Type a message…' }}" autocomplete="off"></textarea>
                         <button class="btn btn-gradient" id="btnSend"><i class="fa-solid fa-paper-plane"></i></button>
                     </form>
                     @if ($isClosed)
-                    <br>
-                    <button class="btn btn-gradient" id="btnReopen">Reopen Conversation</button>
-                    <br>
+                        <br>
+                        <button class="btn btn-gradient" id="btnReopen">Reopen Conversation</button>
+                        <br>
                         <div class="disabled-note">This conversation is closed. You can reopen it from the patient card.
                         </div>
                     @endif
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    {{-- PRESCRIPTION MODAL --}}
+    <div class="modal fade" id="prescriptionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background:#121a2c;border:1px solid var(--border);border-radius:18px;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Add Prescrition</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rxForm" class="cardx">
+                        @csrf
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-solid fa-file-medical"></i>
+                            <h5 class="m-0">New e-Prescription</h5>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-lg-6">
+                                <label class="form-label">Patient</label>
+                                <input type="text" id="patientId" name="patient_id" hidden value="">
+                                <input type="text" id="appointmentId" name="appointment_id" hidden value="">
+                                <h3 id="patientDetails"></h3>
+
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="form-label">Encounter Type</label>
+                                <select class="form-select disabled" name="encounter" required>
+                                    <option value="chat" selected>Chat</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="form-label">Refills</label>
+                                <input type="number" min="0" value="0" class="form-control"
+                                    name="refills">
+                            </div>
+                        </div>
+
+                        <hr class="my-4" style="border-color:var(--border);opacity:.6">
+
+                        <div id="rxItems" class="d-flex flex-column gap-2">
+                            <div class="rx-item">
+                                <div class="row g-2">
+                                    <div class="col-lg-4">
+                                        <label class="form-label">Drug</label>
+                                        <input class="form-control" name="items[0][drug]" placeholder="Amoxicillin 500mg"
+                                            required>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <label class="form-label">Dose</label>
+                                        <input class="form-control" name="items[0][dose]" placeholder="1 tab">
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <label class="form-label">Freq.</label>
+                                        <input class="form-control" name="items[0][freq]" placeholder="2×/day">
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <label class="form-label">Days</label>
+                                        <input class="form-control" type="number" name="items[0][days]"
+                                            placeholder="7">
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <label class="form-label">Qty</label>
+                                        <input class="form-control" type="number" name="items[0][quantity]"
+                                            placeholder="14">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-outline-light btn-sm" id="addItem"><i
+                                    class="fa-solid fa-plus me-1"></i>Add Item</button>
+                            <button class="btn btn-gradient ms-auto" id="btnIssue"><span class="btn-text">Issue
+                                    Prescription</span></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -545,6 +626,7 @@
                     _token: `{{ csrf_token() }}`
                 }).done(res => {
                     flash('success', res.message || 'Closed');
+                    window.location.reload();
                     loadThread(id);
                 }).fail(xhr => {
                     flash('danger', xhr.responseJSON?.message || 'Failed to close');
@@ -561,6 +643,63 @@
                     scrollBottom();
                 });
             }, 6000);
+
+            $('#addItem').on('click', function() {
+                const i = rxIndex++;
+                $('#rxItems').append(`
+                <div class="rx-item">
+                    <div class="row g-2">
+                    <div class="col-lg-4"><label class="form-label">Drug</label><input class="form-control" name="items[${i}][drug]" placeholder="e.g., Amoxicillin 500mg" required></div>
+                    <div class="col-lg-2"><label class="form-label">Dose</label><input class="form-control" name="items[${i}][dose]" placeholder="1 tab"></div>
+                    <div class="col-lg-2"><label class="form-label">Freq.</label><input class="form-control" name="items[${i}][freq]" placeholder="2×/day"></div>
+                    <div class="col-lg-2"><label class="form-label">Days</label><input class="form-control" type="number" name="items[${i}][days]" placeholder="7"></div>
+                    <div class="col-lg-2"><label class="form-label">Qty</label><input class="form-control" type="number" name="items[${i}][quantity]" placeholder="14"></div>
+                    </div>
+                </div>`);
+            });
+
+            $('#rxForm').on('submit', function(e) {
+                e.preventDefault();
+                const $btn = $('#btnIssue');
+                lockBtn($btn);
+
+                $.ajax({
+                    url: `{{ route('doctor.prescriptions.store') }}`,
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    headers: {
+                        'X-CSRF-TOKEN': `{{ csrf_token() }}`
+                    },
+                    success: function(res) {
+                        flash('success', res.message || 'Prescription issued');
+                            // fallback: clear the form for another entry
+                            $('#rxForm')[0].reset();
+                            $('#rxItems').html($('#rxItems .rx-item').first()); // keep first row
+                    },
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON?.message || 'Failed to issue prescription';
+                        flash('danger', msg);
+                        // Optional: show validation errors
+                        if (xhr.responseJSON?.errors) {
+                            console.warn(xhr.responseJSON.errors);
+                        }
+                    },
+                    complete: function() {
+                        unlockBtn($btn);
+                    }
+                });
+            });
+
+            $('#btnPrescription').on('click', function() {
+                let appointmentId = $("#serverAppointmentId").val();
+                let patientId = $("#serverPatientId").val();
+                let patientName = $('#serverPatientDetails').val();
+                let patientDetails = patientName + ' (ID: ' + patientId + ')';
+                $("#patientId").val(patientId)
+                $("#appointmentId").val(appointmentId)
+                $("#patientDetails").text(patientDetails);
+                new bootstrap.Modal(document.getElementById('prescriptionModal')).show();
+            });
 
         })();
     </script>

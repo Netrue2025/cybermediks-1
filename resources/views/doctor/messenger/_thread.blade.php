@@ -23,3 +23,6 @@
 @empty
     <div class="small-muted">No messages yet. Say hello 👋</div>
 @endforelse
+<input type="text" hidden id="serverPatientId" value="{{ $patientId }}">
+<input type="text" hidden id="serverPatientDetails" value="{{ $patientDetails }}">
+<input type="text" hidden id="serverAppointmentId" value="{{ $appointmentId }}">

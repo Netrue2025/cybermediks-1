@@ -8,15 +8,18 @@
     </div>
 
     {{-- User --}}
-   <center>
-     <div class="sb-user align-items-center gap-3">
-        <div class="avatar">{{ strtoupper(substr(auth()->user()->first_name, 0, 1)) . strtoupper(substr(auth()->user()->last_name, 0, 1)) }}</div>
-        <div>
-            <div class="fw-semibold text-white">{{ auth()->user()->first_name. ' '. auth()->user()->last_name }}</div>
-            <div class="sb-role">Pharmacy</div>
+    <center>
+        <div class="sb-user align-items-center gap-3">
+            <div class="avatar">
+                {{ strtoupper(substr(auth()->user()->first_name, 0, 1)) . strtoupper(substr(auth()->user()->last_name, 0, 1)) }}
+            </div>
+            <div>
+                <div class="fw-semibold text-white">{{ auth()->user()->first_name . ' ' . auth()->user()->last_name }}
+                </div>
+                <div class="sb-role">Pharmacy</div>
+            </div>
         </div>
-    </div>
-   </center>
+    </center>
 
     {{-- Menu (scrollable) --}}
     <div class="sb-scroll">
@@ -28,12 +31,19 @@
                 <i class="fa-solid fa-gauge"></i><span>Dashboard</span>
             </a>
 
-            <a class="item {{ request()->routeIs('pharmacy.prescriptions.index') ? 'active' : '' }}" href="{{ route('pharmacy.prescriptions.index') }}">
+            <a class="item {{ request()->routeIs('pharmacy.prescriptions.index') ? 'active' : '' }}"
+                href="{{ route('pharmacy.prescriptions.index') }}">
                 <i class="fa-solid fa-file-prescription"></i><span>Pending Prescriptions</span>
             </a>
 
-            <a class="item {{ request()->routeIs('pharmacy.dispensed.index') ? 'active' : '' }}" href="{{ route('pharmacy.dispensed.index') }}">
+            <a class="item {{ request()->routeIs('pharmacy.dispensed.index') ? 'active' : '' }}"
+                href="{{ route('pharmacy.dispensed.index') }}">
                 <i class="fa-solid fa-clock-rotate-left"></i><span>Dispensed Orders</span>
+            </a>
+
+            <a class="item {{ request()->routeIs('pharmacy.wallet.index') ? 'active' : '' }}"
+                href="{{ route('pharmacy.wallet.index') }}">
+                <i class="fa-solid fa-wallet"></i><span>My Wallet</span>
             </a>
 
         </nav>
@@ -41,7 +51,8 @@
 
     {{-- Bottom actions --}}
     <div class="sb-bottom">
-        <a class="item {{ request()->routeIs('pharmacy.profile') ? 'active' : '' }} mb-4" href="{{ route('pharmacy.profile') }}">
+        <a class="item {{ request()->routeIs('pharmacy.profile') ? 'active' : '' }} mb-4"
+            href="{{ route('pharmacy.profile') }}">
             <i class="fa-solid fa-gear"></i><span>Profile Settings</span>
         </a>
 

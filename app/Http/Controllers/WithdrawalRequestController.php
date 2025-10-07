@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdminTransaction;
+use App\Models\AdminWallet;
 use App\Models\WalletTransaction;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\Request;
@@ -19,27 +21,34 @@ class WithdrawalRequestController extends Controller
             // payout details (required for USD transfers)
             'bank_name'     => 'required|string|max:120',
             'bank_code'     => 'required|string|max:40',     // Flutterwave bank code for USD route
-            'account_number'=> 'required|string|max:40',
+            'account_number' => 'required|string|max:40',
             'account_name'  => 'required|string|max:120',
-            'routing_number'=> 'nullable|string|max:40',
+            'routing_number' => 'nullable|string|max:40',
             'swift_code'    => 'nullable|string|max:40',
         ]);
 
         $user     = $r->user();
         $amount   = (float)$data['amount'];
         $currency = $data['currency'] ?? 'USD';
+        if ($user->role === 'pharmacy') {
+            $fee = (8 / 100);
+        } else {
+            $fee = (23 / 100);
+        }
 
-        if ($user->role === 'patient' || $user->role === 'admin')
-        {
-            return response()->json(['message'=>'You are not allowed to make a withdrawal'], 422);
+        $calculatedFee = $amount * $fee;
+        $calculatedAmount = $amount - $calculatedFee;
+
+        if ($user->role === 'patient' || $user->role === 'admin') {
+            return response()->json(['message' => 'You are not allowed to make a withdrawal'], 422);
         }
 
         if (($user->wallet_balance ?? 0) < $amount) {
-            return response()->json(['message'=>'Insufficient balance'], 422);
+            return response()->json(['message' => 'Insufficient balance'], 422);
         }
 
         try {
-            DB::transaction(function () use ($user, $amount, $currency, $data) {
+            DB::transaction(function () use ($user, $amount, $currency, $data, $calculatedAmount, $calculatedFee) {
                 // Hold funds immediately by decreasing wallet_balance + log tx
                 $user->wallet_balance = (float)$user->wallet_balance - $amount;
                 $user->save();
@@ -47,10 +56,11 @@ class WithdrawalRequestController extends Controller
                 WalletTransaction::create([
                     'user_id'   => $user->id,
                     'type'      => 'debit',
-                    'amount'    => $amount,
-                    'reference' => $ref = 'WD-'.Str::uuid()->toString(),
+                    'amount'    => $calculatedAmount,
+                    'fee'       => $calculatedFee,
+                    'reference' => $ref = 'WD-' . Str::uuid()->toString(),
                     'purpose'   => 'Withdrawal (hold)',
-                    'meta'      => json_encode(['channel'=>'withdrawal','currency'=>$currency]),
+                    'meta'      => json_encode(['channel' => 'withdrawal', 'currency' => $currency]),
                     'status'    => 'pending',
                 ]);
 
@@ -67,14 +77,33 @@ class WithdrawalRequestController extends Controller
                     'account_name'   => $data['account_name'],
                     'routing_number' => $data['routing_number'] ?? null,
                     'swift_code'     => $data['swift_code'] ?? null,
-                    'meta'           => ['note'=>'doctor requested withdrawal'],
+                    'meta'           => ['note' => 'doctor requested withdrawal'],
+                ]);
+
+                $wallet = AdminWallet::first();
+
+                if ($wallet) {
+                    $wallet->update(['balance' => $wallet->balance + $calculatedFee]);
+                } else {
+                    AdminWallet::create([
+                        'balance' => $calculatedFee
+                    ]);
+                }
+
+                AdminTransaction::create([
+                    'type'     => 'debit',
+                    'amount'   => $calculatedFee,
+                    'currency' => $currency,
+                    'purpose'  => 'withdrawal_request_fee_from_' . $user->role,
+                    'reference' => 'TX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
+                    'meta'     => ['status' => 'success'],
                 ]);
             });
 
-            return response()->json(['message'=>'Withdrawal requested. You’ll be notified when processed.']);
+            return response()->json(['message' => 'Withdrawal requested. You’ll be notified when processed.']);
         } catch (\Throwable $e) {
-            Log::error('Withdrawal request failed', ['err'=>$e->getMessage()]);
-            return response()->json(['message'=>'Failed to request withdrawal'], 500);
+            Log::error('Withdrawal request failed', ['err' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to request withdrawal'], 500);
         }
     }
 }

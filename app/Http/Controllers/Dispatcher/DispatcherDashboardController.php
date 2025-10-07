@@ -82,7 +82,9 @@ class DispatcherDashboardController extends Controller
             return view('dispatcher.wallet._list', compact('transactions'))->render();
         }
 
-        return view('dispatcher.wallet.index', compact('balance', 'transactions'));
+        $fee = (23 / 100);
+
+        return view('dispatcher.wallet.index', compact('balance', 'transactions', 'fee'));
     }
 
     public function addFunds(Request $request)

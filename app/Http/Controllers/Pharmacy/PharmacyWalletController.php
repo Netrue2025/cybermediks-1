@@ -28,7 +28,9 @@ class PharmacyWalletController extends Controller
             return view('pharmacy.wallet._list', compact('transactions'))->render();
         }
 
-        return view('pharmacy.wallet.index', compact('balance', 'transactions'));
+        $fee = (8 / 100);
+
+        return view('pharmacy.wallet.index', compact('balance', 'transactions', 'fee'));
     }
 
     public function addFunds(Request $request)

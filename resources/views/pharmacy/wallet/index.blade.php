@@ -69,6 +69,9 @@
                         <label class="form-label">Amount (USD)</label>
                         <input id="wdAmount" type="number" min="5" step="0.01" class="form-control"
                             placeholder="20.00">
+                        <span>Fee: <b id="feeDisplay">0.00</b></span>
+                        <br>
+                        <span>You will receive: <b id="receiveAmount" data-fee="{{ $fee }}">0.00</b></span>
                     </div>
 
                     <div class="row g-2">
@@ -114,6 +117,20 @@
     <script>
         (function() {
             const $txList = $('#txList');
+
+            $("#wdAmount").on('input', function() {
+                const fee = parseFloat($("#receiveAmount").data('fee')) || 0;
+                const amount = parseFloat($(this).val());
+
+                if (isNaN(amount)) {
+                    $("#receiveAmount").text('0.00');
+                    return;
+                }
+
+                const receive = amount * fee;
+                $("#feeDisplay").text(receive.toFixed(2));
+                $("#receiveAmount").text((amount - receive).toFixed(2)); // 2 decimal places
+            });
 
             function refreshList() {
                 $.get(`{{ route('pharmacy.wallet.index') }}`, {}, function(html) {

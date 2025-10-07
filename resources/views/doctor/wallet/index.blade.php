@@ -58,7 +58,7 @@
 
     {{-- Withdraw Prompt (simple) --}}
     <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content" style="background:#121a2c;border:1px solid var(--border);border-radius:18px;">
                 <div class="modal-header border-0">
                     <h5 class="modal-title">Withdraw</h5>
@@ -69,6 +69,9 @@
                         <label class="form-label">Amount (USD)</label>
                         <input id="wdAmount" type="number" min="5" step="0.01" class="form-control"
                             placeholder="20.00">
+                        <span>Fee: <b id="feeDisplay">0.00</b></span>
+                        <br>
+                        <span>You will receive: <b id="receiveAmount" data-fee="{{ $fee }}">0.00</b></span>
                     </div>
 
                     <div class="row g-2">
@@ -101,6 +104,7 @@
                     <div class="small subtle mt-2">
                         * Ensure details are correct. International USD routes may require routing and/or SWIFT.
                     </div>
+
                 </div>
                 <div class="modal-footer border-0">
                     <button class="btn btn-gradient" id="btnDoWithdraw">Request Withdrawal</button>
@@ -125,6 +129,21 @@
                     $('.display-6.fw-bold').text(newBalance);
                 });
             }
+
+            $("#wdAmount").on('input', function() {
+                const fee = parseFloat($("#receiveAmount").data('fee')) || 0;
+                const amount = parseFloat($(this).val());
+
+                if (isNaN(amount)) {
+                    $("#receiveAmount").text('0.00');
+                    return;
+                }
+
+                const receive = amount * fee;
+                $("#feeDisplay").text(receive.toFixed(2));
+                $("#receiveAmount").text((amount - receive).toFixed(2)); // 2 decimal places
+            });
+
 
 
             $('#btnWithdraw').on('click', function() {

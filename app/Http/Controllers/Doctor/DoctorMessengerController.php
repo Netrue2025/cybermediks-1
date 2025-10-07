@@ -8,6 +8,7 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DoctorMessengerController extends Controller
 {
@@ -40,14 +41,18 @@ class DoctorMessengerController extends Controller
             ->orderByDesc(DB::raw('COALESCE(created_at)'))
             ->paginate(30);
 
-        $active = $openConversationId
-            ? Conversation::where('doctor_id', $docId)
+        $openConvo = Conversation::where('doctor_id', $docId)
             ->with(['patient:id,first_name,last_name'])
-            ->find($openConversationId)
-            : null;
+            ->find($openConversationId);
+
+        $active = $openConversationId ? $openConvo : null;
+
+        $patientId = $active? $openConvo->patient_id : null;
+        $patientDetails = $active ? $openConvo->patient->fullName : null;
+        $appointmentId = $active ? $openConvo->appointment_id : null;
 
         // First page render with list + (optionally) active thread
-        return view('doctor.messenger.index', compact('conversations', 'active'));
+        return view('doctor.messenger.index', compact('conversations', 'active', 'patientId', 'patientDetails', 'appointmentId'));
     }
 
     public function show(Conversation $conversation)
@@ -67,7 +72,13 @@ class DoctorMessengerController extends Controller
             ->where('sender_id', '<>', Auth::id())
             ->update(['read_at' => now()]);
 
-        return view('doctor.messenger._thread', compact('conversation', 'messages'))->render();
+
+
+        $patientId = $conversation->patient_id;
+        $patientDetails = $conversation->patient->fullName;
+        $appointmentId = $conversation->appointment_id;
+
+        return view('doctor.messenger._thread', compact('conversation', 'messages', 'patientId', 'patientDetails', 'appointmentId'))->render();
     }
 
     public function send(Request $request, Conversation $conversation)

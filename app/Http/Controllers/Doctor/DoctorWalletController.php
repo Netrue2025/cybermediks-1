@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminTransaction;
+use App\Models\AdminWallet;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,8 +17,8 @@ class DoctorWalletController extends Controller
         $user = Auth::user();
 
         // Balance = sum(credits) - sum(debits)
-        $credits = WalletTransaction::forUser($user->id)->where('type','credit')->sum('amount');
-        $debits  = WalletTransaction::forUser($user->id)->where('type','debit')->sum('amount');
+        $credits = WalletTransaction::forUser($user->id)->where('type', 'credit')->sum('amount');
+        $debits  = WalletTransaction::forUser($user->id)->where('type', 'debit')->sum('amount');
         $balance = $user->wallet_balance;
 
         $transactions = WalletTransaction::with([])
@@ -29,7 +31,9 @@ class DoctorWalletController extends Controller
             return view('doctor.wallet._list', compact('transactions'))->render();
         }
 
-        return view('doctor.wallet.index', compact('balance','transactions'));
+        $fee = 23 / 100;
+
+        return view('doctor.wallet.index', compact('balance', 'transactions', 'fee'));
     }
 
     public function addFunds(Request $request)
@@ -49,13 +53,13 @@ class DoctorWalletController extends Controller
             'amount'   => $data['amount'],
             'currency' => $currency,
             'purpose'  => 'top_up',
-            'reference'=> 'TX-'.now()->format('YmdHis').'-'.Str::upper(Str::random(6)),
+            'reference' => 'TX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
             'meta'     => ['source' => 'manual_demo', 'status' => 'success'],
         ]);
 
         $user->update(['wallet_balance' => $user->wallet_balance + $data['amount']]);
 
-        return response()->json(['status'=>'success','message'=>'Funds added','tx'=>$tx]);
+        return response()->json(['status' => 'success', 'message' => 'Funds added', 'tx' => $tx]);
     }
 
     public function withdraw(Request $request)
@@ -67,29 +71,55 @@ class DoctorWalletController extends Controller
 
         $user = Auth::user();
         $currency = strtoupper($data['currency'] ?? 'USD');
+        $fee = (23 / 100);
+        $calculatedFee = $data['amount'] * $fee;
+        $calculatedAmount = $data['amount'] - $calculatedFee;
 
         // Compute current balance to prevent overdraft
-        $credits = WalletTransaction::forUser($user->id)->where('type','credit')->sum('amount');
-        $debits  = WalletTransaction::forUser($user->id)->where('type','debit')->sum('amount');
+        $credits = WalletTransaction::forUser($user->id)->where('type', 'credit')->sum('amount');
+        $debits  = WalletTransaction::forUser($user->id)->where('type', 'debit')->sum('amount');
         $balance = $user->wallet_balance;
 
         if ($data['amount'] > $balance) {
-            return response()->json(['status'=>'error','message'=>'Insufficient balance'], 422);
+            return response()->json(['status' => 'error', 'message' => 'Insufficient balance'], 422);
         }
 
         // You might want a separate Withdrawals table; here we log as a debit with pending meta.
         $tx = WalletTransaction::create([
             'user_id'  => $user->id,
             'type'     => 'debit',
-            'amount'   => $data['amount'],
+            'amount'   => $calculatedAmount,
+            'fee'      => $calculatedFee,
             'currency' => $currency,
             'purpose'  => 'withdrawal_request',
-            'reference'=> 'TX-'.now()->format('YmdHis').'-'.Str::upper(Str::random(6)),
+            'reference' => 'TX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
             'meta'     => ['status' => 'pending'],
         ]);
 
+        //add fee to admin wallet
+        $wallet = AdminWallet::first();
+
+        if ($wallet) {
+            $wallet->update(['balance' => $wallet->balance + $calculatedFee]);
+        } else {
+            AdminWallet::create([
+                'balance' => $calculatedFee
+            ]);
+        }
+
+        AdminTransaction::create([
+            'type'     => 'debit',
+            'amount'   => $calculatedFee,
+            'currency' => $currency,
+            'purpose'  => 'withdrawal_request_fee_from_doctor',
+            'reference' => 'TX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
+            'meta'     => ['status' => 'success'],
+        ]);
+
+
+
         $user->update(['wallet_balance' => $user->wallet_balance - $data['amount']]);
 
-        return response()->json(['status'=>'success','message'=>'Withdrawal requested','tx'=>$tx]);
+        return response()->json(['status' => 'success', 'message' => 'Withdrawal requested', 'tx' => $tx]);
     }
 }

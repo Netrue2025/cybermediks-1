@@ -92,6 +92,7 @@ class DoctorProfileController extends Controller
     {
         $data = $request->validate([
             'title'        => ['nullable', 'string', 'max:120'],
+            'meeting_link'        => ['nullable', 'url', 'max:120'],
             'consult_fee'  => ['nullable', 'numeric', 'min:0', 'max:100000'],
             'avg_duration' => ['nullable', 'integer', 'min:5', 'max:240'], // minutes
             'specialty_ids' => ['array'],            // NEW
@@ -99,8 +100,18 @@ class DoctorProfileController extends Controller
         ]);
 
         $profile = $this->getProfile();
+
+        if ($request->has('meeting_link') && $request->meeting_link != '')
+        {
+            $now = now();
+        } else {
+            $now = null;
+        }
+
         $profile->update(array_filter([
             'title'        => $data['title']        ?? null,
+            'meeting_link' => $data['meeting_link']        ?? null,
+            'link_updated_at' => $now,
             'consult_fee'  => $data['consult_fee']  ?? null,
             'avg_duration' => $data['avg_duration'] ?? null,
         ], fn($v) => !is_null($v)));

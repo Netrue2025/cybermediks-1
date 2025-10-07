@@ -520,6 +520,14 @@
                                         <span class="input-icon-suffix subtle">min</span>
                                     </div>
                                 </div>
+
+                                <div>
+                                    <label class="form-label small subtle mb-1">Meeting Link</label>
+                                    <div class="input-icon">
+                                        <input id="meeting_link" type="url" 
+                                            class="form-control" value="{{ $profile?->meeting_link}}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -918,6 +926,7 @@
                     title: $('#qTitle').val(),
                     consult_fee: $('#qFee').val(),
                     avg_duration: $('#qDuration').val(),
+                    meeting_link: $('#meeting_link').val(),
                     'specialty_ids': spec
                 })
                 .done(res => {
@@ -930,9 +939,6 @@
                 })
                 .always(() => unlockBtn($btn));
         });
-
-
-
 
         $(document).on('click', '[data-cred-del]', function() {
             const id = $(this).data('cred-del');

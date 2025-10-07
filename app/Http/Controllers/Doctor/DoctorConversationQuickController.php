@@ -57,12 +57,25 @@ class DoctorConversationQuickController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Already closed'], 422);
         }
 
+        // check if prescription was issued
+        $appointment = Appointment::where('id', $conversation->appointment_id)->where('doctor_id', Auth::id())->first();
+
+        if (!$appointment)
+        {
+            return response()->json(['status' => 'error', 'message' => 'Appointment not found'], 422);
+        }
+
+        if (!$appointment->prescription_issued)
+        {
+            return response()->json(['status' => 'error', 'message' => 'You must issue prescription before closing chat'], 422);
+        }
+
+
         // charge patient for consultation
         $patient = $conversation->patient;
         $doctor = $conversation->doctor;
         $doctorProfile = $doctor->doctorProfile;
         $fee = $doctorProfile?->consult_fee;
-        $appointment = Appointment::where('id', $conversation->appointment_id)->first();
 
         if ($fee && $patient && $appointment->status != 'completed') {
             // Charge the patient
