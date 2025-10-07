@@ -49,7 +49,7 @@ class DoctorConversationQuickController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Request rejected ✅']);
     }
 
-    public function close(Conversation $conversation)
+    public function close(Request $request, Conversation $conversation)
     {
         $this->ensureOwned($conversation);
         // allow closing from pending or active
@@ -59,13 +59,14 @@ class DoctorConversationQuickController extends Controller
 
         // check if prescription was issued
         $appointment = Appointment::where('id', $conversation->appointment_id)->where('doctor_id', Auth::id())->first();
+        $required = $request->boolean('prescription_is_required') ?? false;
 
         if (!$appointment)
         {
             return response()->json(['status' => 'error', 'message' => 'Appointment not found'], 422);
         }
 
-        if (!$appointment->prescription_issued)
+        if (!$appointment->prescription_issued && !$required)
         {
             return response()->json(['status' => 'error', 'message' => 'You must issue prescription before closing chat'], 422);
         }

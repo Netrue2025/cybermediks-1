@@ -101,7 +101,6 @@
                         <div class="text-center mb-4">
                             <h2 class="brand-gradient mb-1">CYBERMEDIKS</h2>
                             <h4 class="text-white mb-1">Create an Account</h4>
-                            <div class="subtle">Step 1 of 2: Account Details</div>
                         </div>
 
                         <form id="regForm" autocomplete="off">
@@ -126,6 +125,8 @@
                                         <option value="doctor">Doctor</option>
                                         <option value="pharmacy">Pharmacy</option>
                                         <option value="dispatcher">Dispatch Rider</option>
+                                        <option value="department_of_health">Department of Health</option>
+                                        <option value="department_of_transport">Department of Transport</option>
                                     </select>
                                 </div>
 

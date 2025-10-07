@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-class DoctorMiddleware
+class TransportMiddleware
 {
     /**
      * Handle an incoming request.
@@ -23,7 +23,7 @@ class DoctorMiddleware
             return redirect()->route('login')->with('error', 'Please login first.');
         }
 
-        if (!$user->role || $user->role !== 'doctor') {
+        if (!$user->role || $user->role !== 'transport') {
             $dashboardRoute = '';
 
             switch ($user->role) {
@@ -33,20 +33,20 @@ class DoctorMiddleware
                 case 'dispatcher':
                     $dashboardRoute = 'dispatcher.dashboard';
                     break;
-                case 'pharmacy':
-                    $dashboardRoute = 'pharmacy.dashboard';
+                case 'doctor':
+                    $dashboardRoute = 'doctor.dashboard';
                     break;
                 case 'health':
                     $dashboardRoute = 'health.dashboard';
                     break;
-                case 'transport':
-                    $dashboardRoute = 'transport.dashboard';
+                case 'pharmacy':
+                    $dashboardRoute = 'pharmacy.dashboard';
                     break;
                 default:
                     Auth::logout();
                     return redirect()->route('login')->with('error', 'Unauthorized access. Please login with a valid account.');
             }
-            return redirect()->route($dashboardRoute)->with('error', 'Unauthorized access to doctor area.');
+            return redirect()->route($dashboardRoute)->with('error', 'Unauthorized access to pharmacy area.');
         }
         return $next($request);
     }

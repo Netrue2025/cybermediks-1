@@ -71,9 +71,11 @@ class DoctorQueueController extends Controller
             return response()->json(['message' => 'Only accepted requests can be completed'], 422);
         }
 
-        // check ifprescription was issued
-        if (!$appointment->prescription_issued) {
-            return response()->json(['message' => 'You need to issue a prescrition before completing this appointment'], 422);
+        // check if prescription was issued
+        $required = $request->boolean('prescription_is_required') ?? false;
+        if (!$appointment->prescription_issued && !$required)
+        {
+            return response()->json(['status' => 'error', 'message' => 'You need to issue a prescrition before completing this appointment'], 422);
         }
 
         $appointment->status = 'completed';

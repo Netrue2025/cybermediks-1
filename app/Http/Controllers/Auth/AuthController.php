@@ -27,7 +27,7 @@ class AuthController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', 'in:doctor,pharmacy,dispatcher,patient'],
+            'role' => ['required', 'string', 'in:doctor,pharmacy,dispatcher,patient,department_of_health,department-of_transport'],
             'password' => ['required', 'confirmed', Password::min(6)],
         ]);
 
@@ -71,6 +71,12 @@ class AuthController extends Controller
                     break;
                 case 'dispatcher':
                     $redirect = 'dispatcher.dashboard';
+                    break;
+                case 'health':
+                    $redirect = 'health.dashboard';
+                    break;
+                case 'transport':
+                    $redirect = 'transport.dashboard';
                     break;
                 default:
                     $redirect = 'patient.dashboard';

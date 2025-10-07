@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'doctor'  => \App\Http\Middleware\DoctorMiddleware::class,
             'dispatcher' => \App\Http\Middleware\DispatcherMiddleware::class,
             'pharmacy' => \App\Http\Middleware\PharmacyMiddleware::class,
+            'transport' => \App\Http\Middleware\TransportMiddleware::class,
+            'health' => \App\Http\Middleware\HealthMiddleware::class,
             'admin'   => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })

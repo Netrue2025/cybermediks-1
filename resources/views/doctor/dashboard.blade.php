@@ -385,7 +385,6 @@
                                     </button>
                                 </div>
                             @elseif (in_array($appt->status, ['accepted', 'scheduled']))
-
                                 <button class="btn btn-outline-light btn-sm" data-reject-appt="{{ $appt->id }}">
                                     <i class="fa-solid fa-xmark me-1"></i> Reject
                                 </button>
@@ -395,16 +394,15 @@
                                         data-patientid="{{ $appt->patient?->id }}"
                                         data-patientname="{{ $appt->patient?->first_name . ' ' . $appt->patient?->last_name }}"
                                         data-appointmentid="{{ $appt->id }}">Add Prescription</button>
-                                @else
-                                    @if (!empty($appt->meeting_link))
-                                        <div class="d-flex gap-2">
-                                            <button class="btn btn-success btn-sm"
-                                                data-completed-appt="{{ $appt->id }}">
-                                                <i class="fa-solid fa-check me-1"></i> Mark Completed
-                                            </button>
-                                        </div>
-                                    @endif
                                 @endif
+                                @if (!empty($appt->meeting_link))
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-success btn-sm" data-completed-appt="{{ $appt->id }}">
+                                            <i class="fa-solid fa-check me-1"></i> Mark Completed
+                                        </button>
+                                    </div>
+                                @endif
+
 
 
                                 <div class="subtle small">The patient will automatically see this link</div>
@@ -423,7 +421,7 @@
             </div>
         @endif
 
-        
+
     </div>
 
     {{-- PRESCRIPTION MODAL --}}
@@ -503,6 +501,52 @@
                                     Prescription</span></button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="closeChatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="background:#0f1628;border:1px solid #27344e;border-radius:18px;color:#e5e7eb;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Close Appointment</h5>
+                    <button type="button" id="closeModalBtn" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Hidden input ensures 0 is sent when unchecked -->
+                    <input type="hidden" name="prescription_is_required" value="0">
+
+                    <div class="form-check form-switch d-flex align-items-center gap-2">
+                        <input class="form-check-input" type="checkbox" id="prescription_is_required"
+                            name="prescription_is_required" value="1">
+                        <label class="form-check-label" for="prescription_is_required">
+                            Prescription not required
+                        </label>
+                    </div>
+
+                    <p class="mt-3 mb-0" style="font-size:.9rem;color:#9aa3b2;">
+                        Toggle this if you can close the appointment without issuing a prescription.
+                    </p>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="button" class="btn btn-outline-light flex-fill" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="button" data-completed-appt="" class="btn flex-fill" id="endChat"
+                            style="background:linear-gradient(135deg,#3b82f6,#06b6d4);color:#fff;border:0;">
+                            Close Appointment
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 d-flex justify-content-between">
+                    <button class="btn btn-success" id="newPrescription" type="button">
+                        Add Prescription
+                    </button>
                 </div>
             </div>
         </div>
@@ -691,13 +735,26 @@
                     .always(() => unlockBtn($btn));
             });
 
+            $("#newPrescription").on('click', function() {
+                $("#closeModalBtn").trigger('click');
+                $("#btnPrescription").trigger('click');
+            })
+
             // mark completed
-            $(document).on('click', '[data-completed-appt]', function() {
+            $('#endChat').on('click', function() {
+                const is_required = $('#prescription_is_required').prop('checked') ? 1 : 0;
                 const id = $(this).data('completed-appt');
                 const $btn = $(this);
+
+                if (is_required === 0) {
+                    flash('danger', 'Prescription is required');
+                    return;
+                }
+
                 lockBtn($btn);
                 $.post(`{{ route('doctor.queue.completed', '__ID__') }}`.replace('__ID__', id), {
-                        _token: `{{ csrf_token() }}`
+                        _token: `{{ csrf_token() }}`,
+                        prescription_is_required: is_required
                     })
                     .done(res => {
                         flash('success', res.message || 'Accepted');
@@ -708,6 +765,19 @@
                     })
                     .always(() => unlockBtn($btn));
             });
+
+            // mark completed
+            $(document).on('click', '[data-completed-appt]', function() {
+                const id = $(this).data('completed-appt');
+                const $endBtn = $('#endChat');
+
+                // Set consistently with .data()
+                $endBtn.data('completed-appt', id); // or use .data('close', id) if your other code reads that
+
+                const modalEl = document.getElementById('closeChatModal');
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            });
+
 
             // Reject video call
             $(document).on('click', '[data-reject-appt]', function() {

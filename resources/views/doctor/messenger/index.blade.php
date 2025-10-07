@@ -372,31 +372,48 @@
 
                 <div class="chat-body" id="chatBody">
                     @if ($active)
-                        {!! view('doctor.messenger._thread', ['conversation' => $active, 'messages' => [], 'patientId' => $patientId, 'patientDetails' => $patientDetails, 'appointmentId' => $appointmentId])->render() !!}
+                        {!! view('doctor.messenger._thread', [
+                            'conversation' => $active,
+                            'messages' => [],
+                            'patientId' => $patientId,
+                            'patientDetails' => $patientDetails,
+                            'appointmentId' => $appointmentId,
+                        ])->render() !!}
                     @else
                         <div class="small-muted">Select a conversation to start.</div>
                     @endif
                 </div>
 
-                <div class="chat-input">
+                <div class="chat-input border-top py-2">
                     @php $isClosed = $active && $active->status === 'closed'; @endphp
-                    <form id="msgForm" class="composer" {{ $active && !$isClosed ? '' : 'style=display:none' }}>
+
+                    <form id="msgForm" class="{{ $active && !$isClosed ? '' : 'd-none' }}">
                         @csrf
                         <input type="hidden" id="convId" name="conv_id" value="{{ $active->id ?? '' }}">
-                        <button type="button" class="btn btn-ghost" id="btnPrescription" title="Attach"><i
-                                class="fa-solid fa-tablets"></i></button>
-                        <textarea class="form-control" name="body"
-                            placeholder="{{ $isClosed ? 'Conversation is closed' : 'Type a message…' }}" autocomplete="off"></textarea>
-                        <button class="btn btn-gradient" id="btnSend"><i class="fa-solid fa-paper-plane"></i></button>
+
+                        <div class="input-group">
+                            <button type="button" class="btn btn-gradient" id="btnPrescription" title="Attach">
+                                New Prescription
+                            </button>
+
+                            <textarea class="form-control" name="body" rows="1"
+                                placeholder="{{ $isClosed ? 'Conversation is closed' : 'Type a message…' }}" autocomplete="off"></textarea>
+
+                            <button type="button" class="btn btn-primary" id="btnSend">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </form>
+
                     @if ($isClosed)
-                        <br>
-                        <button class="btn btn-gradient" id="btnReopen">Reopen Conversation</button>
-                        <br>
-                        <div class="disabled-note">This conversation is closed. You can reopen it from the patient card.
+                        <div class="mt-2">
+                            <button class="btn btn-primary" id="btnReopen">Reopen Conversation</button>
+                            <div class="form-text mt-2">This conversation is closed. You can reopen it from the patient
+                                card.</div>
                         </div>
                     @endif
                 </div>
+
             </div>
 
         </div>
@@ -482,6 +499,56 @@
             </div>
         </div>
     </div>
+
+
+    <div class="modal fade" id="closeChatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="background:#0f1628;border:1px solid #27344e;border-radius:18px;color:#e5e7eb;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Close Chat</h5>
+                    <button type="button" id="closeModalBtn" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Hidden input ensures 0 is sent when unchecked -->
+                    <input type="hidden" name="prescription_is_required" value="0">
+
+                    <div class="form-check form-switch d-flex align-items-center gap-2">
+                        <input class="form-check-input" type="checkbox" id="prescription_is_required"
+                            name="prescription_is_required" value="1">
+                        <label class="form-check-label" for="prescription_is_required">
+                            Prescription not required
+                        </label>
+                    </div>
+
+                    <p class="mt-3 mb-0" style="font-size:.9rem;color:#9aa3b2;">
+                        Toggle this if you can close the chat without issuing a prescription.
+                    </p>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="button" class="btn btn-outline-light flex-fill" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn flex-fill" id="endChat" data-close="{{ $active->id }}"
+                            style="background:linear-gradient(135deg,#3b82f6,#06b6d4);color:#fff;border:0;">
+                            Close Chat
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 d-flex justify-content-between">
+                    <button class="btn btn-success" id="newPrescription" type="button">
+                        New Prescription
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 @endsection
 
 @push('scripts')
@@ -565,10 +632,7 @@
                     _token: `{{ csrf_token() }}`
                 }).done(res => {
                     flash('success', res.message || 'Reopened');
-                    loadThread(id);
-                    $msgForm.show();
-                    $btn.hide();
-                    $(".disabled-note").remove();
+                    window.location.reload()
                 }).fail(xhr => {
                     flash('danger', xhr.responseJSON?.message || 'Failed to reopen');
                 }).always(() => unlockBtn($btn));
@@ -611,27 +675,51 @@
                     _token: `{{ csrf_token() }}`
                 }).done(res => {
                     flash('success', res.message || 'Accepted');
-                    loadThread(id);
+                    window.location.reload();
                 }).fail(xhr => {
                     flash('danger', xhr.responseJSON?.message || 'Failed to accept');
                 }).always(() => unlockBtn($btn));
             });
 
             $(document).on('click', '[data-close]', function() {
+                new bootstrap.Modal(document.getElementById('closeChatModal')).show();
+            });
+
+            $("#newPrescription").on('click', function() {
+                $("#closeModalBtn").trigger('click');
+                $("#btnPrescription").trigger('click');
+            })
+
+            $('#endChat').on('click', function() {
+                const is_required = $('#prescription_is_required').prop('checked') ? 1 : 0;
                 const id = $(this).data('close');
                 const $btn = $(this);
+
+                if (is_required === 0) {
+                    flash('danger', 'Prescription is required');
+                    return;
+                }
+
                 lockBtn($btn);
-                $.post(`{{ route('doctor.conversations.close', ['conversation' => '__ID__']) }}`.replace(
-                    '__ID__', id), {
-                    _token: `{{ csrf_token() }}`
-                }).done(res => {
-                    flash('success', res.message || 'Closed');
-                    window.location.reload();
-                    loadThread(id);
-                }).fail(xhr => {
-                    flash('danger', xhr.responseJSON?.message || 'Failed to close');
-                }).always(() => unlockBtn($btn));
+
+                $.post(
+                        `{{ route('doctor.conversations.close', ['conversation' => '__ID__']) }}`.replace(
+                            '__ID__', id), {
+                            _token: `{{ csrf_token() }}`,
+                            prescription_is_required: is_required // <-- send it
+                        }
+                    )
+                    .done(res => {
+                        flash('success', res.message || 'Closed');
+                        window.location.reload();
+                        // loadThread(id); // not needed if you reload
+                    })
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to close');
+                    })
+                    .always(() => unlockBtn($btn));
             });
+
 
             // light polling every 6s only if a thread is open and window focused
             setInterval(function() {
@@ -672,9 +760,9 @@
                     },
                     success: function(res) {
                         flash('success', res.message || 'Prescription issued');
-                            // fallback: clear the form for another entry
-                            $('#rxForm')[0].reset();
-                            $('#rxItems').html($('#rxItems .rx-item').first()); // keep first row
+                        // fallback: clear the form for another entry
+                        $('#rxForm')[0].reset();
+                        $('#rxItems').html($('#rxItems .rx-item').first()); // keep first row
                     },
                     error: function(xhr) {
                         const msg = xhr.responseJSON?.message || 'Failed to issue prescription';
