@@ -75,18 +75,36 @@
             <div class="col-md-6">
                 <label class="form-label small section-subtle mb-1">Search</label>
                 <div class="input-group">
-                    <span class="input-group-text" style="background:#0b1222;border-color:var(--border)">
+                    <span class="input-group-text" style="background:#0b1222;border-color:var(--border); color:white;">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </span>
                     <input class="form-control" name="q" value="{{ $q }}"
-                        placeholder="Dispatcher name or email">
+                        placeholder="Search first/last name or email">
                 </div>
             </div>
+
+            <div class="col-md-3">
+                <label class="form-label small section-subtle mb-1">Country</label>
+                <select class="form-select" name="country">
+                    <option value="">All countries</option>
+                    @foreach ($countries as $c)
+                        <option value="{{ $c }}" @selected(strtoupper($country ?? '') === $c)>{{ $c }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="col-md-2">
                 <label class="form-label small section-subtle mb-1">&nbsp;</label>
                 <button class="btn btn-gradient w-100">
                     <i class="fa-solid fa-sliders me-1"></i> Filter
                 </button>
+            </div>
+
+            <div class="col-md-1 text-md-end">
+                <label class="form-label small section-subtle mb-1 d-none d-md-block">&nbsp;</label>
+                <a href="{{ route('admin.dispatchers.index') }}" class="reset-link d-inline-block">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                </a>
             </div>
         </form>
     </div>

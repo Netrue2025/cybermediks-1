@@ -11,24 +11,44 @@ class AdminDoctorsController extends Controller
 {
     public function index(Request $r)
     {
-        $q = trim((string) $r->query('q'));
+        $q        = trim((string) $r->query('q', ''));
+        $country  = trim((string) $r->query('country', ''));
 
-        $doctors = User::with(['doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration', 'specialties'])
+        // For a dropdown of countries that actually have doctors
+        $countries = User::where('role', 'doctor')
+            ->whereNotNull('country')
+            ->select('country')->distinct()
+            ->orderBy('country')
+            ->pluck('country');
+
+        $doctors = User::with([
+            'doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration',
+            'specialties'
+        ])
             ->where('role', 'doctor')
             ->when($q !== '', function ($w) use ($q) {
                 $w->where(function ($x) use ($q) {
-                    $x->where('first_name', 'like', "%$q%")
-                        ->orWhere('last_name', 'like', "%$q%")
-                        ->orWhereHas('doctorProfile', fn($p) => $p->where('title', 'like', "%$q%"));
+                    $x->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%")
+                        ->orWhereHas('doctorProfile', fn($p) => $p->where('title', 'like', "%{$q}%"));
+                    // Optionally search specialties too:
+                    // ->orWhereHas('specialties', fn ($s) => $s->where('name', 'like', "%{$q}%"));
                 });
             })
+            // COUNTRY FILTER (case-insensitive exact match)
+            ->when($country !== '', function ($w) use ($country) {
+                $w->whereRaw('LOWER(country) = ?', [strtolower($country)]);
+                // or use LIKE if you want partial matches:
+                // $w->where('country', 'like', "%{$country}%");
+            })
             ->orderBy('first_name')
-            ->paginate(20);
-
+            ->paginate(20)
+            ->withQueryString();
         $credentials = DoctorCredential::with('doctor')->where('status', 'pending')->latest()->take(10)->get();
 
-        return view('admin.doctors.index', compact('doctors', 'q', 'credentials'));
+        return view('admin.doctors.index', compact('doctors', 'q', 'credentials', 'country', 'countries'));
     }
+
 
     public function availability($id)
     {

@@ -11,22 +11,38 @@ class AdminPharmaciesController extends Controller
 {
     public function index(Request $r)
     {
-        $q = trim((string)$r->query('q'));
+        $q        = trim((string) $r->query('q', ''));
+        $country  = trim((string) $r->query('country', ''));
+
+        // Countries that actually have pharmacies
+        $countries = User::where('role', 'pharmacy')
+            ->whereNotNull('country')
+            ->select('country')->distinct()
+            ->orderBy('country')
+            ->pluck('country');
 
         $pharmacies = User::with(['pharmacyProfile'])
             ->where('role', 'pharmacy')
             ->when($q !== '', function ($w) use ($q) {
                 $w->where(function ($x) use ($q) {
-                    $x->where('first_name', 'like', "%$q%")
-                        ->orWhere('last_name', 'like', "%$q%")
-                        ->orWhere('email', 'like', "%$q%");
+                    $x->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name',  'like', "%{$q}%")
+                        ->orWhere('email',      'like', "%{$q}%");
                 });
             })
+            // COUNTRY FILTER (case-insensitive exact)
+            ->when($country !== '', function ($w) use ($country) {
+                $w->whereRaw('LOWER(country) = ?', [strtolower($country)]);
+                // or use LIKE for partials:
+                // $w->where('country', 'like', "%{$country}%");
+            })
             ->orderBy('first_name')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
-        return view('admin.pharmacies.index', compact('pharmacies', 'q'));
+        return view('admin.pharmacies.index', compact('pharmacies', 'q', 'country', 'countries'));
     }
+
 
     public function profile(User $pharmacy)
     {

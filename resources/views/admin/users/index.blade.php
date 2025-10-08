@@ -89,6 +89,7 @@
         .reset-link:hover {
             color: #fff
         }
+
         table th {
             color: white !important;
         }
@@ -99,7 +100,7 @@
     {{-- Filters --}}
     <div class="cardx mb-3 filter-card">
         <form class="row g-2 align-items-end">
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <label class="form-label small section-subtle mb-1">Search</label>
                 <div class="input-group">
                     <span class="input-group-text" style="background:#0b1222;border-color:var(--border); color:white;">
@@ -110,15 +111,15 @@
                 </div>
             </div>
 
-            {{-- <div class="col-md-3">
-                <label class="form-label small section-subtle mb-1">Role</label>
-                <select class="form-select" name="role">
-                    <option value="">All Roles</option>
-                    @foreach (['admin', 'patient', 'doctor', 'pharmacy', 'dispatcher'] as $r)
-                        <option value="{{ $r }}" @selected($role === $r)>{{ ucfirst($r) }}</option>
+            <div class="col-md-3">
+                <label class="form-label small section-subtle mb-1">Country</label>
+                <select class="form-select" name="country">
+                    <option value="">All countries</option>
+                    @foreach ($countries as $c)
+                        <option value="{{ $c }}" @selected(strtoupper($country ?? '') === $c)>{{ $c }}</option>
                     @endforeach
                 </select>
-            </div> --}}
+            </div>
 
             <div class="col-md-2">
                 <label class="form-label small section-subtle mb-1">&nbsp;</label>
@@ -127,13 +128,14 @@
                 </button>
             </div>
 
-            <div class="col-md-2 text-md-end">
+            <div class="col-md-1 text-md-end">
                 <label class="form-label small section-subtle mb-1 d-none d-md-block">&nbsp;</label>
                 <a href="{{ route('admin.users.index') }}" class="reset-link d-inline-block">
                     <i class="fa-solid fa-rotate-left me-1"></i> Reset
                 </a>
             </div>
         </form>
+
     </div>
 
     {{-- Table --}}
@@ -185,7 +187,7 @@
                                 </span>
                             </td>
                             <td>
-                                @if($u->hasVerifiedEmail())
+                                @if ($u->hasVerifiedEmail())
                                     <span class="badge-soft badge-on">
                                         <i class="fa-solid fa-check"></i> Verified
                                     </span>
