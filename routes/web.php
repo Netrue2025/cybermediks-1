@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminDispatchersController;
 use App\Http\Controllers\Admin\AdminDoctorsController;
 use App\Http\Controllers\Admin\AdminPharmaciesController;
 use App\Http\Controllers\Admin\AdminPrescriptionsController;
+use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminsController;
 use App\Http\Controllers\Admin\AdminSpecialtiesController;
 use App\Http\Controllers\Admin\AdminTransactionsController;
@@ -81,7 +82,7 @@ Route::middleware('auth')->group(function () {
 Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'patient'])->group(function () {
 
     Route::get('/dashboard', [PatientDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/store', fn() => view('patient.store'))->name('store');
+    Route::get('/store', [PatientDashboardController::class, 'products'])->name('store');
     Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
     Route::get('/prescriptions/{rx}/pharmacies', [PrescriptionController::class, 'list'])->name('prescriptions.pharmacies');
     Route::post('/prescriptions/{rx}/assign-pharmacy', [PrescriptionController::class, 'assign'])->name('prescriptions.assignPharmacy');
@@ -298,6 +299,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/specialties', [AdminSpecialtiesController::class, 'index'])->name('specialties.index');
     Route::resource('specialties', AdminSpecialtiesController::class)
         ->only(['index', 'store', 'update', 'destroy']);
+
+    Route::get('/products',        [AdminProductController::class, 'index'])->name('products.index');
+    Route::post('/products',       [AdminProductController::class, 'store'])->name('products.store');
+    Route::put('/products/{product}',   [AdminProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
+
 
     // Admin management
     Route::get('/admins', [AdminsController::class, 'index'])->name('admins.index');

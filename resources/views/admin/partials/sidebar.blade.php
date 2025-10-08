@@ -31,6 +31,11 @@
                 <i class="fa-solid fa-gauge"></i><span>Dashboard</span>
             </a>
 
+             <a class="item {{ request()->routeIs('admin.products.index') ? 'active' : '' }}"
+                href="{{ route('admin.products.index') }}">
+                <i class="fa-solid fa-box"></i><span>Products</span>
+            </a>
+
             <div class="section">People</div>
             <a class="item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
                 href="{{ route('admin.users.index') }}">

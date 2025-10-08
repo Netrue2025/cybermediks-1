@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Prescription;
+use App\Models\Product;
 use App\Models\Specialty;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -58,5 +59,23 @@ class PatientDashboardController extends Controller
             'specialties'    => $specialties,
             'acceptedAppt'   => $acceptedAppt
         ]);
+    }
+
+    public function products(Request $r)
+    {
+        $q = trim((string) $r->query('q', ''));
+
+        $products = Product::query()
+            ->when($q !== '', function ($w) use ($q) {
+                $w->where(function ($x) use ($q) {
+                    $x->where('name', 'like', "%{$q}%")
+                        ->orWhere('description', 'like', "%{$q}%");
+                });
+            })
+            ->orderByDesc('updated_at')
+            ->paginate(24)                 // paginate for nicer UX
+            ->withQueryString();           // keep ?q= in pagination links
+
+        return view('patient.store', compact('products', 'q'));
     }
 }
