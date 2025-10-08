@@ -9,9 +9,12 @@ class PharmacyProfile extends Model
     protected $fillable = [
         'user_id',
         'license_no',
+        'operating_license',
         'hours',
         'is_24_7',
         'delivery_radius_km',
+        'status',
+        'rejection_reason'
     ];
 
     public function user()

@@ -1,4 +1,4 @@
-@extends('layouts.health')
+@extends('layouts.transport')
 @section('title', 'Profile Settings')
 
 @push('styles')
@@ -221,7 +221,7 @@
 
             const data = $(this).serializeArray();
 
-            $.post(`{{ route('health.profile.update') }}`, $.param(data))
+            $.post(`{{ route('transport.profile.update') }}`, $.param(data))
                 .done(res => flash('success', res.message || 'Profile updated'))
                 .fail(xhr => {
                     let msg = xhr.responseJSON?.message || 'Update failed';
@@ -238,7 +238,7 @@
             e.preventDefault();
             const $btn = $('#btnChangePass');
             lockBtn($btn);
-            $.post(`{{ route('health.profile.password') }}`, $(this).serialize())
+            $.post(`{{ route('transport.profile.password') }}`, $(this).serialize())
                 .done(res => {
                     flash('success', res.message || 'Password updated');
                     this.reset();

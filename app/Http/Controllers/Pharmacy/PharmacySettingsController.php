@@ -7,6 +7,7 @@ use App\Models\PharmacyProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class PharmacySettingsController extends Controller
@@ -26,7 +27,6 @@ class PharmacySettingsController extends Controller
     {
         $profile = PharmacyProfile::firstOrCreate(['user_id' => Auth::id()]);
         $data = $r->validate([
-            'license_no' => 'nullable|string|max:120',
             'is_24_7'    => 'nullable|boolean',
             'delivery_radius_km' => 'nullable|numeric|min:0|max:500',
             'hours'      => 'nullable|string|max:3000', // store JSON or free text
@@ -35,6 +35,39 @@ class PharmacySettingsController extends Controller
         $profile->update($data);
 
         return back()->with('ok', 'Settings saved.');
+    }
+
+    public function updateLicense(Request $r)
+    {
+        $profile = PharmacyProfile::firstOrCreate(['user_id' => Auth::id()]);
+
+        // Block updates while pending
+        if ($profile->status === 'pending') {
+            return back()->withErrors([
+                'operating_license' => 'Your previous submission is still under review. Please wait until it is rejected before uploading again.',
+            ])->withInput();
+        }
+
+        $data = $r->validate([
+            'license_no'        => 'required|string|max:120',
+            'operating_license' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        $oldPath = $profile->operating_license;
+        $path = $r->file('operating_license')->store('pharmacy/licenses', 'public');
+
+        $profile->fill([
+            'license_no'        => $data['license_no'],
+            'operating_license' => $path,
+            'status'            => 'pending',
+            'rejection_reason'  => null,
+        ])->save();
+
+        if ($oldPath && $oldPath !== $path) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        return back()->with('ok', 'License updated and sent for review.');
     }
 
     public function showProfile()

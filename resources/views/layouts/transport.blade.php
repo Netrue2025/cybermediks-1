@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name') }} — @yield('title', 'Department of Health') </title>
+    <title>{{ config('app.name') }} — @yield('title', 'Department of Transport') </title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
@@ -368,7 +368,7 @@
 
     <div class="layout">
         {{-- Sidebar --}}
-        @include('health.partials.sidebar')
+        @include('transport.partials.sidebar')
 
         {{-- Main content --}}
         <section class="content">
@@ -393,7 +393,7 @@
     <script>
         $('#btnSidebar').on('click', () => $('.sidebar').toggleClass('show'));
     </script>
-    @include('health.partials.location-modal')
+    @include('transport.partials.location-modal')
     @stack('scripts')
 </body>
 

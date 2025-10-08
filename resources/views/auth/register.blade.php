@@ -126,7 +126,7 @@
                                         <option value="pharmacy">Pharmacy</option>
                                         <option value="dispatcher">Dispatch Rider</option>
                                         <option value="health">Department of Health</option>
-                                        <option value="transport">Department of Transport</option>
+                                        <option value="transport">Department of Pharmacy</option>
                                     </select>
                                 </div>
 

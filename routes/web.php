@@ -44,6 +44,7 @@ use App\Http\Controllers\Pharmacy\PharmacyProfileController;
 use App\Http\Controllers\Pharmacy\PharmacyReportsController;
 use App\Http\Controllers\Pharmacy\PharmacySettingsController;
 use App\Http\Controllers\Pharmacy\PharmacyWalletController;
+use App\Http\Controllers\Transport\TransportDashboardController;
 use App\Http\Controllers\WithdrawalRequestController;
 use Illuminate\Support\Facades\Route;
 
@@ -224,6 +225,7 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     // Settings
     Route::get('/settings', [PharmacySettingsController::class, 'show'])->name('settings.show');
     Route::post('/settings', [PharmacySettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/license', [PharmacySettingsController::class, 'updateLicense'])->name('settings.license.update');
 
     // PROFILE
     Route::get('/profile', [PharmacySettingsController::class, 'showProfile'])->name('profile');
@@ -314,9 +316,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 Route::middleware(['auth', 'verified', 'health'])->prefix('health')->name('health.')->group(function () {
     Route::get('/', [HealthDashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
-    Route::post('/users/{user}/toggle', [AdminUsersController::class, 'toggleActive'])->name('users.toggle');
-
     Route::get('/doctors', [HealthDashboardController::class, 'doctorIndex'])->name('doctors.index');
     Route::get('/doctors/{doctor}/credentials', [HealthDashboardController::class, 'credentials'])->name('doctors.credentials');
     Route::post('/doctors/{id}/approve-credential', [HealthDashboardController::class, 'approveCredential'])->name('doctors.approveCredential');
@@ -325,4 +324,20 @@ Route::middleware(['auth', 'verified', 'health'])->prefix('health')->name('healt
     Route::get('/profile', [HealthDashboardController::class, 'showProfile'])->name('profile');
     Route::post('/profile', [HealthDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/password', [HealthDashboardController::class, 'updatePassword'])->name('profile.password');
+});
+
+
+// TRANSPORT
+
+Route::middleware(['auth', 'verified', 'transport'])->prefix('transport')->name('transport.')->group(function () {
+    Route::get('/', [TransportDashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/pharmacies', [TransportDashboardController::class, 'pharmacyIndex'])->name('pharmacies.index');
+    Route::post('/pharmacies/{pharmacy}/approve', [TransportDashboardController::class, 'approveLicense'])->name('pharmacies.approve');
+    Route::post('/pharmacies/{pharmacy}/reject', [TransportDashboardController::class, 'rejectLicense'])->name('pharmacies.reject');
+    Route::get('/pharmacies/{pharmacy}/profile', [TransportDashboardController::class, 'profile'])->name('pharmacies.profile');
+
+    Route::get('/profile', [TransportDashboardController::class, 'showProfile'])->name('profile');
+    Route::post('/profile', [TransportDashboardController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/password', [TransportDashboardController::class, 'updatePassword'])->name('profile.password');
 });

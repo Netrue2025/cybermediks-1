@@ -41,12 +41,6 @@
         <div class="subtle mb-3">Update your profile & operating preferences</div>
 
         <div class="row g-3">
-            <div class="col-lg-6">
-                <div class="ps-row">
-                    <label class="form-label">License No.</label>
-                    <input name="license_no" class="form-control" value="{{ old('license_no', $profile->license_no) }}">
-                </div>
-            </div>
 
             <div class="col-lg-6">
                 <div class="ps-row d-flex align-items-center justify-content-between">
@@ -83,4 +77,67 @@
             <button class="btn btn-gradient">Save Settings</button>
         </div>
     </form>
+
+    @php $isPending = ($profile->status === 'pending'); @endphp
+
+    <h4>Status: {{ ucfirst($profile->status ?? '—') }}</h4>
+    @if ($profile->status === 'rejected')
+        <h5>Reason: {{ $profile->rejection_reason }}</h5>
+    @endif
+
+    @if ($isPending)
+        <div class="alert alert-warning mt-2">
+            Your license is currently under review. You can upload a new file after it’s rejected.
+        </div>
+    @endif
+
+    <form class="cardx" method="POST" action="{{ route('pharmacy.settings.license.update') }}"
+        enctype="multipart/form-data">
+        @csrf
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="ps-row">
+                    <label class="form-label" for="operating_license">Operating License</label>
+                    <input id="operating_license" name="operating_license" type="file"
+                        class="form-control @error('operating_license') is-invalid @enderror"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp" {{ $isPending ? 'disabled' : 'required' }}>
+                    @error('operating_license')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="ps-row">
+                    <label class="form-label" for="license_no">License No.</label>
+                    <input id="license_no" name="license_no" class="form-control @error('license_no') is-invalid @enderror"
+                        value="{{ old('license_no', $profile->license_no) }}" maxlength="120"
+                        {{ $isPending ? 'disabled' : 'required' }}>
+                    @error('license_no')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary" {{ $isPending ? 'disabled' : '' }}>
+                Save License
+            </button>
+        </div>
+
+        @if (!empty($profile->status))
+            <div class="mt-2">
+                <span class="badge-soft">
+                    Status: {{ ucfirst($profile->status) }}
+                    @if ($profile->status === 'rejected' && $profile->rejection_reason)
+                        — Reason: {{ $profile->rejection_reason }}
+                    @endif
+                </span>
+            </div>
+        @endif
+    </form>
+
+
 @endsection
