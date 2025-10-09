@@ -43,28 +43,37 @@ class Appointment extends Model
     {
         return $this->hasOne(Prescription::class);
     }
-     // Scopes for filters
-    public function scopeForPatient(Builder $q, int $patientId): Builder {
+    // Scopes for filters
+    public function scopeForPatient(Builder $q, int $patientId): Builder
+    {
         return $q->where('patient_id', $patientId);
     }
-    public function scopeTypeIs(Builder $q, ?string $type): Builder {
+    public function scopeTypeIs(Builder $q, ?string $type): Builder
+    {
         if ($type) $q->where('type', $type);
         return $q;
     }
-    public function scopeOnDate(Builder $q, ?string $ymd): Builder {
+    public function scopeOnDate(Builder $q, ?string $ymd): Builder
+    {
         if ($ymd) $q->whereDate('scheduled_at', $ymd);
         return $q;
     }
-    public function scopeSearch(Builder $q, ?string $term): Builder {
+    public function scopeSearch(Builder $q, ?string $term): Builder
+    {
         if (!$term) return $q;
-        $like = '%'.trim($term).'%';
-        return $q->where(function($qq) use($like){
+        $like = '%' . trim($term) . '%';
+        return $q->where(function ($qq) use ($like) {
             $qq->where('title', 'like', $like)
-               ->orWhere('notes', 'like', $like)
-               ->orWhereHas('doctor', function($dq) use($like){
+                ->orWhere('notes', 'like', $like)
+                ->orWhereHas('doctor', function ($dq) use ($like) {
                     $dq->where('first_name', 'like', $like)
-                       ->orWhere('last_name', 'like', $like);
-               });
+                        ->orWhere('last_name', 'like', $like);
+                });
         });
+    }
+
+    public function dispute()
+    {
+        return $this->hasOne(AppointmentDispute::class);
     }
 }

@@ -60,10 +60,20 @@
                             View Notes
                         </button>
                     @endif
+
+                    {{-- Show Dispute if not already disputed --}}
+                    @if (($a->status ?? '') !== 'disputed' && !$a->dispute)
+                        <button class="btn btn-warning btn-sm js-open-dispute" data-appt-id="{{ $a->id }}"
+                            data-appt-when="{{ $when }}" data-doctor="{{ $a->doctor?->full_name }}">
+                            Dispute
+                        </button>
+                    @endif
+
                     <button class="btn btn-gradient btn-sm" data-book-again data-doctor-id="{{ $a->doctor_id }}">
                         Book Again
                     </button>
                 </div>
+
             </div>
         </div>
     @empty

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminAppointmentsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminDispatchersController;
+use App\Http\Controllers\Admin\AdminDisputeController;
 use App\Http\Controllers\Admin\AdminDoctorsController;
 use App\Http\Controllers\Admin\AdminPharmaciesController;
 use App\Http\Controllers\Admin\AdminPrescriptionsController;
@@ -118,6 +119,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');
     Route::post('/appointments', [PatientAppointmentController::class, 'store'])->name('appointments.store'); // AJAX
     Route::post('/appointments/close/{id}', [PatientAppointmentController::class, 'close'])->name('appointments.close'); // AJAX
+    Route::post('/appointments/{appointment}/dispute', [PatientAppointmentController::class, 'storeDispute'])->name('appointments.dispute');
 
 
     Route::post('/wallet/pay', [WalletController::class, 'startFlutterwave'])->name('wallet.pay');           // create payment link
@@ -316,6 +318,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/withdrawals/{wd}/approve', [AdminWithdrawalRequestController::class, 'approve'])->name('withdrawals.approve');
     Route::post('/withdrawals/{wd}/payout',  [AdminWithdrawalRequestController::class, 'payout'])->name('withdrawals.payout');
     Route::post('/withdrawals/{wd}/reject',  [AdminWithdrawalRequestController::class, 'reject'])->name('withdrawals.reject');
+
+
+    // ADMIN DISPUTES
+    Route::get('/disputes',                [AdminDisputeController::class, 'index'])->name('disputes.index');
+    Route::get('/disputes/{dispute}',      [AdminDisputeController::class, 'show'])->name('disputes.show'); // optional
+    Route::post('/disputes/{dispute}/resolve', [AdminDisputeController::class, 'resolve'])->name('disputes.resolve');
 });
 
 // HEALTH ROUTES

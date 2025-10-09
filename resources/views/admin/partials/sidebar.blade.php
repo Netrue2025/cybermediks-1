@@ -36,6 +36,11 @@
                 <i class="fa-solid fa-box"></i><span>Products</span>
             </a>
 
+            <a class="item {{ request()->routeIs('admin.disputes.index') ? 'active' : '' }}"
+                href="{{ route('admin.disputes.index') }}">
+                <i class="fa-solid fa-box"></i><span>Disputes</span>
+            </a>
+
             <div class="section">People</div>
             <a class="item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
                 href="{{ route('admin.users.index') }}">

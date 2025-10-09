@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\AppointmentDispute;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\DisputeHoldService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +20,7 @@ class PatientAppointmentController extends Controller
     {
         $doctor = null;
         if ($r->filled('doctor_id')) {
-            $doctor = User::where('role','doctor')->find($r->integer('doctor_id'));
+            $doctor = User::where('role', 'doctor')->find($r->integer('doctor_id'));
         }
         return view('patient.appointments.create', compact('doctor'));
     }
@@ -26,15 +28,15 @@ class PatientAppointmentController extends Controller
     public function store(Request $r)
     {
         $data = $r->validate([
-            'doctor_id'    => ['required', Rule::exists('users','id')->where('role','doctor')],
-            'type'         => ['required', Rule::in(['video','chat','in_person'])],
-            'scheduled_at' => ['nullable','date','after:now'],
-            'duration'     => ['nullable','integer','min:5','max:180'],
-            'reason'       => ['nullable','string','max:255'],
+            'doctor_id'    => ['required', Rule::exists('users', 'id')->where('role', 'doctor')],
+            'type'         => ['required', Rule::in(['video', 'chat', 'in_person'])],
+            'scheduled_at' => ['nullable', 'date', 'after:now'],
+            'duration'     => ['nullable', 'integer', 'min:5', 'max:180'],
+            'reason'       => ['nullable', 'string', 'max:255'],
         ]);
 
         // Price can be dynamic (doctor_profiles.consult_fee) — simple fetch here:
-        $doctor = User::where('role','doctor')->findOrFail($data['doctor_id']);
+        $doctor = User::where('role', 'doctor')->findOrFail($data['doctor_id']);
         $price  = optional($doctor->doctorProfile)->consult_fee ?? 0;
 
         $appt = Appointment::create([
@@ -45,18 +47,16 @@ class PatientAppointmentController extends Controller
             'duration'      => $data['duration'] ?? null,
             'status'        => 'pending',
             'price'         => $price,
-            'payment_status'=> 'unpaid',
+            'payment_status' => 'unpaid',
             'reason'        => $data['reason'] ?? null,
         ]);
         $redirect = route('patient.appointments.index');
 
-        if ($data['type'] === 'chat')
-        {
+        if ($data['type'] === 'chat') {
             // check if there is a previous convo with the doctor
             $conversation = Conversation::where('patient_id', $r->user()->id)->where('doctor_id', $data['doctor_id'])->first();
 
-            if (!$conversation)
-            {
+            if (!$conversation) {
                 $conversation = Conversation::create([
                     'patient_id' => $r->user()->id,
                     'doctor_id' => $data['doctor_id'],
@@ -66,7 +66,7 @@ class PatientAppointmentController extends Controller
             } else {
                 $conversation->update(['status' => 'pending', 'appointment_id' => $appt->id]);
             }
-            $redirect = route('patient.messages').'?c='.$conversation->id;
+            $redirect = route('patient.messages') . '?c=' . $conversation->id;
         }
 
         return response()->json([
@@ -81,7 +81,7 @@ class PatientAppointmentController extends Controller
         $user = Auth::user();
 
         $appointments = Appointment::query()
-            ->with(['doctor:id,first_name,last_name'])
+            ->with(['doctor:id,first_name,last_name', 'dispute'])
             ->forPatient($user->id)
             ->typeIs(match ($request->get('type')) {
                 'Video' => 'video',
@@ -109,8 +109,7 @@ class PatientAppointmentController extends Controller
 
         $appointment = Appointment::with(['patient', 'doctor'])->where('id', $id)->where('patient_id', $user->id)->first();
 
-        if (!$appointment)
-        {
+        if (!$appointment) {
             return response()->json(['message' => 'Appointment not found'], 422);
         }
 
@@ -155,5 +154,43 @@ class PatientAppointmentController extends Controller
         }
 
         return response()->json(['ok' => true, 'message' => 'Appointment closed']);
+    }
+
+    public function storeDispute(Request $request, Appointment $appointment)
+    {
+        // Ensure the logged-in user owns this appointment as patient
+        if ((int)$appointment->patient_id !== (int)Auth::id()) {
+            abort(403, 'You cannot dispute this appointment.');
+        }
+
+        // Block double disputes (if you track it)
+        if ($appointment->status === 'disputed' || $appointment->dispute()->exists()) {
+            return back()->withErrors(['dispute' => 'This appointment is already disputed.']);
+        }
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:2000'],
+        ]);
+
+        // Create the dispute record
+        $dispute = AppointmentDispute::create([
+            'appointment_id' => $appointment->id,
+            'patient_id'     => Auth::id(),
+            'reason'         => $data['reason'],
+            'status'         => 'open', // open -> admin_review -> resolved
+        ]);
+
+        // Flip appointment status to disputed (so downstream logic can hold funds, etc.)
+        $appointment->update(['status' => 'disputed']);
+        $amount = (float) $appointment->price;
+        DisputeHoldService::openDoctorHold(
+            $appointment,
+            $amount,
+            $appointment->patient_id,
+            $appointment->doctor_id,
+            $dispute->id
+        );
+
+        return back()->with('ok', 'Dispute opened. Our team will review shortly.');
     }
 }

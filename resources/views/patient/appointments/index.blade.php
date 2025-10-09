@@ -68,6 +68,35 @@
             </div>
         </div>
     </div>
+
+    <!-- Dispute Modal -->
+    <div class="modal fade" id="apDisputeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:var(--card); color:var(--text); border:1px solid var(--border)">
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i> Dispute Appointment
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="apDisputeForm" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-2 section-subtle small" id="apDisputeContext"></div>
+                        <label class="form-label">Reason for dispute <span class="text-danger">*</span></label>
+                        <textarea name="reason" id="apDisputeReason" class="form-control" rows="4"
+                            placeholder="Describe what went wrong (e.g., doctor did not show, incorrect billing, etc.)" required></textarea>
+                        <div class="invalid-feedback">Please provide a reason (min 5 characters).</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-warning" id="apSubmitDisputeBtn" type="submit">Submit Dispute</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -107,6 +136,37 @@
             $(document).on('click', '[data-book-again]', function() {
                 const doctorId = $(this).data('doctor-id');
                 window.location.href = `/patient/appointments/create?doctor_id=${doctorId}`;
+            });
+
+            // Open dispute modal, wire form action to the selected appointment
+            $(document).on('click', '.js-open-dispute', function() {
+                const id = $(this).data('appt-id');
+                const when = $(this).data('appt-when');
+                if (when == '') {
+                    when = '__';
+                }
+                const doctor = $(this).data('doctor') || 'your doctor';
+
+                // Set context line
+                $('#apDisputeContext').text(`Appointment on ${when} with ${doctor}`);
+                // Clear textarea
+                $('#apDisputeReason').val('').removeClass('is-invalid');
+
+                // Point the form to the dispute route of this appointment
+                const action = `{{ url('/patient/appointments') }}/${id}/dispute`;
+                $('#apDisputeForm').attr('action', action);
+
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('apDisputeModal')).show();
+            });
+
+            // Simple client-side validation before submit
+            $('#apDisputeForm').on('submit', function(e) {
+                const $txt = $('#apDisputeReason');
+                const val = ($txt.val() || '').trim();
+                if (val.length < 5) {
+                    e.preventDefault();
+                    $txt.addClass('is-invalid').focus();
+                }
             });
         })();
     </script>
