@@ -221,9 +221,7 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     // Inventory
     Route::get('/inventory', [PharmacyInventoryController::class, 'show'])->name('inventory.show');
     Route::post('/inventory', [PharmacyInventoryController::class, 'upload'])->name('inventory.upload');
-    Route::patch('/inventory/{item}', [PharmacyInventoryController::class, 'update'])->name('inventory.update');
-    Route::post('/inventory/{item}/adjust', [PharmacyInventoryController::class, 'adjust'])->name('inventory.adjust');
-    Route::delete('/inventory/{item}', [PharmacyInventoryController::class, 'destroy'])->name('inventory.destroy');
+    Route::get('/inventory/download', [PharmacyInventoryController::class, 'download'])->name('inventory.download');
 
     // Reports
     Route::get('/reports', [PharmacyReportsController::class, 'index'])->name('reports.index');
