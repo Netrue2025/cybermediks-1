@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\Prescription;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
@@ -14,36 +15,55 @@ class PharmacyDashboardController extends Controller
     {
         $pharmacyId = Auth::id();
 
-        // Metrics
-        $pendingCount = Prescription::where('pharmacy_id', $pharmacyId)
-            ->where('dispense_status', 'pending')->count();
+        // Metrics (Orders-based)
+        $actionableCount = Order::where('pharmacy_id', $pharmacyId)
+            ->whereIn('status', ['quoted', 'patient_confirmed'])
+            ->count();
 
-        $readyCount = Prescription::where('pharmacy_id', $pharmacyId)
-            ->where('dispense_status', 'ready')->count();
+        $readyCount = Order::where('pharmacy_id', $pharmacyId)
+            ->where('status', 'ready')
+            ->count();
 
+        // Revenue today (credits tied to orders)
+        // We log purpose like: "Payment received for order #O{ID}" and meta['order_id'] in the OrderController
         $revenueToday = WalletTransaction::where('user_id', $pharmacyId)
             ->where('type', 'credit')
-            ->where('purpose', 'pharmacy_sale')
             ->whereDate('created_at', now()->toDateString())
+            ->where(function ($q) {
+                $q->where('purpose', 'like', 'Payment received for order%')
+                    ->orWhereNotNull('meta->order_id'); // JSON meta fallback
+            })
             ->sum('amount');
 
         // Lists (latest 8)
-        $pending = Prescription::with(['patient:id,first_name,last_name', 'doctor:id,first_name,last_name'])
+        $pendingOrders = Order::with([
+            'prescription:id,code,patient_id,doctor_id',
+            'prescription.patient:id,first_name,last_name',
+            'prescription.doctor:id,first_name,last_name',
+        ])
             ->where('pharmacy_id', $pharmacyId)
-            ->where('dispense_status', 'pending')
-            ->latest()->take(8)->get();
+            ->whereIn('status', ['quoted', 'patient_confirmed'])
+            ->latest()
+            ->take(8)
+            ->get();
 
-        $dispensed = Prescription::with(['patient:id,first_name,last_name'])
+        $dispensedOrders = Order::with([
+            'prescription:id,code,patient_id',
+            'prescription.patient:id,first_name,last_name',
+        ])
             ->where('pharmacy_id', $pharmacyId)
-            ->whereIn('dispense_status', ['ready', 'picked'])
-            ->latest()->take(8)->get();
+            ->whereIn('status', ['ready', 'dispatcher_price_set', 'dispatcher_price_confirm', 'picked'])
+            ->latest()
+            ->take(8)
+            ->get();
 
+        // NOTE: the dashboard.blade.php you updated should expect $pendingOrders and $dispensedOrders now.
         return view('pharmacy.dashboard', compact(
-            'pendingCount',
+            'actionableCount',
             'readyCount',
             'revenueToday',
-            'pending',
-            'dispensed'
+            'pendingOrders',
+            'dispensedOrders'
         ));
     }
 

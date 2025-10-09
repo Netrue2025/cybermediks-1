@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Dispatcher;
 
 use App\Http\Controllers\Controller;
-use App\Models\Prescription;
+use App\Models\Order;
 use App\Models\WalletTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class DispatcherDashboardController extends Controller
@@ -18,134 +18,70 @@ class DispatcherDashboardController extends Controller
     {
         $dispatcherId = Auth::id();
 
-        // PENDING (unassigned): Include all unassigned dispatchable states
-        // ready → dispatcher_price_set → dispatcher_price_confirm
-        $pending = Prescription::with(['patient', 'pharmacy', 'items'])
+        // PENDING (unassigned): orders pharmacy marked ready, or in fee stages but not yet claimed
+        $pendingOrders = Order::with([
+            'prescription.patient:id,first_name,last_name,phone,address',
+            'prescription.pharmacy:id,first_name,last_name,address',
+            'prescription:id,code,patient_id,pharmacy_id',
+        ])
             ->whereNull('dispatcher_id')
-            ->whereIn('dispense_status', [
+            ->whereIn('status', [
                 'ready',
                 'dispatcher_price_set',
-                'dispatcher_price_confirm', // <- include this so you can see fee-confirmed but unclaimed jobs
+                'dispatcher_price_confirm',
             ])
             ->latest()
             ->paginate(10, ['*'], 'pending_page');
 
-        // ACTIVE (assigned to me): include all live dispatch states
-        // ready / dispatcher_price_set / dispatcher_price_confirm / picked (in transit)
-        $active = Prescription::with(['patient', 'pharmacy', 'items'])
+        // ACTIVE (mine): claimed orders in active delivery statuses
+        $activeOrders = Order::with([
+            'prescription.patient:id,first_name,last_name,phone,address',
+            'prescription.pharmacy:id,first_name,last_name,address',
+            'prescription:id,code,patient_id,pharmacy_id',
+        ])
             ->where('dispatcher_id', $dispatcherId)
-            ->whereIn('dispense_status', [
+            ->whereIn('status', [
                 'ready',
                 'dispatcher_price_set',
                 'dispatcher_price_confirm',
-                'picked',              // <- include this to keep it visible after pickup until delivered
+                'picked',
             ])
             ->latest()
             ->paginate(10, ['*'], 'active_page');
 
-        $pendingCount = $pending->total();
-        $activeCount  = $active->total();
+        $pendingCount = $pendingOrders->total();
+        $activeCount  = $activeOrders->total();
 
-        // Revenue today: sum dispatcher fees for deliveries you completed today.
-        // If later you add a dedicated delivered_at, switch the date column accordingly.
+        // Revenue today = sum of dispatcher fees on orders you delivered today
         $today = Carbon::today();
-        $revenueToday = Prescription::where('dispatcher_id', $dispatcherId)
-            ->where('dispense_status', 'delivered') // delivered is what you actually completed
+        $revenueToday = Order::where('dispatcher_id', $dispatcherId)
+            ->where('status', 'delivered')
             ->whereDate('updated_at', $today)
             ->sum('dispatcher_price');
 
         return view('dispatcher.dashboard', compact(
-            'pending',
-            'active',
+            'pendingOrders',
+            'activeOrders',
             'pendingCount',
             'activeCount',
             'revenueToday'
         ));
     }
 
+    /* Wallet pages you already had — unchanged except they live here for convenience */
+
     public function walletIndex(Request $request)
     {
-        $user = Auth::user();
-
-        // Balance = sum(credits) - sum(debits)
-        $credits = WalletTransaction::forUser($user->id)->where('type', 'credit')->sum('amount');
-        $debits  = WalletTransaction::forUser($user->id)->where('type', 'debit')->sum('amount');
+        $user = $request->user();
+        $transactions = WalletTransaction::forUser($user->id)->latestFirst()->paginate(10)->withQueryString();
         $balance = $user->wallet_balance;
-
-        $transactions = WalletTransaction::with([])
-            ->forUser($user->id)
-            ->latestFirst()
-            ->paginate(10)
-            ->withQueryString();
+        $fee = (23 / 100);
 
         if ($request->ajax()) {
             return view('dispatcher.wallet._list', compact('transactions'))->render();
         }
 
-        $fee = (23 / 100);
-
         return view('dispatcher.wallet.index', compact('balance', 'transactions', 'fee'));
-    }
-
-    public function addFunds(Request $request)
-    {
-        $data = $request->validate([
-            'amount'   => 'required|numeric|min:5',
-            'currency' => 'nullable|string|size:3'
-        ]);
-
-        $user = Auth::user();
-        $currency = strtoupper($data['currency'] ?? 'USD');
-
-        // TODO: integrate your payment gateway; for now we demo-credit immediately.
-        $tx = WalletTransaction::create([
-            'user_id'  => $user->id,
-            'type'     => 'credit',
-            'amount'   => $data['amount'],
-            'currency' => $currency,
-            'purpose'  => 'top_up',
-            'reference' => 'TX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
-            'meta'     => ['source' => 'manual_demo', 'status' => 'success'],
-        ]);
-
-        $user->update(['wallet_balance' => $user->wallet_balance + $data['amount']]);
-
-        return response()->json(['status' => 'success', 'message' => 'Funds added', 'tx' => $tx]);
-    }
-
-    public function withdraw(Request $request)
-    {
-        $data = $request->validate([
-            'amount'   => 'required|numeric|min:5',
-            'currency' => 'nullable|string|size:3'
-        ]);
-
-        $user = Auth::user();
-        $currency = strtoupper($data['currency'] ?? 'USD');
-
-        // Compute current balance to prevent overdraft
-        $credits = WalletTransaction::forUser($user->id)->where('type', 'credit')->sum('amount');
-        $debits  = WalletTransaction::forUser($user->id)->where('type', 'debit')->sum('amount');
-        $balance = $user->wallet_balance;
-
-        if ($data['amount'] > $balance) {
-            return response()->json(['status' => 'error', 'message' => 'Insufficient balance'], 422);
-        }
-
-        // You might want a separate Withdrawals table; here we log as a debit with pending meta.
-        $tx = WalletTransaction::create([
-            'user_id'  => $user->id,
-            'type'     => 'debit',
-            'amount'   => $data['amount'],
-            'currency' => $currency,
-            'purpose'  => 'withdrawal_request',
-            'reference' => 'TX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
-            'meta'     => ['status' => 'pending'],
-        ]);
-
-        $user->update(['wallet_balance' => $user->wallet_balance - $data['amount']]);
-
-        return response()->json(['status' => 'success', 'message' => 'Withdrawal requested', 'tx' => $tx]);
     }
 
     public function showProfile()
@@ -167,15 +103,7 @@ class DispatcherDashboardController extends Controller
             'address'    => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user->fill([
-            'first_name'    => $data['first_name'],
-            'last_name'     => $data['last_name'],
-            'phone'   => $data['phone'] ?? null,
-            'gender'  => $data['gender'] ?? null,
-            'dob'     => $data['dob'] ?? null,
-            'country' => $data['country'] ?? null,
-            'address' => $data['address'] ?? null,
-        ])->save();
+        $user->fill($data)->save();
 
         return response()->json(['ok' => true, 'message' => 'Profile updated']);
     }
@@ -197,50 +125,48 @@ class DispatcherDashboardController extends Controller
         return response()->json(['ok' => true, 'message' => 'Password updated']);
     }
 
+    // Deliveries list/history using Orders
     public function getDeliveries(Request $request)
     {
         $dispatcherId = Auth::id();
 
-        $q       = trim((string) $request->get('q'));
-        $status  = (string) $request->get('status'); // '', picked, delivered, cancelled, etc
-        $from    = $request->date('from');
-        $to      = $request->date('to');
+        $q      = trim((string) $request->get('q'));
+        $status = (string) $request->get('status'); // '', picked, delivered, cancelled, etc
+        $from   = $request->date('from');
+        $to     = $request->date('to');
 
-        // Past by default
-        $pastStatuses = ['picked', 'delivered', 'cancelled'];
+        $base = Order::with(['prescription.patient', 'prescription.pharmacy'])
+            ->where('dispatcher_id', $dispatcherId);
 
-        $rx = Prescription::with(['patient', 'pharmacy', 'items'])
-            ->where('dispatcher_id', $dispatcherId)
-            ->when($status !== '', fn($w) => $w->where('dispense_status', $status))
-            ->when($status === '', fn($w) => $w->whereIn('dispense_status', $pastStatuses));
+        if ($status !== '') {
+            $base->where('status', $status);
+        } else {
+            $base->whereIn('status', ['picked', 'delivered', 'cancelled']);
+        }
 
         if ($q !== '') {
-            $rx->where(function ($w) use ($q) {
-                $w->where('code', 'like', "%{$q}%")
-                    ->orWhereHas('patient', fn($p) => $p
+            $base->where(function ($w) use ($q) {
+                $w->whereHas('prescription', fn($pq) => $pq->where('code', 'like', "%{$q}%"))
+                    ->orWhereHas('prescription.patient', fn($p) => $p
                         ->where('first_name', 'like', "%{$q}%")
                         ->orWhere('last_name', 'like', "%{$q}%")
                         ->orWhere('email', 'like', "%{$q}%"))
-                    ->orWhereHas('pharmacy', fn($ph) => $ph
+                    ->orWhereHas('prescription.pharmacy', fn($ph) => $ph
                         ->where('first_name', 'like', "%{$q}%")
                         ->orWhere('last_name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%"))
-                    ->orWhereHas('items', fn($i) => $i->where('drug', 'like', "%{$q}%"));
+                        ->orWhere('email', 'like', "%{$q}%"));
             });
         }
 
-        if ($from) $rx->whereDate('updated_at', '>=', $from);
-        if ($to)   $rx->whereDate('updated_at', '<=', $to);
+        if ($from) $base->whereDate('updated_at', '>=', $from);
+        if ($to)   $base->whereDate('updated_at', '<=', $to);
 
-        $deliveries = $rx->orderByDesc('updated_at')->paginate(15)->withQueryString();
+        $deliveries = $base->orderByDesc('updated_at')->paginate(15)->withQueryString();
 
-        // Summary cards
-        $countPicked    = (clone $rx)->where('dispense_status', 'picked')->count();
-        $countDelivered = (clone $rx)->where('dispense_status', 'delivered')->count();
-        $countCancelled = (clone $rx)->where('dispense_status', 'cancelled')->count();
-
-        // Revenue sum for the filtered list (dispatcher fees)
-        $sumFees = (clone $rx)->sum('dispatcher_price');
+        $countPicked    = (clone $base)->where('status', 'picked')->count();
+        $countDelivered = (clone $base)->where('status', 'delivered')->count();
+        $countCancelled = (clone $base)->where('status', 'cancelled')->count();
+        $sumFees        = (clone $base)->sum('dispatcher_price');
 
         return view('dispatcher.deliveries.index', compact(
             'deliveries',

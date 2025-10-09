@@ -291,8 +291,8 @@
             <div class="cardx">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="subtle">Pending Prescriptions</div>
-                        <div class="metric">{{ $pendingCount }}</div>
+                        <div class="subtle">Actionable Orders</div>
+                        <div class="metric">{{ $actionableCount }}</div>
                     </div>
                     <div class="pill"><i class="fa-solid fa-file-prescription fs-5" style="color:#efed86;"></i></div>
                 </div>
@@ -322,10 +322,11 @@
         </div>
     </div>
 
+
     {{-- SHORTCUTS --}}
     <div class="row g-3 mt-1">
         <div class="col-lg-4">
-            <a href="{{ route('pharmacy.inventory.index') }}" class="qa-card link-card d-flex gap-3 text-decoration-none">
+            <a href="{{ route('pharmacy.inventory.show') }}" class="qa-card link-card d-flex gap-3 text-decoration-none">
                 <div class="pill" style="width:38px;height:38px;"><i class="fa-solid fa-magnifying-glass"></i></div>
                 <div>
                     <div class="qa-title">Inventory Search</div>
@@ -358,40 +359,55 @@
 
     {{-- PANELS --}}
     <div class="row g-3 mt-1">
-        {{-- Pending --}}
+        {{-- Pending (quoted or patient_confirmed are most relevant to act on) --}}
         <div class="col-lg-6">
             <div class="cardx h-100">
-                <div class="sec-head"><i class="fa-regular fa-circle-question"></i> <span>Pending Prescriptions</span></div>
+                <div class="sec-head"><i class="fa-regular fa-circle-question"></i> <span>Actionable Orders</span></div>
 
-                @if ($pending->isEmpty())
+                @if ($pendingOrders->isEmpty())
                     <div class="empty">
                         <div class="ico"><i class="fa-solid fa-box-open"></i></div>
-                        <div>No pending prescriptions</div>
+                        <div>No orders to act on</div>
                     </div>
                 @else
                     <div class="d-flex flex-column gap-2">
-                        @foreach ($pending as $rx)
+                        @foreach ($pendingOrders as $order)
+                            @php $rx = $order->prescription; @endphp
                             <div class="ps-row d-flex justify-content-between align-items-center">
                                 <div>
-                                    <div class="fw-semibold">Rx {{ $rx->code }}</div>
+                                    <div class="fw-semibold">Rx {{ $rx?->code }}</div>
                                     <div class="subtle small">
-                                        {{ $rx->patient?->first_name }} {{ $rx->patient?->last_name }}
-                                        • {{ $rx->created_at->diffForHumans() }}
-                                        @if ($rx->total_amount)
-                                            • ${{ number_format($rx->total_amount, 2, '.', ',') }}
+                                        {{ $rx?->patient?->first_name }} {{ $rx?->patient?->last_name }}
+                                        • {{ $order->created_at->diffForHumans() }}
+                                        @if ($order->items_subtotal)
+                                            • ${{ number_format($order->items_subtotal, 2, '.', ',') }}
                                         @endif
+                                        • {{ ucwords(str_replace('_', ' ', $order->status)) }}
                                     </div>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <a href="{{ route('pharmacy.prescriptions.index') }}?id={{ $rx->id }}"
+                                    <a href="{{ route('pharmacy.orders.index') }}?id={{ $order->id }}"
                                         class="btn btn-outline-light btn-sm">View</a>
-                                    <button class="btn btn-success btn-sm" data-ready="{{ $rx->id }}">
-                                        <i class="fa-solid fa-boxes-packing me-1"></i> Mark Ready
-                                    </button>
+
+                                    @if ($order->status === 'patient_confirmed')
+                                        <button class="btn btn-success btn-sm" data-status="ready"
+                                            data-id="{{ $order->id }}">
+                                            <i class="fa-solid fa-boxes-packing me-1"></i> Mark Ready
+                                        </button>
+                                    @elseif ($order->status === 'quoted')
+                                        <button class="btn btn-success btn-sm" data-status="pharmacy_accepted"
+                                            data-id="{{ $order->id }}">
+                                            Accept
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" data-status="rejected"
+                                            data-id="{{ $order->id }}">
+                                            Reject
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
-                        <a class="btn btn-ghost w-100" href="{{ route('pharmacy.prescriptions.index') }}">See all</a>
+                        <a class="btn btn-ghost w-100" href="{{ route('pharmacy.orders.index') }}">See all</a>
                     </div>
                 @endif
             </div>
@@ -402,29 +418,31 @@
             <div class="cardx h-100">
                 <div class="sec-head"><i class="fa-solid fa-truck"></i> <span>Dispensed Orders</span></div>
 
-                @if ($dispensed->isEmpty())
+                @if ($dispensedOrders->isEmpty())
                     <div class="empty">
                         <div class="ico"><i class="fa-solid fa-truck"></i></div>
                         <div>No dispensed orders</div>
-                        <div class="subtle small">Dispense prescriptions to see them here</div>
+                        <div class="subtle small">Dispense orders to see them here</div>
                     </div>
                 @else
                     <div class="d-flex flex-column gap-2">
-                        @foreach ($dispensed as $rx)
+                        @foreach ($dispensedOrders as $order)
+                            @php $rx = $order->prescription; @endphp
                             <div class="ps-row d-flex justify-content-between align-items-center">
                                 <div>
-                                    <div class="fw-semibold">Rx {{ $rx->code }}</div>
+                                    <div class="fw-semibold">Rx {{ $rx?->code }}</div>
                                     <div class="subtle small">
-                                        {{ $rx->patient?->first_name }} {{ $rx->patient?->last_name }}
-                                        • Status: {{ ucfirst($rx->dispense_status) }}
-                                        @if ($rx->total_amount)
-                                            • ${{ number_format($rx->total_amount, 2, '.', ',') }}
+                                        {{ $rx?->patient?->first_name }} {{ $rx?->patient?->last_name }}
+                                        • Status: {{ ucwords(str_replace('_', ' ', $order->status)) }}
+                                        @if ($order->items_subtotal)
+                                            • ${{ number_format($order->items_subtotal, 2, '.', ',') }}
                                         @endif
                                     </div>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    @if ($rx->dispense_status === 'ready')
-                                        <button class="btn btn-outline-light btn-sm" data-picked="{{ $rx->id }}">
+                                    @if ($order->status === 'dispatcher_price_confirm')
+                                        <button class="btn btn-outline-light btn-sm" data-status="picked"
+                                            data-id="{{ $order->id }}">
                                             <i class="fa-solid fa-person-walking-dashed-line-arrow-right me-1"></i> Mark
                                             Picked
                                         </button>
@@ -432,49 +450,56 @@
                                 </div>
                             </div>
                         @endforeach
-                        <a class="btn btn-ghost w-100" href="{{ route('pharmacy.prescriptions.index') }}">See all</a>
+                        <a class="btn btn-ghost w-100" href="{{ route('pharmacy.orders.index') }}">See all</a>
                     </div>
                 @endif
             </div>
         </div>
     </div>
+
+
+
 @endsection
 
 @push('scripts')
     <script>
         (function() {
-            // Mark Ready
-            $(document).on('click', '[data-ready]', function() {
-                const id = $(this).data('ready');
+            $(document).on('click', '[data-status]', function() {
+                const id = $(this).data('id');
+                const to = $(this).data('status');
+                if (to === 'picked') {
+                    return;
+                }
                 const $btn = $(this);
                 lockBtn($btn);
-                $.post(`{{ url('pharmacy/prescriptions') }}/${id}/ready`, {
-                        _token: `{{ csrf_token() }}`
+                $.post(`{{ url('/pharmacy/orders') }}/${id}/status`, {
+                        _token: `{{ csrf_token() }}`,
+                        status: to
                     })
                     .done(res => {
-                        flash('success', res.message || 'Marked ready');
+                        flash('success', res.message || 'Updated');
                         location.reload();
                     })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed');
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Update failed');
                     })
                     .always(() => unlockBtn($btn));
             });
 
-            // Mark Picked
-            $(document).on('click', '[data-picked]', function() {
-                const id = $(this).data('picked');
+            $(document).on('click', '[data-status="picked"]', function() {
+                const id = $(this).data('id');
                 const $btn = $(this);
                 lockBtn($btn);
-                $.post(`{{ url('pharmacy/prescriptions') }}/${id}/picked`, {
+                $.post(`{{ route('pharmacy.orders.markPicked', ['order' => '__OID__']) }}`.replace('__OID__',
+                        id), {
                         _token: `{{ csrf_token() }}`
                     })
                     .done(res => {
                         flash('success', res.message || 'Marked picked');
                         location.reload();
                     })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed');
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed');
                     })
                     .always(() => unlockBtn($btn));
             });

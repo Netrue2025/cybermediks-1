@@ -12,6 +12,7 @@ class PharmacyProfile extends Model
         'operating_license',
         'hours',
         'is_24_7',
+        'inventory_path',
         'delivery_radius_km',
         'status',
         'rejection_reason'

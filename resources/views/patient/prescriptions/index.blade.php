@@ -145,12 +145,40 @@
         </div>
     </div>
 
+    <!-- Quote Review Modal -->
+    <div class="modal fade" id="quoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background:var(--card); color:var(--text);">
+                <div class="modal-header">
+                    <h6 class="modal-title"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Quote Review</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="quoteBody">
+                        <div class="text-center text-secondary py-3">Loading…</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="me-auto section-subtle">
+                        <span id="quoteTotal" class="price-pill">$0.00</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmQuotedItems" disabled>Confirm
+                        Items</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 @endsection
 
 @push('scripts')
     <script>
         (function() {
             const $list = $('#rxList');
+            let currentOrderIdForQuote = null;
+            let currentRxIdForQuote = null;
             let t = null;
 
             function fetchList() {
@@ -175,19 +203,33 @@
                 const payload = $(this).data('rx-view'); // stringified JSON
                 const rx = typeof payload === 'string' ? JSON.parse(payload) : payload;
 
+                let itemsHtml = rx.items.map(i => {
+                    const bought = i.status === 'purchased';
+                    const badge = i.status ?
+                        `<span class="badge-soft ms-1">${i.status.replaceAll('_',' ')}</span>` : '';
+                    const price = (i.line_total ?? i.unit_price) ?
+                        `<span class="price-pill ms-2">$${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
+                        '';
+                    return `<li class="${bought ? 'opacity-50' : ''}">
+                ${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}
+                ${badge}${price}
+                </li>`;
+                }).join('');
+
                 let html = `
-                    <div class="mb-2"><span class="rx-badge">Rx ${rx.code}</span>
-                    <span class="rx-status ms-2">${rx.status.replace('_',' ')}</span></div>
+                    <div class="mb-2">
+                        <span class="rx-badge">Rx ${rx.code}</span>
+                        <span class="rx-status ms-2">${(rx.dispense || rx.status || '').toString().replaceAll('_',' ')}</span>
+                    </div>
                     <div class="mb-2"><strong>Doctor:</strong> ${rx.doctor}</div>
                     ${rx.notes ? `<div class="mb-3"><strong>Notes:</strong> ${rx.notes}</div>` : ``}
                     <div class="mb-2"><strong>Items</strong></div>
-                    <ul class="mb-0">
-                        ${rx.items.map(i => `<li>${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}</li>`).join('')}
-                    </ul>
+                    <ul class="mb-0">${itemsHtml}</ul>
                 `;
                 $('#rxViewBody').html(html);
                 new bootstrap.Modal(document.getElementById('rxViewModal')).show();
             });
+
 
             // Refill click (placeholder: route to your refill flow)
             $(document).on('click', '[data-rx-refill]', function() {
@@ -244,44 +286,42 @@
                         pharmacy_id: pharmId
                     })
                     .done(res => {
-                        flash('success', res.message || 'Pharmacy selected');
+                        // Always close the picker
                         $pharmModal.modal('hide');
-                        // refresh the list below (re-use your existing helper):
-                        try {
-                            (typeof fetchList === 'function') && fetchList();
-                        } catch (e) {}
+
+                        // If server returned a quote, show it immediately
+                        if (res && res.quote) {
+                            currentOrderIdForQuote = res.order_id;
+                            currentRxIdForQuote =
+                                currentRxId; // <- you already have currentRxId in your page
+                            renderQuoteModal(res.order_id, res.quote); // signature can stay the same
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal'))
+                                .show();
+                        } else {
+                            flash('success', res.message || 'Pharmacy selected');
+                            try {
+                                (typeof fetchList === 'function') && fetchList();
+                            } catch (e) {}
+                        }
                     })
+
                     .fail(xhr => {
                         flash('danger', xhr.responseJSON?.message || 'Failed to assign pharmacy');
                     })
                     .always(() => unlockBtn($btn));
             });
 
-            $(document).on('click', '#btnConfirmPrice', function() {
-                const id = $(this).data('id');
+            $(document).on('click', '[data-dsp-confirm-order]', function() {
+                const orderId = $(this).data('dsp-confirm-order');
                 const $btn = $(this);
                 lockBtn($btn);
-                $.post(`{{ route('patient.prescriptions.confirmPrice', '__ID__') }}`.replace('__ID__', id), {
-                        _token: `{{ csrf_token() }}`
-                    })
-                    .done(res => {
-                        flash('success', res.message || 'Confirmed');
-                        location.reload();
-                    })
-                    .fail(xhr => {
-                        flash('danger', xhr.responseJSON?.message || 'Failed');
-                    })
-                    .always(() => unlockBtn($btn));
-            });
 
-            // NEW: Confirm Dispatcher Delivery Fee
-            $(document).on('click', '[data-dsp-confirm]', function() {
-                const id = $(this).data('dsp-confirm');
-                const $btn = $(this);
-                lockBtn($btn);
-                $.post(`{{ route('patient.confirmDeliveryFee', ':id') }}`.replace(':id', id), {
-                        _token: `{{ csrf_token() }}`
-                    })
+                $.post(
+                        `{{ route('patient.orders.confirmDeliveryFee', ['order' => '__OID__']) }}`.replace(
+                            '__OID__', orderId), {
+                            _token: `{{ csrf_token() }}`
+                        }
+                    )
                     .done(res => {
                         flash('success', res.message || 'Delivery fee confirmed');
                         location.reload();
@@ -291,6 +331,96 @@
                     })
                     .always(() => unlockBtn($btn));
             });
+
+
+
+
+            function renderQuoteModal(orderId, q) {
+                currentOrderIdForQuote = orderId;
+
+                const available = (q.available || []).map(a => {
+                    const unit = Number(a.unit_price || 0);
+                    const line = Number(a.line_total || unit);
+                    return `
+                    <tr>
+                        <td>${escapeHtml(a.drug || '')}</td>
+                        <td class="text-end">$${unit.toFixed(2)}</td>
+                        <td class="text-end">$${line.toFixed(2)}</td>
+                    </tr>
+                    `;
+                }).join('');
+
+                const unavailable = (q.unavailable || []).map(u => `
+                    <li>${escapeHtml(u.drug || '')}${u.reason ? ` — <span class="section-subtle">${escapeHtml(u.reason)}</span>` : ''}</li>
+                `).join('');
+
+                const table = available ?
+                    `
+                        <div class="mb-2 fw-semibold">Available items</div>
+                        <div class="table-responsive">
+                        <table class="table table-borderless table-darkish align-middle mb-3">
+                            <thead>
+                            <tr>
+                                <th>Drug</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Line Total</th>
+                            </tr>
+                            </thead>
+                            <tbody>${available}</tbody>
+                        </table>
+                        </div>
+                    ` :
+                    `<div class="text-warning mb-2">No matching items found in this pharmacy inventory.</div>`;
+
+                const unvBlock = unavailable ?
+                    `
+                        <div class="mb-2 fw-semibold">Unavailable here</div>
+                        <ul class="mb-0 small">${unavailable}</ul>
+                    ` :
+                    '';
+
+                $('#quoteBody').html(`${table}${unvBlock}`);
+                const total = Number(q.items_total || 0);
+                $('#quoteTotal').text(`$${total.toFixed(2)}`);
+                $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
+            }
+
+            // Confirm the quoted items for this order
+            $(document)
+                .off('click.quote', '#btnConfirmQuotedItems')
+                .on('click.quote', '#btnConfirmQuotedItems', function() {
+                    const $btn = $(this);
+                    if (!currentRxIdForQuote) return; // we confirm by PRESCRIPTION
+
+                    lockBtn($btn);
+                    $.post(
+                            `{{ route('patient.prescriptions.confirmPrice', ['rx' => '__RX__']) }}`
+                            .replace('__RX__', currentRxIdForQuote), {
+                                _token: `{{ csrf_token() }}`
+                            }
+                        )
+                        .done(res => {
+                            flash('success', res.message || 'Items confirmed');
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal')).hide();
+                            try {
+                                (typeof fetchList === 'function') && fetchList();
+                            } catch (e) {}
+                        })
+                        .fail(xhr => {
+                            flash('danger', xhr.responseJSON?.message || 'Failed to confirm');
+                        })
+                        .always(() => unlockBtn($btn));
+                });
+
+
+
+            // tiny HTML escaper for safe rendering
+            function escapeHtml(s) {
+                return String(s || '')
+                    .replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+            }
+
         })();
     </script>
 @endpush

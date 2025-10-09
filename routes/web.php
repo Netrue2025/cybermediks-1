@@ -17,6 +17,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\Dispatcher\DispatcherDashboardController;
+use App\Http\Controllers\Dispatcher\DispatcherOrderController;
 use App\Http\Controllers\Dispatcher\DispatcherPrescriptionController;
 use App\Http\Controllers\Doctor\DoctorConversationQuickController;
 use App\Http\Controllers\Doctor\DoctorCredentialController;
@@ -41,6 +42,7 @@ use App\Http\Controllers\Patient\WalletController;
 use App\Http\Controllers\Pharmacy\PharmacyDashboardController;
 use App\Http\Controllers\Pharmacy\PharmacyDispensedController;
 use App\Http\Controllers\Pharmacy\PharmacyInventoryController;
+use App\Http\Controllers\Pharmacy\PharmacyOrderController;
 use App\Http\Controllers\Pharmacy\PharmacyPrescriptionController;
 use App\Http\Controllers\Pharmacy\PharmacyProfileController;
 use App\Http\Controllers\Pharmacy\PharmacyReportsController;
@@ -89,6 +91,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::post('/prescriptions/{rx}/assign-pharmacy', [PrescriptionController::class, 'assign'])->name('prescriptions.assignPharmacy');
     Route::post('/prescriptions/{rx}/confirm-price', [PrescriptionController::class, 'confirm'])->name('prescriptions.confirmPrice');
     Route::post('/prescriptions/{rx}/confirm-delivery-fee', [PrescriptionController::class, 'confirmDeliveryFee'])->name('confirmDeliveryFee');
+    Route::post('/orders/{order}/confirm-delivery-fee',[PrescriptionController::class, 'confirmDeliveryFee'])->name('orders.confirmDeliveryFee');
 
     Route::get('/pharmacies', fn() => view('patient.pharmacies'))->name('pharmacies');
 
@@ -211,13 +214,13 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     Route::post('/prescriptions/{rx}/picked', [PharmacyDashboardController::class, 'markPicked'])->name('rx.picked');
 
     // Order history
-    Route::get('/orders', [PharmacyDashboardController::class, 'orders'])->name('orders.index');
-    Route::get('/orders/{order}', [PharmacyDashboardController::class, 'orderShow'])->name('orders.show');
+    // Route::get('/orders', [PharmacyDashboardController::class, 'orders'])->name('orders.index');
+    // Route::get('/orders/{order}', [PharmacyDashboardController::class, 'orderShow'])->name('orders.show');
 
 
     // Inventory
-    Route::get('/inventory', [PharmacyInventoryController::class, 'index'])->name('inventory.index');
-    Route::post('/inventory', [PharmacyInventoryController::class, 'store'])->name('inventory.store');
+    Route::get('/inventory', [PharmacyInventoryController::class, 'show'])->name('inventory.show');
+    Route::post('/inventory', [PharmacyInventoryController::class, 'upload'])->name('inventory.upload');
     Route::patch('/inventory/{item}', [PharmacyInventoryController::class, 'update'])->name('inventory.update');
     Route::post('/inventory/{item}/adjust', [PharmacyInventoryController::class, 'adjust'])->name('inventory.adjust');
     Route::delete('/inventory/{item}', [PharmacyInventoryController::class, 'destroy'])->name('inventory.destroy');
@@ -243,6 +246,12 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     Route::post('/dispensed/{rx}/undo', [PharmacyDispensedController::class, 'undo'])->name('dispensed.undo'); // set back to 'ready'
     // optional: receipt
     Route::get('/dispensed/{rx}/receipt', [PharmacyDispensedController::class, 'receipt'])->name('dispensed.receipt');
+
+
+    Route::get('orders',                [PharmacyOrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}',        [PharmacyOrderController::class, 'show'])->name('orders.show');
+    Route::post('orders/{order}/status', [PharmacyOrderController::class, 'updateStatus'])->name('orders.status');
+    Route::post('/orders/{order}/picked', [PharmacyOrderController::class, 'markPicked'])->name('orders.markPicked');
 });
 
 // DISPATCHER ROUTES
@@ -257,6 +266,10 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
 
     Route::post('/prescriptions/{rx}/deliver', [DispatcherPrescriptionController::class, 'markDelivered'])->name('prescriptions.deliver');
     Route::get('/deliveries', [DispatcherDashboardController::class, 'getDeliveries'])->name('deliveries.index');
+
+    Route::post('/orders/{order}/accept',  [DispatcherOrderController::class, 'accept'])->name('orders.accept');
+    Route::post('/orders/{order}/fee',     [DispatcherOrderController::class, 'setDeliveryFee'])->name('orders.setDeliveryFee');
+    Route::post('/orders/{order}/deliver', [DispatcherOrderController::class, 'markDelivered'])->name('orders.deliver');
 
     // PROFILE
     Route::get('/profile', [DispatcherDashboardController::class, 'showProfile'])->name('profile');

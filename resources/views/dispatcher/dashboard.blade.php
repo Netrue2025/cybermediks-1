@@ -74,209 +74,190 @@
     {{-- PANELS --}}
     <div class="row g-3 mt-1">
         {{-- Pending --}}
-        <div class="col-lg-6">
-            <div class="cardx h-100">
-                <div class="sec-head"><i class="fa-regular fa-circle-question"></i> <span>Pending delivery</span></div>
+        @if ($pendingOrders->isEmpty())
+            <div class="empty"> ... </div>
+        @else
+            <div class="note-alert py-2 px-3 mb-2 small">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                Make sure to <strong>negotiate delivery details</strong> (fee, time window, address confirmation) with the
+                patient.
+            </div>
 
-                @if ($pending->isEmpty())
-                    <div class="empty">
-                        <div class="ico"><i class="fa-solid fa-box-open"></i></div>
-                        <div>No pending deliveries</div>
-                    </div>
-                @else
-                    <div class="note-alert py-2 px-3 mb-2 small">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                        Make sure to <strong>negotiate delivery details</strong> (fee, time window, address confirmation)
-                        with the patient.
-                    </div>
+            <div class="d-flex flex-column gap-2">
+                @foreach ($pendingOrders as $order)
+                    @php
+                        $rx = $order->prescription;
+                        $pickup = $rx?->pharmacy?->address ?? '—';
+                        $delivery = $rx?->patient?->address ?? '—';
+                        $phone = $rx?->patient?->phone ?? '';
+                        $st = $order->status ?? 'ready';
+                        $canSetFee = in_array($st, ['ready', 'dispatcher_price_set'], true);
+                    @endphp
 
-                    <div class="d-flex flex-column gap-2">
-                        @foreach ($pending as $rx)
-                            @php
-                                $pickup = $rx->pharmacy?->address ?? ($rx->pharmacy?->pharmacyProfile?->hours ?? '—');
-                                $delivery = $rx->patient?->address ?? '—';
-                                $phone = $rx->patient?->phone ?? '';
-                                $st = $rx->dispense_status ?? 'ready';
-                                $canSetFee = in_array($st, ['ready', 'dispatcher_price_set'], true);
-                            @endphp
+                    <div class="ps-row d-flex justify-content-between align-items-start">
+                        <div class="pe-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="fw-semibold">Rx {{ $rx?->code }}</div>
+                                <span class="badge-soft">
+                                    <i class="fa-regular fa-clock me-1"></i>{{ $order->created_at->diffForHumans() }}
+                                </span>
+                                @if (!is_null($order->items_subtotal))
+                                    <span class="badge-soft">
+                                        <i
+                                            class="fa-solid fa-dollar-sign me-1"></i>{{ number_format($order->items_subtotal, 2, '.', ',') }}
+                                    </span>
+                                @endif
+                            </div>
 
-                            <div class="ps-row d-flex justify-content-between align-items-start">
-                                <div class="pe-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="fw-semibold">Rx {{ $rx->code }}</div>
-                                        <span class="badge-soft">
-                                            <i class="fa-regular fa-clock me-1"></i>{{ $rx->created_at->diffForHumans() }}
-                                        </span>
-                                        @if (!is_null($rx->total_amount))
-                                            <span class="badge-soft">
-                                                <i
-                                                    class="fa-solid fa-dollar-sign me-1"></i>{{ number_format($rx->total_amount, 2, '.', ',') }}
-                                            </span>
-                                        @endif
-                                    </div>
+                            <div class="subtle small mt-1">
+                                {{ $rx?->patient?->first_name }} {{ $rx?->patient?->last_name }}
+                                • Status: {{ ucwords(str_replace('_', ' ', $st)) }}
+                            </div>
 
-                                    <div class="subtle small mt-1">
-                                        {{ $rx->patient?->first_name }} {{ $rx->patient?->last_name }}
-                                        • Status: {{ ucwords(str_replace('_', ' ', $st)) }}
-                                    </div>
-
-                                    <div class="subtle small mt-2">
-                                        <div><i class="fa-solid fa-store me-1"></i><strong>Pickup:</strong>
-                                            {{ $pickup }}</div>
-                                        <div><i class="fa-solid fa-location-dot me-1"></i><strong>Delivery:</strong>
-                                            {{ $delivery }}</div>
-                                        <div>
-                                            <i class="fa-solid fa-phone me-1"></i><strong>Call:</strong>
-                                            @if ($phone)
-                                                <a class="link-light text-decoration-none"
-                                                    href="tel:{{ $phone }}">{{ $phone }}</a>
-                                            @else
-                                                —
-                                            @endif
-                                        </div>
-                                    </div>
+                            <div class="subtle small mt-2">
+                                <div><i class="fa-solid fa-store me-1"></i><strong>Pickup:</strong> {{ $pickup }}
                                 </div>
-
-                                <div class="d-flex flex-column align-items-end gap-2">
-                                    @if ($canSetFee)
-                                        <div class="input-group input-group-sm" style="width:220px;">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" step="0.01" min="0" class="form-control"
-                                                value="{{ $rx->dispatcher_price }}" id="dspFee{{ $rx->id }}"
-                                                placeholder="Delivery fee">
-                                            <button class="btn btn-outline-light" data-dsp-set="{{ $rx->id }}">
-                                                Set Fee
-                                            </button>
-                                        </div>
-                                        <div class="text-end subtle small">
-                                            {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Please call patient to negotiate price' }}
-                                        </div>
+                                <div><i class="fa-solid fa-location-dot me-1"></i><strong>Delivery:</strong>
+                                    {{ $delivery }}</div>
+                                <div>
+                                    <i class="fa-solid fa-phone me-1"></i><strong>Call:</strong>
+                                    @if ($phone)
+                                        <a class="link-light text-decoration-none"
+                                            href="tel:{{ $phone }}">{{ $phone }}</a>
+                                    @else
+                                        —
                                     @endif
-
-                                    <div class="d-flex flex-wrap gap-2">
-                                        @if ($phone)
-                                            <a class="btn btn-outline-light btn-sm" href="tel:{{ $phone }}">
-                                                <i class="fa-solid fa-phone me-1"></i> Call
-                                            </a>
-                                        @endif
-
-                                        {{-- Accept (attach dispatcher_id). Disabled if already assigned elsewhere --}}
-                                        <button class="btn btn-success btn-sm" data-accept="{{ $rx->id }}"
-                                            {{ $rx->dispatcher_id ? 'disabled' : '' }}>
-                                            <i class="fa-solid fa-boxes-packing me-1"></i>
-                                            {{ $rx->dispatcher_id ? 'Accepted' : 'Accept' }}
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
-                        @endforeach
+                        </div>
 
-                        @if ($pending->hasPages())
-                            <div class="mt-2">{{ $pending->withQueryString()->links() }}</div>
-                        @endif
+                        <div class="d-flex flex-column align-items-end gap-2">
+                            @if ($canSetFee)
+                                <div class="input-group input-group-sm" style="width:220px;">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" class="form-control"
+                                        value="{{ $order->dispatcher_price }}" id="dspFee{{ $order->id }}"
+                                        placeholder="Delivery fee">
+                                    <button class="btn btn-outline-light" data-dsp-set="{{ $order->id }}">Set
+                                        Fee</button>
+                                </div>
+                                <div class="text-end subtle small">
+                                    {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Please call patient to negotiate price' }}
+                                </div>
+                            @endif
+
+                            <div class="d-flex flex-wrap gap-2">
+                                @if ($phone)
+                                    <a class="btn btn-outline-light btn-sm" href="tel:{{ $phone }}">
+                                        <i class="fa-solid fa-phone me-1"></i> Call
+                                    </a>
+                                @endif
+
+                                <button class="btn btn-success btn-sm" data-accept="{{ $order->id }}"
+                                    {{ $order->dispatcher_id ? 'disabled' : '' }}>
+                                    <i class="fa-solid fa-boxes-packing me-1"></i>
+                                    {{ $order->dispatcher_id ? 'Accepted' : 'Accept' }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                @endforeach
+
+                @if ($pendingOrders->hasPages())
+                    <div class="mt-2">{{ $pendingOrders->withQueryString()->links() }}</div>
                 @endif
             </div>
-        </div>
+        @endif
+
 
         {{-- Active --}}
-        <div class="col-lg-6">
-            <div class="cardx h-100">
-                <div class="sec-head"><i class="fa-solid fa-truck"></i> <span>Active Deliveries</span></div>
+        @if ($activeOrders->isEmpty())
+            <div class="empty"> ... </div>
+        @else
+            <div class="d-flex flex-column gap-2">
+                @foreach ($activeOrders as $order)
+                    @php
+                        $rx = $order->prescription;
+                        $pickup = $rx?->pharmacy?->address ?? '—';
+                        $delivery = $rx?->patient?->address ?? '—';
+                        $st = $order->status ?? 'ready';
+                        $canSetFee = in_array($st, ['ready', 'dispatcher_price_set'], true);
+                    @endphp
 
-                @if ($active->isEmpty())
-                    <div class="empty">
-                        <div class="ico"><i class="fa-solid fa-truck"></i></div>
-                        <div>No active deliveries</div>
-                        <div class="subtle small">Accept deliveries to see them here</div>
-                    </div>
-                @else
-                    <div class="d-flex flex-column gap-2">
-                        @foreach ($active as $rx)
-                            @php
-                                $pickup = $rx->pharmacy?->address ?? ($rx->pharmacy?->pharmacyProfile?->hours ?? '—');
-                                $delivery = $rx->patient?->address ?? '—';
-                                $st = $rx->dispense_status ?? 'ready';
-                                $canSetFee = in_array($st, ['ready', 'dispatcher_price_set'], true);
-                            @endphp
-                            <div class="ps-row d-flex justify-content-between align-items-start">
-                                <div class="pe-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="fw-semibold">Rx {{ $rx->code }}</div>
-                                        <span class="badge-soft">
-                                            <i class="fa-regular fa-clock me-1"></i>{{ $rx->created_at->diffForHumans() }}
-                                        </span>
-                                        <span
-                                            class="badge-soft {{ $st === 'dispatcher_price_confirm' ? 'badge-ok' : 'badge-note' }}">
-                                            {{ ucwords(str_replace('_', ' ', $st)) }}
-                                        </span>
-                                        @if (!is_null($rx->dispatcher_price))
-                                            <span class="badge-soft">
-                                                <i
-                                                    class="fa-solid fa-dollar-sign me-1"></i>{{ number_format($rx->dispatcher_price, 2, '.', ',') }}
-                                            </span>
-                                        @endif
-                                    </div>
-
-                                    <div class="subtle small mt-2">
-                                        <div><i class="fa-solid fa-store me-1"></i><strong>Pickup:</strong>
-                                            {{ $pickup }}</div>
-                                        <div><i class="fa-solid fa-location-dot me-1"></i><strong>Delivery:</strong>
-                                            {{ $delivery }}</div>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex flex-column align-items-end gap-2">
-                                    {{-- You can keep tweaking fee until patient confirms --}}
-                                    @if ($canSetFee)
-                                        <div class="input-group input-group-sm" style="width:220px;">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" step="0.01" min="0" class="form-control"
-                                                value="{{ $rx->dispatcher_price }}" id="dspFee{{ $rx->id }}"
-                                                placeholder="Delivery fee">
-                                            <button class="btn btn-outline-light" data-dsp-set="{{ $rx->id }}">
-                                                Set Fee
-                                            </button>
-                                        </div>
-                                        <div class="text-end subtle small">
-                                            {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Propose a delivery fee to the patient' }}
-                                        </div>
-                                    @endif
-
-                                    <div class="d-flex flex-wrap gap-2">
-                                        {{-- Only show "Mark Delivered" when picked --}}
-                                        @if ($st === 'picked')
-                                            <button class="btn btn-success btn-sm" data-delivered="{{ $rx->id }}">
-                                                <i class="fa-solid fa-clipboard-check me-1"></i> Mark Delivered
-                                            </button>
-                                        @endif
-
-                                    </div>
-                                </div>
+                    <div class="ps-row d-flex justify-content-between align-items-start">
+                        <div class="pe-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="fw-semibold">Rx {{ $rx?->code }}</div>
+                                <span class="badge-soft">
+                                    <i class="fa-regular fa-clock me-1"></i>{{ $order->created_at->diffForHumans() }}
+                                </span>
+                                <span
+                                    class="badge-soft {{ $st === 'dispatcher_price_confirm' ? 'badge-ok' : 'badge-note' }}">
+                                    {{ ucwords(str_replace('_', ' ', $st)) }}
+                                </span>
+                                @if (!is_null($order->dispatcher_price))
+                                    <span class="badge-soft">
+                                        <i
+                                            class="fa-solid fa-dollar-sign me-1"></i>{{ number_format($order->dispatcher_price, 2, '.', ',') }}
+                                    </span>
+                                @endif
                             </div>
-                            <hr>
-                        @endforeach
 
-                        @if ($active->hasPages())
-                            <div class="mt-2">{{ $active->withQueryString()->links() }}</div>
-                        @endif
+                            <div class="subtle small mt-2">
+                                <div><i class="fa-solid fa-store me-1"></i><strong>Pickup:</strong> {{ $pickup }}
+                                </div>
+                                <div><i class="fa-solid fa-location-dot me-1"></i><strong>Delivery:</strong>
+                                    {{ $delivery }}</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column align-items-end gap-2">
+                            @if ($canSetFee)
+                                <div class="input-group input-group-sm" style="width:220px;">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" class="form-control"
+                                        value="{{ $order->dispatcher_price }}" id="dspFee{{ $order->id }}"
+                                        placeholder="Delivery fee">
+                                    <button class="btn btn-outline-light" data-dsp-set="{{ $order->id }}">Set
+                                        Fee</button>
+                                </div>
+                                <div class="text-end subtle small">
+                                    {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Propose a delivery fee to the patient' }}
+                                </div>
+                            @endif
+
+                            <div class="d-flex flex-wrap gap-2">
+                                @if ($st === 'picked')
+                                    <button class="btn btn-success btn-sm" data-delivered="{{ $order->id }}">
+                                        <i class="fa-solid fa-clipboard-check me-1"></i> Mark Delivered
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
                     </div>
+
+                    <hr>
+                @endforeach
+
+                @if ($activeOrders->hasPages())
+                    <div class="mt-2">{{ $activeOrders->withQueryString()->links() }}</div>
                 @endif
             </div>
-        </div>
+        @endif
+
     </div>
 @endsection
 
 @push('scripts')
     <script>
         (function() {
-            // Accept
+            // Accept order
             $(document).on('click', '[data-accept]', function() {
                 const id = $(this).data('accept');
                 const $btn = $(this);
                 if ($btn.is(':disabled')) return;
                 lockBtn($btn);
-                $.post(`{{ route('dispatcher.prescriptions.accept', '__ID__') }}`.replace('__ID__', id), {
+                $.post(`{{ route('dispatcher.orders.accept', '__ID__') }}`.replace('__ID__', id), {
                         _token: `{{ csrf_token() }}`
                     })
                     .done(res => {
@@ -299,7 +280,7 @@
                     return;
                 }
                 lockBtn($btn);
-                $.post(`{{ route('dispatcher.setDeliveryFee', ':id') }}`.replace(':id', id), {
+                $.post(`{{ route('dispatcher.orders.setDeliveryFee', ':id') }}`.replace(':id', id), {
                         _token: `{{ csrf_token() }}`,
                         dispatcher_price: val
                     })
@@ -318,7 +299,7 @@
                 const id = $(this).data('delivered');
                 const $btn = $(this);
                 lockBtn($btn);
-                $.post(`{{ route('dispatcher.prescriptions.deliver', '__ID__') }}`.replace('__ID__', id), {
+                $.post(`{{ route('dispatcher.orders.deliver', '__ID__') }}`.replace('__ID__', id), {
                         _token: `{{ csrf_token() }}`
                     })
                     .done(res => {
@@ -330,7 +311,6 @@
                     })
                     .always(() => unlockBtn($btn));
             });
-
         })();
     </script>
 @endpush
