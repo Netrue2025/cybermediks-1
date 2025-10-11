@@ -154,7 +154,7 @@
                                 <input type="datetime-local" class="form-control" id="scheduledAt"
                                     value="{{ $lab->scheduled_at?->format('Y-m-d\TH:i') }}">
                                 <button class="btn btn-outline-light btn-sm" data-once
-                                    data-schedule="{{ $lab->id }}">Save</button>
+                                    data-schedule="{{ $lab->id }}" {{ !$inProgress ? '' : 'disabled' }}>Save</button>
                             </div>
                         </fieldset>
 
