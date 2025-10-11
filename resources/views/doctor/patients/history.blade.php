@@ -286,6 +286,13 @@
                             <i class="fa-solid fa-prescription-bottle-medical me-1"></i> Prescriptions
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lab-tab" data-bs-toggle="tab" data-bs-target="#lab" type="button"
+                            role="tab">
+                            <i class="fa-solid fa-flask-vial me-1"></i> Labworks
+                        </button>
+                    </li>
+
                 </ul>
 
                 <div class="tab-content pt-3">
@@ -414,6 +421,82 @@
                             <div class="mt-3">{!! $prescriptions->onEachSide(0)->links() !!}</div>
                         @endif
                     </div>
+
+                    {{-- Labworks --}}
+                    <div class="tab-pane fade" id="lab" role="tabpanel" aria-labelledby="lab-tab">
+                        <div class="d-flex flex-column">
+                            @forelse($labworks as $lab)
+                                @php
+                                    $st = strtolower($lab->status ?? 'pending');
+                                    $cls = match ($st) {
+                                        'scheduled' => 'b-scheduled',
+                                        'in_progress' => 'b-ready',
+                                        'results_uploaded' => 'b-ready',
+                                        'completed' => 'b-completed',
+                                        'rejected', 'cancelled' => 'b-cancelled',
+                                        default => 'b-pending',
+                                    };
+                                @endphp
+
+                                <div class="blk">
+                                    <div class="blk-head">
+                                        <div>
+                                            <div class="blk-title">
+                                                <i class="fa-solid fa-flask-vial me-1"></i>#{{ $lab->code }} —
+                                                {{ $lab->lab_type }}
+                                            </div>
+                                            <div class="blk-subtle mt-1">
+                                                Requested {{ $lab->created_at?->format('M d, Y · g:ia') }}
+                                                @if ($lab->collection_method)
+                                                    • {{ ucfirst($lab->collection_method) }} collection
+                                                @endif
+                                                @if ($lab->scheduled_at)
+                                                    • Scheduled: {{ $lab->scheduled_at->format('M d, Y · g:ia') }}
+                                                @endif
+                                                @if ($lab->labtech?->first_name)
+                                                    • Labtech: {{ $lab->labtech->first_name }}
+                                                    {{ $lab->labtech->last_name }}
+                                                @endif
+                                                @if ($lab->price)
+                                                    • ${{ number_format($lab->price, 2) }}
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <span
+                                                class="badge-soft {{ $cls }}">{{ ucwords(str_replace('_', ' ', $st)) }}</span>
+                                            @if ($lab->results_path)
+                                                <div class="mt-1">
+                                                    <a class="btn btn-outline-light btn-sm" target="_blank"
+                                                        href="{{ Storage::disk('public')->url($lab->results_path) }}">
+                                                        View Results
+                                                    </a>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    @if ($lab->address || $lab->notes)
+                                        <div class="blk-subtle mt-2">
+                                            @if ($lab->address)
+                                                <div><strong>Address:</strong> {{ $lab->address }}</div>
+                                            @endif
+                                            @if ($lab->notes)
+                                                <div class="mt-1">{{ $lab->notes }}</div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="text-center subtle py-4">No labworks found.</div>
+                            @endforelse
+                        </div>
+
+                        @if ($labworks->hasPages())
+                            <div class="mt-3">{!! $labworks->onEachSide(0)->links() !!}</div>
+                        @endif
+                    </div>
+
                 </div>
             </div>
         </div>

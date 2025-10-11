@@ -31,9 +31,12 @@ use App\Http\Controllers\Doctor\DoctorQueueController;
 use App\Http\Controllers\Doctor\DoctorScheduleController;
 use App\Http\Controllers\Doctor\DoctorWalletController;
 use App\Http\Controllers\Health\HealthDashboardController;
+use App\Http\Controllers\Labtech\LabtechDashboardController;
+use App\Http\Controllers\Labtech\LabtechLabworkController;
 use App\Http\Controllers\Patient\DoctorBrowseController;
 use App\Http\Controllers\Patient\PatientAppointmentController;
 use App\Http\Controllers\Patient\PatientDashboardController;
+use App\Http\Controllers\Patient\PatientLabworkController;
 use App\Http\Controllers\Patient\PatientLocationController;
 use App\Http\Controllers\Patient\PatientMessageController;
 use App\Http\Controllers\Patient\PatientProfileController;
@@ -81,7 +84,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/wallet/withdraw', [WithdrawalRequestController::class, 'requestWithdraw'])->name('wallet.withdraw');
 });
 
-/** Patient Dashboard (authed + verified) */
+// PATIENT ROUTES
+
 Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'patient'])->group(function () {
 
     Route::get('/dashboard', [PatientDashboardController::class, 'index'])->name('dashboard');
@@ -91,7 +95,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::post('/prescriptions/{rx}/assign-pharmacy', [PrescriptionController::class, 'assign'])->name('prescriptions.assignPharmacy');
     Route::post('/prescriptions/{rx}/confirm-price', [PrescriptionController::class, 'confirm'])->name('prescriptions.confirmPrice');
     Route::post('/prescriptions/{rx}/confirm-delivery-fee', [PrescriptionController::class, 'confirmDeliveryFee'])->name('confirmDeliveryFee');
-    Route::post('/orders/{order}/confirm-delivery-fee',[PrescriptionController::class, 'confirmDeliveryFee'])->name('orders.confirmDeliveryFee');
+    Route::post('/orders/{order}/confirm-delivery-fee', [PrescriptionController::class, 'confirmDeliveryFee'])->name('orders.confirmDeliveryFee');
 
     Route::get('/pharmacies', fn() => view('patient.pharmacies'))->name('pharmacies');
 
@@ -125,12 +129,28 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
     Route::post('/appointments/{appointment}/dispute', [PatientAppointmentController::class, 'storeDispute'])->name('appointments.dispute');
 
 
+    // LABWORKS
+    Route::get('/labworks',                 [PatientLabworkController::class, 'index'])->name('labworks.index');
+    Route::get('/labworks/create',          [PatientLabworkController::class, 'create'])->name('labworks.create');
+    Route::post('/labworks',                [PatientLabworkController::class, 'store'])->name('labworks.store');
+    Route::get('/labworks/{lab}',           [PatientLabworkController::class, 'show'])->name('labworks.show');
+    Route::post('/labworks/{lab}/cancel',   [PatientLabworkController::class, 'cancel'])->name('labworks.cancel');
+
+    // provider search + assign (optional)
+    Route::get('/labworks/providers/search',       [PatientLabworkController::class, 'providers'])->name('labworks.providers');
+    Route::post('/labworks/{lab}/assign-provider', [PatientLabworkController::class, 'assignProvider'])->name('labworks.assignProvider');
+
+    // download results (authorized)
+    Route::get('/labworks/{lab}/download',  [PatientLabworkController::class, 'downloadResults'])->name('labworks.download');
+
+
+
     Route::post('/wallet/pay', [WalletController::class, 'startFlutterwave'])->name('wallet.pay');           // create payment link
     Route::get('/wallet/callback', [WalletController::class, 'flutterwaveCallback'])->name('wallet.callback');   // user returns here
 });
 
 
-/** Doctor Dashboard (authed + verified) */
+// DOCTOR ROUTES
 Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'doctor'])->group(function () {
     Route::get('/dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
 
@@ -212,10 +232,6 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
     // actions
     Route::post('/prescriptions/{rx}/ready',  [PharmacyDashboardController::class, 'markReady'])->name('rx.ready');
     Route::post('/prescriptions/{rx}/picked', [PharmacyDashboardController::class, 'markPicked'])->name('rx.picked');
-
-    // Order history
-    // Route::get('/orders', [PharmacyDashboardController::class, 'orders'])->name('orders.index');
-    // Route::get('/orders/{order}', [PharmacyDashboardController::class, 'orderShow'])->name('orders.show');
 
 
     // Inventory
@@ -353,7 +369,7 @@ Route::middleware(['auth', 'verified', 'health'])->prefix('health')->name('healt
 });
 
 
-// TRANSPORT
+// TRANSPORT ROUTES
 
 Route::middleware(['auth', 'verified', 'transport'])->prefix('transport')->name('transport.')->group(function () {
     Route::get('/', [TransportDashboardController::class, 'index'])->name('dashboard');
@@ -366,4 +382,39 @@ Route::middleware(['auth', 'verified', 'transport'])->prefix('transport')->name(
     Route::get('/profile', [TransportDashboardController::class, 'showProfile'])->name('profile');
     Route::post('/profile', [TransportDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/password', [TransportDashboardController::class, 'updatePassword'])->name('profile.password');
+});
+
+
+// LABTECH ROUTES
+
+Route::prefix('labtech')->name('labtech.')->middleware(['auth', 'verified', 'labtech'])->group(function () {
+
+    Route::get('/dashboard', [LabtechDashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/labworks',                [LabtechLabworkController::class, 'index'])->name('labworks.index');
+    Route::get('/labworks/{lab}',          [LabtechLabworkController::class, 'show'])->name('labworks.show');
+
+    Route::post('/labworks/{lab}/accept',  [LabtechLabworkController::class, 'accept'])->name('labworks.accept');
+    Route::post('/labworks/{lab}/reject',  [LabtechLabworkController::class, 'reject'])->name('labworks.reject');
+
+    Route::post('/labworks/{lab}/schedule',     [LabtechLabworkController::class, 'schedule'])->name('labworks.schedule');
+    Route::post('/labworks/{lab}/price',        [LabtechLabworkController::class, 'setPrice'])->name('labworks.price');
+    Route::post('/labworks/{lab}/start',        [LabtechLabworkController::class, 'start'])->name('labworks.start');
+
+    // upload results BEFORE completion
+    Route::post('/labworks/{lab}/upload-results', [LabtechLabworkController::class, 'uploadResults'])->name('labworks.uploadResults');
+    Route::post('/labworks/{lab}/complete',       [LabtechLabworkController::class, 'complete'])->name('labworks.complete');
+
+    // optional: delete/replace results
+    Route::post('/labworks/{lab}/clear-results',  [LabtechLabworkController::class, 'clearResults'])->name('labworks.clearResults');
+
+
+    // WALLETS
+    Route::get('/wallet', [LabtechDashboardController::class, 'walletIndex'])->name('wallet.index');
+    Route::post('/wallet/withdraw', [LabtechDashboardController::class, 'withdraw'])->name('wallet.withdraw');
+
+    // PROFILE
+    Route::get('/profile', [LabtechDashboardController::class, 'showProfile'])->name('profile');
+    Route::post('/profile', [LabtechDashboardController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/password', [LabtechDashboardController::class, 'updatePassword'])->name('profile.password');
 });

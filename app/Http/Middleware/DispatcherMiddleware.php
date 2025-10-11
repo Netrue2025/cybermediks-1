@@ -16,7 +16,7 @@ class DispatcherMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-       $user = $request->user();
+        $user = $request->user();
 
         if (!$user) {
             // Not logged in
@@ -41,6 +41,9 @@ class DispatcherMiddleware
                     break;
                 case 'transport':
                     $dashboardRoute = 'transport.dashboard';
+                    break;
+                case 'labtech':
+                    $dashboardRoute = 'labtech.dashboard';
                     break;
                 default:
                     Auth::logout();

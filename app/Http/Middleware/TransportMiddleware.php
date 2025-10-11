@@ -42,6 +42,9 @@ class TransportMiddleware
                 case 'pharmacy':
                     $dashboardRoute = 'pharmacy.dashboard';
                     break;
+                case 'labtech':
+                    $dashboardRoute = 'labtech.dashboard';
+                    break;
                 default:
                     Auth::logout();
                     return redirect()->route('login')->with('error', 'Unauthorized access. Please login with a valid account.');

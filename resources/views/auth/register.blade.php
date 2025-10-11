@@ -125,6 +125,7 @@
                                         <option value="doctor">Doctor</option>
                                         <option value="pharmacy">Pharmacy</option>
                                         <option value="dispatcher">Dispatch Rider</option>
+                                        <option value="labtech">Laboratory Technician</option>
                                         <option value="health">Department of Health</option>
                                         <option value="transport">Department of Pharmacy</option>
                                     </select>

@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'pharmacy' => \App\Http\Middleware\PharmacyMiddleware::class,
             'transport' => \App\Http\Middleware\TransportMiddleware::class,
             'health' => \App\Http\Middleware\HealthMiddleware::class,
+            'labtech' => \App\Http\Middleware\LabTechMiddleware::class,
             'admin'   => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })

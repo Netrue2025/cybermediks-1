@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\LabworkRequest;
 use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -101,7 +102,6 @@ class DoctorPatientController extends Controller
     {
         $docId = Auth::id();
 
-        // Ensure this patient has (or had) an appointment with this doctor
         $hasRelation = Appointment::where('doctor_id', $docId)
             ->where('patient_id', $patient->id)
             ->exists();
@@ -110,11 +110,11 @@ class DoctorPatientController extends Controller
 
         // Stats
         $stats = Appointment::selectRaw('
-                COUNT(*) as total_visits,
-                SUM(CASE WHEN status="scheduled" AND scheduled_at > NOW() THEN 1 ELSE 0 END) as upcoming_count,
-                MIN(scheduled_at) as first_visit_at,
-                MAX(scheduled_at) as last_visit_at
-            ')
+            COUNT(*) as total_visits,
+            SUM(CASE WHEN status="scheduled" AND scheduled_at > NOW() THEN 1 ELSE 0 END) as upcoming_count,
+            MIN(scheduled_at) as first_visit_at,
+            MAX(scheduled_at) as last_visit_at
+        ')
             ->where('doctor_id', $docId)
             ->where('patient_id', $patient->id)
             ->first();
@@ -139,12 +139,20 @@ class DoctorPatientController extends Controller
             ->paginate(10, ['*'], 'rx_page')
             ->withQueryString();
 
+        // NEW: Labworks for this patient (regardless of labtech)
+        $labworks = LabworkRequest::with(['labtech']) // ensure relation exists: belongsTo(User::class,'labtech_id')
+            ->where('patient_id', $patient->id)
+            ->orderByDesc('created_at')
+            ->paginate(10, ['*'], 'lab_page')
+            ->withQueryString();
+
         return view('doctor.patients.history', [
             'patient'        => $patient,
             'stats'          => $stats,
             'activeRxCount'  => $activeRxCount,
             'appointments'   => $appointments,
             'prescriptions'  => $prescriptions,
+            'labworks'       => $labworks, // NEW
         ]);
     }
 }
