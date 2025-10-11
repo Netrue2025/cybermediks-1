@@ -165,7 +165,7 @@
                                 <input type="number" step="0.01" min="0" class="form-control" id="priceInput"
                                     value="{{ $lab->price }}">
                                 <button class="btn btn-outline-light" data-once
-                                    data-price="{{ $lab->id }}" {{ !$inProgress '' : 'disabled' }}>Save</button>
+                                    data-price="{{ $lab->id }}" {{ !$inProgress ? '' : 'disabled' }}>Save</button>
                             </div>
                         </fieldset>
 
