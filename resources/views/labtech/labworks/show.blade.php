@@ -38,128 +38,220 @@
             </div>
         </div>
 
+        {{-- inside resources/views/labtech/labworks/show.blade.php --}}
+
         <div class="col-lg-5">
             <div class="cardx">
                 @php
                     $st = $lab->status;
                     $hasResults = !empty($lab->results_path);
-                    $canEditMeta = !in_array($st, ['rejected', 'completed', 'cancelled'], true);
-                    $canAccept = $st === 'pending';
-                    $canReject = $st === 'pending';
-                    $canSchedule = $canEditMeta;
-                    $canPrice = $canEditMeta;
-                    $canStart = in_array($st, ['accepted', 'scheduled'], true);
-                    $canUpload = in_array($st, ['accepted', 'scheduled', 'in_progress', 'results_uploaded'], true);
-                    $canClear =
-                        $hasResults &&
-                        in_array($st, ['accepted', 'scheduled', 'in_progress', 'results_uploaded'], true);
-                    $canComplete =
-                        $hasResults &&
-                        in_array($st, ['results_uploaded', 'in_progress', 'scheduled', 'accepted'], true);
-                    $statusHint = match ($st) {
-                        'pending' => 'Review and accept or reject this request.',
-                        'accepted' => 'Optionally schedule/timebox and set a price. Start when ready.',
-                        'scheduled'
-                            => 'You can adjust schedule/price. Start when the patient arrives or collection begins.',
-                        'in_progress' => 'Upload results when ready. You can complete after results are uploaded.',
-                        'results_uploaded' => 'Results are uploaded. You may mark this labwork completed.',
-                        'completed' => 'Completed — no further actions allowed.',
-                        'rejected' => 'Rejected — no further actions allowed.',
-                        'cancelled' => 'Cancelled — no further actions allowed.',
-                        default => '—',
-                    };
+
+                    // Derived step flags
+                    $accepted = in_array(
+                        $st,
+                        ['accepted', 'scheduled', 'in_progress', 'results_uploaded', 'completed'],
+                        true,
+                    );
+                    $scheduled = !is_null($lab->scheduled_at);
+                    $priced = !is_null($lab->price) && $lab->price >= 0; // require a price (>=0)
+                    $mayStart = $accepted && $scheduled && $priced;
+                    $inProgress = $st === 'in_progress' || $st === 'results_uploaded' || $st === 'completed';
+                    $canUpload = $inProgress;
+                    $canComplete = $st === 'results_uploaded' && $hasResults;
+                    $isFinished = in_array($st, ['rejected', 'cancelled', 'completed'], true);
                 @endphp
 
+                <style>
+                    .step {
+                        display: flex;
+                        gap: .6rem;
+                        align-items: flex-start;
+                        padding: .5rem .25rem;
+                        opacity: .95
+                    }
+
+                    .step .dot {
+                        width: 14px;
+                        height: 14px;
+                        border-radius: 50%;
+                        margin-top: .25rem;
+                        background: #2a3854;
+                        border: 1px solid var(--border)
+                    }
+
+                    .step.done .dot {
+                        background: #22c55e;
+                        border-color: #1f6f43
+                    }
+
+                    .step.active .dot {
+                        background: #60a5fa;
+                        border-color: #2563eb
+                    }
+
+                    .step .meta {
+                        flex: 1
+                    }
+
+                    .step .title {
+                        font-weight: 700
+                    }
+
+                    .step .hint {
+                        color: var(--muted);
+                        font-size: .9rem
+                    }
+
+                    fieldset:disabled {
+                        opacity: .55
+                    }
+                </style>
+
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="fw-bold">Actions</div>
-                    <span
-                        class="badge-soft {{ in_array($st, ['completed']) ? 'badge-ready' : (in_array($st, ['rejected', 'cancelled']) ? 'badge-cancelled' : 'badge-pending') }}">
+                    <div class="fw-bold">Workflow</div>
+                    <span class="badge-soft {{ $st === 'completed' ? 'badge-on' : ($isFinished ? 'badge-off' : '') }}">
                         {{ ucwords(str_replace('_', ' ', $st)) }}
                     </span>
                 </div>
-                <div class="small subtle mb-3">{{ $statusHint }}</div>
 
-                {{-- Accept / Reject --}}
-                @if ($canAccept || $canReject)
-                    <div class="d-flex gap-2 mb-3">
-                        @if ($canAccept)
-                            <button class="btn btn-success btn-sm" data-once
-                                data-accept="{{ $lab->id }}">Accept</button>
+                {{-- STEP 1: Accept / Reject --}}
+                <div class="step {{ $accepted || $isFinished ? 'done' : ($st === 'pending' ? 'active' : '') }}">
+                    <div class="dot"></div>
+                    <div class="meta">
+                        <div class="title">1) Review</div>
+                        <div class="hint">Accept or reject the request.</div>
+
+                        @if (!$isFinished && $st === 'pending')
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-success btn-sm" data-once
+                                    data-accept="{{ $lab->id }}">Accept</button>
+                                <div class="input-group input-group-sm" style="max-width:320px">
+                                    <input type="text" class="form-control" placeholder="Reason (optional)"
+                                        id="rejectReason">
+                                    <button class="btn btn-outline-danger btn-sm" data-once
+                                        data-reject="{{ $lab->id }}">Reject</button>
+                                </div>
+                            </div>
+                        @elseif($accepted)
+                            <div class="mt-2"><span class="badge-soft badge-on">Accepted</span></div>
+                        @elseif($isFinished)
+                            <div class="mt-2"><span class="badge-soft badge-off">{{ ucwords($st) }}</span></div>
                         @endif
-                        @if ($canReject)
-                            <div class="input-group input-group-sm" style="max-width: 360px;">
-                                <input type="text" class="form-control" placeholder="Reason (optional)"
-                                    id="rejectReason">
+                    </div>
+                </div>
+
+                {{-- STEP 2: Schedule + Price (both required before Start) --}}
+                <div
+                    class="step {{ $accepted && $scheduled && $priced ? 'done' : ($accepted && !$isFinished ? 'active' : '') }}">
+                    <div class="dot"></div>
+                    <div class="meta">
+                        <div class="title">2) Schedule & Price</div>
+                        <div class="hint">Set a scheduled time and a price, then save both.</div>
+
+                        <fieldset class="mt-2" {{ $accepted && !$isFinished ? '' : 'disabled' }}>
+                            <label class="form-label small mb-1">Schedule</label>
+                            <div class="d-flex gap-2">
+                                <input type="datetime-local" class="form-control" id="scheduledAt"
+                                    value="{{ $lab->scheduled_at?->format('Y-m-d\TH:i') }}">
+                                <button class="btn btn-outline-light btn-sm" data-once
+                                    data-schedule="{{ $lab->id }}">Save</button>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="mt-2" {{ $accepted && !$isFinished ? '' : 'disabled' }}>
+                            <label class="form-label small mb-1">Price</label>
+                            <div class="input-group input-group-sm" style="max-width:260px;">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" min="0" class="form-control" id="priceInput"
+                                    value="{{ $lab->price }}">
+                                <button class="btn btn-outline-light" data-once
+                                    data-price="{{ $lab->id }}">Save</button>
+                            </div>
+                        </fieldset>
+
+                        <div class="small subtle mt-2">
+                            @if (!$scheduled)
+                                <span>• Schedule not set</span>
+                            @else
+                                <span class="text-success">• Schedule set</span>
+                            @endif
+                            @if (!$priced)
+                                <span class="ms-2">• Price not set</span>
+                            @else
+                                <span class="text-success ms-2">• Price set</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- STEP 3: Start --}}
+                <div class="step {{ $inProgress ? 'done' : ($mayStart && !$isFinished ? 'active' : '') }}">
+                    <div class="dot"></div>
+                    <div class="meta">
+                        <div class="title">3) Start</div>
+                        <div class="hint">Begin labwork (moves to in progress).</div>
+
+                        <div class="mt-2 d-grid">
+                            <button class="btn btn-outline-light btn-sm" data-once data-start="{{ $lab->id }}"
+                                {{ $mayStart && !$isFinished && !$inProgress ? '' : 'disabled' }}>
+                                Mark In Progress
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- STEP 4: Upload Results --}}
+                <div
+                    class="step {{ $st === 'results_uploaded' ? 'done' : ($inProgress && !$isFinished ? 'active' : '') }}">
+                    <div class="dot"></div>
+                    <div class="meta">
+                        <div class="title">4) Upload Results</div>
+                        <div class="hint">Attach PDF/images/docs and optional notes.</div>
+
+                        <fieldset class="mt-2" {{ $inProgress && !$isFinished ? '' : 'disabled' }}>
+                            <input type="file" id="resultsFile" class="form-control mb-2"
+                                accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx,.xls,.xlsx">
+                            <textarea id="resultsNotes" rows="2" class="form-control mb-2" placeholder="Notes (optional)">{{ old('notes', $lab->results_notes) }}</textarea>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success btn-sm" data-once
+                                    data-upload="{{ $lab->id }}">Upload</button>
+                                @if ($hasResults)
+                                    <a class="btn btn-outline-light btn-sm" target="_blank"
+                                        href="{{ Storage::disk('public')->url($lab->results_path) }}">Preview</a>
+                                @endif
+                            </div>
+                        </fieldset>
+
+                        @if ($hasResults && !$isFinished)
+                            <div class="mt-2">
                                 <button class="btn btn-outline-danger btn-sm" data-once
-                                    data-reject="{{ $lab->id }}">Reject</button>
+                                    data-clear="{{ $lab->id }}">Remove Results</button>
                             </div>
                         @endif
                     </div>
-                @endif
-
-                {{-- Schedule --}}
-                <fieldset class="mt-2" {{ $canSchedule ? '' : 'disabled' }}>
-                    <label class="form-label small">Schedule</label>
-                    <div class="d-flex gap-2">
-                        <input type="datetime-local" class="form-control" id="scheduledAt"
-                            value="{{ $lab->scheduled_at?->format('Y-m-d\TH:i') }}">
-                        <button class="btn btn-outline-light btn-sm" data-once
-                            data-schedule="{{ $lab->id }}">Save</button>
-                    </div>
-                </fieldset>
-
-                {{-- Price --}}
-                <fieldset class="mt-3" {{ $canPrice ? '' : 'disabled' }}>
-                    <label class="form-label small">Price</label>
-                    <div class="input-group input-group-sm" style="max-width: 260px;">
-                        <span class="input-group-text">$</span>
-                        <input type="number" step="0.01" min="0" class="form-control" id="priceInput"
-                            value="{{ $lab->price }}">
-                        <button class="btn btn-outline-light" data-once data-price="{{ $lab->id }}">Save</button>
-                    </div>
-                </fieldset>
-
-                {{-- Start / In Progress --}}
-                <div class="mt-3 d-grid">
-                    <button class="btn btn-outline-light btn-sm" data-once data-start="{{ $lab->id }}"
-                        {{ $canStart ? '' : 'disabled' }}>
-                        Mark In Progress
-                    </button>
                 </div>
 
-                <hr>
+                {{-- STEP 5: Complete --}}
+                <div class="step {{ $st === 'completed' ? 'done' : ($canComplete ? 'active' : '') }}">
+                    <div class="dot"></div>
+                    <div class="meta">
+                        <div class="title">5) Complete</div>
+                        <div class="hint">Finish the job (requires uploaded results).</div>
 
-                {{-- Results upload BEFORE completion --}}
-                <fieldset class="mt-2" {{ $canUpload ? '' : 'disabled' }}>
-                    <label class="form-label small">Upload Results (PDF/Images/Docs)</label>
-                    <input type="file" id="resultsFile" class="form-control mb-2"
-                        accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx,.xls,.xlsx">
-                    <textarea id="resultsNotes" rows="2" class="form-control mb-2" placeholder="Notes (optional)">{{ old('notes', $lab->results_notes) }}</textarea>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-success btn-sm" data-once data-upload="{{ $lab->id }}">Upload</button>
-                        @if ($hasResults)
-                            <a class="btn btn-outline-light btn-sm" target="_blank"
-                                href="{{ Storage::disk('public')->url($lab->results_path) }}">Preview</a>
-                        @endif
+                        <div class="mt-2 d-grid">
+                            <button class="btn btn-primary" data-once data-complete="{{ $lab->id }}"
+                                {{ $canComplete ? '' : 'disabled' }}>
+                                Mark Completed
+                            </button>
+
+                             <a class="btn btn-outline-light btn-sm" target="_blank" href="{{ Storage::disk('public')->url($lab->results_path) }}">View Result</a>
+                        </div>
                     </div>
-                </fieldset>
-
-                @if ($canClear)
-                    <div class="mt-2">
-                        <button class="btn btn-outline-danger btn-sm" data-once data-clear="{{ $lab->id }}">Remove
-                            Results</button>
-                    </div>
-                @endif
-
-                {{-- Complete --}}
-                <div class="mt-3 d-grid">
-                    <button class="btn btn-primary" data-once data-complete="{{ $lab->id }}"
-                        {{ $canComplete ? '' : 'disabled' }}>
-                        Mark Completed
-                    </button>
                 </div>
+
             </div>
-    </div>
+        </div>
+
 
     </div>
 @endsection
@@ -170,36 +262,38 @@
 
             function lockBtn($b) {
                 try {
-                    $b.prop('disabled', true).addClass('opacity-50');
+                    $b.prop('disabled', true).addClass('opacity-50')
                 } catch (e) {}
             }
 
             function unlockBtn($b) {
                 try {
-                    $b.prop('disabled', false).removeClass('opacity-50');
+                    $b.prop('disabled', false).removeClass('opacity-50')
                 } catch (e) {}
             }
 
             function doneBtn($b, label) {
                 try {
-                    $b.prop('disabled', true)
-                        .addClass('opacity-50')
-                        .attr('aria-disabled', 'true')
-                        .text(label || $b.text());
-                    $b.closest('[data-once]').attr('data-once-done', '1');
+                    $b.prop('disabled', true).addClass('opacity-50').attr('aria-disabled', 'true').text(label || $b
+                        .text())
                 } catch (e) {}
             }
-            // One-click guard: after one successful click, we won’t fire again
+
+            // One-click guard
             $(document).on('click', '[data-once]', function(e) {
                 const $t = $(this);
-                if ($t.attr('data-once-done') === '1') {
+                if ($t.data('onceDone')) {
                     e.stopImmediatePropagation();
                     e.preventDefault();
                     return false;
                 }
             });
 
-            // Accept
+            function markOnce($b) {
+                $b.data('onceDone', true);
+            }
+
+            // STEP 1: Accept
             $(document).on('click', '[data-accept]', function() {
                 const id = $(this).data('accept'),
                     $btn = $(this);
@@ -210,6 +304,7 @@
                     .done(r => {
                         flash('success', r.message || 'Accepted');
                         doneBtn($btn, 'Accepted');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
@@ -218,7 +313,7 @@
                     });
             });
 
-            // Reject
+            // STEP 1: Reject
             $(document).on('click', '[data-reject]', function() {
                 const id = $(this).data('reject'),
                     $btn = $(this);
@@ -231,6 +326,7 @@
                     .done(r => {
                         flash('success', r.message || 'Rejected');
                         doneBtn($btn, 'Rejected');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
@@ -239,11 +335,12 @@
                     });
             });
 
-            // Schedule
+            // STEP 2: Schedule
             $(document).on('click', '[data-schedule]', function() {
                 const id = $(this).data('schedule'),
                     $btn = $(this);
                 const dt = $('#scheduledAt').val();
+                if (!dt) return flash('danger', 'Select a schedule');
                 lockBtn($btn);
                 $.post(`{{ route('labtech.labworks.schedule', '__ID__') }}`.replace('__ID__', id), {
                         _token: csrf,
@@ -252,15 +349,16 @@
                     .done(r => {
                         flash('success', r.message || 'Schedule saved');
                         doneBtn($btn, 'Saved');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
-                        flash('danger', x.responseJSON?.message || 'Failed to save');
+                        flash('danger', x.responseJSON?.message || 'Failed to save schedule');
                         unlockBtn($btn);
                     });
             });
 
-            // Price
+            // STEP 2: Price
             $(document).on('click', '[data-price]', function() {
                 const id = $(this).data('price'),
                     $btn = $(this);
@@ -274,15 +372,16 @@
                     .done(r => {
                         flash('success', r.message || 'Price saved');
                         doneBtn($btn, 'Saved');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
-                        flash('danger', x.responseJSON?.message || 'Failed to save');
+                        flash('danger', x.responseJSON?.message || 'Failed to save price');
                         unlockBtn($btn);
                     });
             });
 
-            // Start / In progress
+            // STEP 3: Start
             $(document).on('click', '[data-start]', function() {
                 const id = $(this).data('start'),
                     $btn = $(this);
@@ -293,6 +392,7 @@
                     .done(r => {
                         flash('success', r.message || 'Marked in progress');
                         doneBtn($btn, 'In Progress');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
@@ -301,20 +401,17 @@
                     });
             });
 
-            // Upload Results (file + notes)
+            // STEP 4: Upload results
             $(document).on('click', '[data-upload]', function() {
                 const id = $(this).data('upload'),
                     $btn = $(this);
                 const fileInput = document.getElementById('resultsFile');
-                if (!fileInput || !fileInput.files || !fileInput.files.length) {
-                    return flash('danger', 'Please choose a file to upload');
-                }
-                const notes = $('#resultsNotes').val() || '';
+                if (!fileInput || !fileInput.files || !fileInput.files.length) return flash('danger',
+                    'Choose a file to upload');
                 const fd = new FormData();
                 fd.append('_token', csrf);
                 fd.append('file', fileInput.files[0]);
-                fd.append('notes', notes);
-
+                fd.append('notes', $('#resultsNotes').val() || '');
                 lockBtn($btn);
                 $.ajax({
                         url: `{{ route('labtech.labworks.uploadResults', '__ID__') }}`.replace('__ID__',
@@ -327,6 +424,7 @@
                     .done(r => {
                         flash('success', r.message || 'Results uploaded');
                         doneBtn($btn, 'Uploaded');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
@@ -335,7 +433,7 @@
                     });
             });
 
-            // Clear Results
+            // STEP 4: Clear results
             $(document).on('click', '[data-clear]', function() {
                 const id = $(this).data('clear'),
                     $btn = $(this);
@@ -347,6 +445,7 @@
                     .done(r => {
                         flash('success', r.message || 'Results removed');
                         doneBtn($btn, 'Removed');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
@@ -355,7 +454,7 @@
                     });
             });
 
-            // Complete
+            // STEP 5: Complete
             $(document).on('click', '[data-complete]', function() {
                 const id = $(this).data('complete'),
                     $btn = $(this);
@@ -366,6 +465,7 @@
                     .done(r => {
                         flash('success', r.message || 'Marked completed');
                         doneBtn($btn, 'Completed');
+                        markOnce($btn);
                         location.reload();
                     })
                     .fail(x => {
