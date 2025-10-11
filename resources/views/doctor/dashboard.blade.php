@@ -746,10 +746,10 @@
                 const id = $(this).data('completed-appt');
                 const $btn = $(this);
 
-                if (is_required === 0) {
-                    flash('danger', 'Prescription is required');
-                    return;
-                }
+                //if (is_required === 0) {
+                 //   flash('danger', 'Prescription is required');
+                   // return;
+                //}
 
                 lockBtn($btn);
                 $.post(`{{ route('doctor.queue.completed', '__ID__') }}`.replace('__ID__', id), {
