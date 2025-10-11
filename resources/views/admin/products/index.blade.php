@@ -231,9 +231,9 @@
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Link (optional)</label>
+                        <label class="form-label">Link</label>
                         <input name="link" type="url" class="form-control @error('link') is-invalid @enderror"
-                            placeholder="https://example.com/product" value="{{ old('link', $editing->link ?? '') }}">
+                            placeholder="https://example.com/product" required value="{{ old('link', $editing->link ?? '') }}">
                         @error('link')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

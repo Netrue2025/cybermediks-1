@@ -40,7 +40,7 @@ class AdminProductController extends Controller
             'name'        => ['required', 'string', 'max:190'],
             'description' => ['nullable', 'string', 'max:5000'],
             'price'       => ['required', 'numeric', 'min:0'],
-            'link'        => ['nullable', 'url', 'max:255'],
+            'link'        => ['required', 'url', 'max:255'],
             'image'       => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
         ]);
 
