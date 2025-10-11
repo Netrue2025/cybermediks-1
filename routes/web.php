@@ -57,20 +57,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
-/** Patient Auth (guest) */
-Route::middleware('guest')->group(function () {
-    Route::get('/login',    [AuthController::class, 'showLogin'])->name('login.show');
-    Route::post('/login',   [AuthController::class, 'login'])->name('login');
 
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register.show');
-    Route::post('/register', [AuthController::class, 'register'])->name('register');
+Route::get('/login',    [AuthController::class, 'showLogin'])->name('login.show');
+Route::post('/login',   [AuthController::class, 'login'])->name('login');
 
-    Route::get('/forgot',   [PasswordController::class, 'showForgot'])->name('forgot.show');
-    Route::post('/forgot',  [PasswordController::class, 'sendResetCode'])->middleware('throttle:5,1')->name('forgot.send');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register.show');
+Route::post('/register', [AuthController::class, 'register'])->name('register');
 
-    Route::get('/reset',    [PasswordController::class, 'showReset'])->name('reset.show');
-    Route::post('/reset',   [PasswordController::class, 'reset'])->name('reset');
-});
+Route::get('/forgot',   [PasswordController::class, 'showForgot'])->name('forgot.show');
+Route::post('/forgot',  [PasswordController::class, 'sendResetCode'])->middleware('throttle:5,1')->name('forgot.send');
+
+Route::get('/reset',    [PasswordController::class, 'showReset'])->name('reset.show');
+Route::post('/reset',   [PasswordController::class, 'reset'])->name('reset');
 
 /** Auth (authed) */
 Route::middleware('auth')->group(function () {
