@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -11,7 +12,8 @@ class PatientProfileController extends Controller
 {
     public function show()
     {
-        return view('patient.profile');
+        $countries = Country::all();
+        return view('patient.profile', compact('countries'));
     }
 
     public function update(Request $r)
@@ -24,7 +26,7 @@ class PatientProfileController extends Controller
             'phone'      => ['nullable', 'string', 'max:40'],
             'gender'     => ['nullable', 'in:male,female,other'],
             'dob'        => ['nullable', 'date'],
-            'country'    => ['nullable', 'string', 'max:100'],
+            'country_id'    => ['nullable', 'string', 'exists:countries,id'],
             'address'    => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -34,7 +36,7 @@ class PatientProfileController extends Controller
             'phone'   => $data['phone'] ?? null,
             'gender'  => $data['gender'] ?? null,
             'dob'     => $data['dob'] ?? null,
-            'country' => $data['country'] ?? null,
+            'country_id' => $data['country_id'] ?? null,
             'address' => $data['address'] ?? null,
         ])->save();
 

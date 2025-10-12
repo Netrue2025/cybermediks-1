@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\User;
 use App\Services\OneTimeCode;
 use Illuminate\Http\Request;
@@ -14,7 +15,8 @@ class AuthController extends Controller
 {
     public function showRegister()
     {
-        return view('auth.register');
+        $countries = Country::all();
+        return view('auth.register', compact('countries'));
     }
     public function showLogin()
     {
@@ -28,6 +30,7 @@ class AuthController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', 'string', 'in:doctor,pharmacy,dispatcher,patient,labtech,health,transport'],
+            'country_id' => ['required', 'string', 'exists:countries,id'],
             'password' => ['required', 'confirmed', Password::min(6)],
         ]);
 
@@ -36,6 +39,7 @@ class AuthController extends Controller
             'last_name' => $data['last_name'],
             'email' => strtolower($data['email']),
             'role' => $data['role'],
+            'country_id' => $data['country_id'],
             'password' => Hash::make($data['password']),
         ]);
 

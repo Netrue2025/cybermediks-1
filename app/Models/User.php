@@ -21,12 +21,12 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'email',
+        'country_id',
         'password',
         'role',
         'phone',
         'gender',
         'dob',
-        'country',
         'address',
         'wallet_balance',
     ];
@@ -55,7 +55,12 @@ class User extends Authenticatable
         ];
     }
 
+    public function country()
+    {
+        return $this->belongsTo(Country::class, 'country_id', 'id');
+    }
 
+    
 
     public function doctorProfile()
     {
@@ -137,5 +142,10 @@ class User extends Authenticatable
     public function getNameAttribute(): string
     {
         return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
+
+    public function getCountryNameAttribute(): string
+    {
+        return $this->country?->name;
     }
 };

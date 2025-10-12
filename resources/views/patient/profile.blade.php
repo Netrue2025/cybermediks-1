@@ -127,8 +127,13 @@
 
                         <div class="col-md-4">
                             <label class="form-label">Country</label>
-                            <input class="form-control" name="country"
-                                value="{{ old('country', auth()->user()->country ?? '') }}" disabled>
+
+                            <select name="country_id" class="form-select" required disabled>
+                                <option value="" selected>Select Country</option>
+                                @foreach ($countries as $country)
+                                    <option value="{{ $country->id }}" {{ auth()->user()->country_id == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="col-12">

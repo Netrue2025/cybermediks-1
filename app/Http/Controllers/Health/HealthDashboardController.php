@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Health;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\DoctorCredential;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -84,7 +85,8 @@ class HealthDashboardController extends Controller
 
     public function showProfile()
     {
-        return view('health.profile');
+        $countries = Country::all();
+        return view('health.profile', compact('countries'));
     }
 
     public function updateProfile(Request $r)
@@ -97,7 +99,7 @@ class HealthDashboardController extends Controller
             'phone'      => ['nullable', 'string', 'max:40'],
             'gender'     => ['nullable', 'in:male,female,other'],
             'dob'        => ['nullable', 'date'],
-            'country'    => ['nullable', 'string', 'max:100'],
+            'country_id'    => ['nullable', 'string', 'exists:countries,id'],
             'address'    => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -107,7 +109,7 @@ class HealthDashboardController extends Controller
             'phone'   => $data['phone'] ?? null,
             'gender'  => $data['gender'] ?? null,
             'dob'     => $data['dob'] ?? null,
-            'country' => $data['country'] ?? null,
+            'country_id' => $data['country_id'] ?? null,
             'address' => $data['address'] ?? null,
         ])->save();
 

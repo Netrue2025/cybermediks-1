@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\DoctorProfile;
 use App\Models\DoctorSpecialty;
 use App\Models\Specialty;
@@ -27,7 +28,8 @@ class DoctorProfileController extends Controller
         $profile = DoctorProfile::firstOrCreate(['doctor_id' => Auth::id()]);
         $allSpecialties = Specialty::orderBy('name')->get(['id', 'name']);
         $selectedSpecialtyIds = DoctorSpecialty::where('doctor_id', Auth::id())->pluck('specialty_id')->all();
-        return view('doctor.profile', compact('profile', 'allSpecialties', 'selectedSpecialtyIds'));
+        $countries = Country::all();
+        return view('doctor.profile', compact('profile', 'allSpecialties', 'selectedSpecialtyIds', 'countries'));
     }
 
     public function update(Request $r)
@@ -40,7 +42,7 @@ class DoctorProfileController extends Controller
             'phone'      => ['nullable', 'string', 'max:40'],
             'gender'     => ['nullable', 'in:male,female,other'],
             'dob'        => ['nullable', 'date'],
-            'country'    => ['nullable', 'string', 'max:100'],
+            'country_id'    => ['nullable', 'string', 'exists:countries,id'],
             'address'    => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -50,13 +52,13 @@ class DoctorProfileController extends Controller
             'phone'   => $data['phone'] ?? null,
             'gender'  => $data['gender'] ?? null,
             'dob'     => $data['dob'] ?? null,
-            'country' => $data['country'] ?? null,
+            'country_id' => $data['country_id'] ?? null,
             'address' => $data['address'] ?? null,
         ])->save();
 
         return response()->json(['ok' => true, 'message' => 'Profile updated']);
     }
-
+    
     public function updatePassword(Request $r)
     {
         $r->validate([
@@ -101,8 +103,7 @@ class DoctorProfileController extends Controller
 
         $profile = $this->getProfile();
 
-        if ($request->has('meeting_link') && $request->meeting_link != '')
-        {
+        if ($request->has('meeting_link') && $request->meeting_link != '') {
             $now = now();
         } else {
             $now = null;

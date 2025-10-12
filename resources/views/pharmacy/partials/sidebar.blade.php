@@ -31,9 +31,9 @@
                 <i class="fa-solid fa-gauge"></i><span>Dashboard</span>
             </a>
 
-            <a class="item {{ request()->routeIs('pharmacy.prescriptions.index') ? 'active' : '' }}"
-                href="{{ route('pharmacy.prescriptions.index') }}">
-                <i class="fa-solid fa-file-prescription"></i><span>Pending Prescriptions</span>
+            <a class="item {{ request()->routeIs('pharmacy.orders.index') ? 'active' : '' }}"
+                href="{{ route('pharmacy.orders.index') }}">
+                <i class="fa-solid fa-file-prescription"></i><span>Pending Orders</span>
             </a>
 
             <a class="item {{ request()->routeIs('pharmacy.dispensed.index') ? 'active' : '' }}"

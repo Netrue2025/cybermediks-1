@@ -131,6 +131,15 @@
                                     </select>
                                 </div>
 
+                                <div class="col-12">
+                                    <select name="country_id" class="form-select" required>
+                                        <option value="" disabled selected>Select Country</option>
+                                        @foreach ($countries as $country)
+                                            <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
                                 <div class="col-12 input-with-icon">
                                     <input type="password" name="password" class="form-control" placeholder="Password"
                                         required>
@@ -183,6 +192,7 @@
                     first_name: $('input[name="first_name"]').val().trim(),
                     last_name: $('input[name="last_name"]').val().trim(),
                     email: $('input[name="email"]').val().trim(),
+                    country_id: $('select[name="country_id"]').val().trim(),
                     password: $('input[name="password"]').val(),
                     password_confirmation: $('input[name="password_confirmation"]').val(),
                     role: $('select[name="role"]').val()

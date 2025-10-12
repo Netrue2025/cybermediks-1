@@ -22,7 +22,7 @@ class PatientDashboardController extends Controller
             ->count();
 
         $acceptedAppt = Appointment::with('doctor')
-            ->where('patient_id', auth()->id())
+            ->where('patient_id', $userId)
             ->where('status', 'accepted')
             ->whereNotNull('meeting_link')
             ->orderByDesc('updated_at')
@@ -52,12 +52,25 @@ class PatientDashboardController extends Controller
                 ->count();
         }
 
+        $prescriptions = Prescription::query()
+            ->with([
+                'doctor:id,first_name,last_name',
+                'items:id,prescription_id,drug,dose,frequency,days,quantity,directions',
+                'order:id,prescription_id,patient_id,pharmacy_id,status,items_subtotal,dispatcher_price,grand_total',
+                'order.items:id,order_id,prescription_item_id,status,unit_price,line_total'
+            ])
+            ->forPatient($userId)
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
+
         return view('patient.dashboard', [
             'pendingAppointments'   => $pendingAppointments,
             'activeRxCount'  => $activeRxCount,
             'nearbyCount'    => $nearbyCount,
             'specialties'    => $specialties,
-            'acceptedAppt'   => $acceptedAppt
+            'acceptedAppt'   => $acceptedAppt,
+            'prescriptions'  => $prescriptions
         ]);
     }
 

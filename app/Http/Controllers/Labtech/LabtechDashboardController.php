@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Labtech;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\LabworkRequest;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
@@ -71,7 +72,8 @@ class LabtechDashboardController extends Controller
 
     public function showProfile()
     {
-        return view('labtech.profile');
+        $countries = Country::all();
+        return view('labtech.profile', compact('countries'));
     }
 
     public function updateProfile(Request $r)
@@ -84,11 +86,19 @@ class LabtechDashboardController extends Controller
             'phone'      => ['nullable', 'string', 'max:40'],
             'gender'     => ['nullable', 'in:male,female,other'],
             'dob'        => ['nullable', 'date'],
-            'country'    => ['nullable', 'string', 'max:100'],
+            'country_id'    => ['nullable', 'string', 'exists:countries,id'],
             'address'    => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user->fill($data)->save();
+        $user->fill([
+            'first_name'    => $data['first_name'],
+            'last_name'     => $data['last_name'],
+            'phone'   => $data['phone'] ?? null,
+            'gender'  => $data['gender'] ?? null,
+            'dob'     => $data['dob'] ?? null,
+            'country_id' => $data['country_id'] ?? null,
+            'address' => $data['address'] ?? null,
+        ])->save();
 
         return response()->json(['ok' => true, 'message' => 'Profile updated']);
     }

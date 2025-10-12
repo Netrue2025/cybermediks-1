@@ -137,6 +137,184 @@
         .spec-results .item:hover {
             background: #111f37
         }
+
+        .hdr-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: #0e162b;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px
+        }
+
+        .hdr-title {
+            display: flex;
+            align-items: center;
+            gap: .6rem
+        }
+
+        .hdr-title .pill-ghost {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            background: #0b1222;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .tile {
+            background: #0f1a2e;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px
+        }
+
+        .tile+.tile {
+            margin-top: 12px
+        }
+
+        .tile-head {
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: .5rem
+        }
+
+        .mini {
+            color: #9aa3b2;
+            font-size: .9rem
+        }
+
+        .badge-soft {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .22rem .6rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: #0e162b;
+            font-size: .85rem;
+            color: #cfe0ff
+        }
+
+        .badge-on {
+            background: rgba(34, 197, 94, .10);
+            border-color: #1f6f43
+        }
+
+        .badge-off {
+            background: rgba(239, 68, 68, .10);
+            border-color: #6f2b2b
+        }
+
+        .input-icon {
+            position: relative
+        }
+
+        .input-icon .input-icon-prefix {
+            position: absolute;
+            left: .6rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9aa3b2
+        }
+
+        .input-icon .input-icon-suffix {
+            position: absolute;
+            right: .6rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9aa3b2
+        }
+
+        .input-icon .form-control {
+            padding-left: 1.6rem;
+            padding-right: 2.2rem
+        }
+
+        /* specialties */
+        .chips-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            min-height: 38px;
+            padding: .35rem;
+            background: #0d162a;
+            border: 1px solid var(--border);
+            border-radius: 10px
+        }
+
+        .chip2 {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            background: #13203a;
+            border: 1px solid #2a3854;
+            border-radius: 999px;
+            padding: .28rem .6rem;
+            color: #cfe0ff;
+            font-size: .85rem
+        }
+
+        .chip2 .x {
+            opacity: .7;
+            cursor: pointer
+        }
+
+        .chip2 .x:hover {
+            opacity: 1
+        }
+
+        .spec-results {
+            position: relative;
+            margin-top: .25rem
+        }
+
+        .spec-results .menu {
+            position: absolute;
+            z-index: 10;
+            width: 100%;
+            background: #0f1a2e;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            max-height: 240px;
+            overflow: auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
+        }
+
+        .spec-results .item {
+            padding: .5rem .6rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer
+        }
+
+        .spec-results .item:hover {
+            background: #111f37
+        }
+
+        /* sticky save bar */
+        .savebar {
+            position: sticky;
+            bottom: 0;
+            margin-top: 12px;
+            background: linear-gradient(180deg, rgba(15, 22, 40, 0) 0%, #0f1628 35%);
+            padding-top: 10px
+        }
+
+        .savebar .inner {
+            background: #0f1a2e;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end
+        }
     </style>
 @endpush
 
@@ -217,8 +395,7 @@
                                     <div class="input-group">
                                         <input class="form-control" value="{{ auth()->user()->email }}" disabled>
                                         @if (!auth()->user()->email_verified_at)
-                                            <a class="btn btn-outline-light"
-                                                href="{{ route('verify.show') }}">Verify</a>
+                                            <a class="btn btn-outline-light" href="{{ route('verify.show') }}">Verify</a>
                                         @endif
                                     </div>
                                     <div class="mt-1">
@@ -258,8 +435,15 @@
 
                                 <div class="col-md-4">
                                     <label class="form-label">Country</label>
-                                    <input class="form-control" name="country"
-                                        value="{{ old('country', auth()->user()->country ?? '') }}" disabled>
+
+                                    <select name="country_id" class="form-select" required disabled>
+                                        <option value="" selected>Select Country</option>
+                                        @foreach ($countries as $country)
+                                            <option value="{{ $country->id }}"
+                                                {{ auth()->user()->country_id == $country->id ? 'selected' : '' }}>
+                                                {{ $country->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
 
                                 <div class="col-12">
@@ -280,187 +464,6 @@
 
                 {{-- TAB 2: Doctor Profile --}}
                 <div class="tab-pane fade" id="pane-doctor" role="tabpanel" aria-labelledby="tab-doctor">
-                    @push('styles')
-                        <style>
-                            .hdr-bar {
-                                display: flex;
-                                align-items: center;
-                                justify-content: space-between;
-                                gap: 10px;
-                                background: #0e162b;
-                                border: 1px solid var(--border);
-                                border-radius: 12px;
-                                padding: 12px 14px;
-                                margin-bottom: 12px
-                            }
-
-                            .hdr-title {
-                                display: flex;
-                                align-items: center;
-                                gap: .6rem
-                            }
-
-                            .hdr-title .pill-ghost {
-                                width: 38px;
-                                height: 38px;
-                                border-radius: 999px;
-                                background: #0b1222;
-                                border: 1px solid var(--border);
-                                display: flex;
-                                align-items: center;
-                                justify-content: center
-                            }
-
-                            .tile {
-                                background: #0f1a2e;
-                                border: 1px solid var(--border);
-                                border-radius: 12px;
-                                padding: 14px
-                            }
-
-                            .tile+.tile {
-                                margin-top: 12px
-                            }
-
-                            .tile-head {
-                                font-weight: 700;
-                                margin-bottom: 8px;
-                                display: flex;
-                                align-items: center;
-                                gap: .5rem
-                            }
-
-                            .mini {
-                                color: #9aa3b2;
-                                font-size: .9rem
-                            }
-
-                            .badge-soft {
-                                display: inline-flex;
-                                align-items: center;
-                                gap: .35rem;
-                                padding: .22rem .6rem;
-                                border-radius: 999px;
-                                border: 1px solid var(--border);
-                                background: #0e162b;
-                                font-size: .85rem;
-                                color: #cfe0ff
-                            }
-
-                            .badge-on {
-                                background: rgba(34, 197, 94, .10);
-                                border-color: #1f6f43
-                            }
-
-                            .badge-off {
-                                background: rgba(239, 68, 68, .10);
-                                border-color: #6f2b2b
-                            }
-
-                            .input-icon {
-                                position: relative
-                            }
-
-                            .input-icon .input-icon-prefix {
-                                position: absolute;
-                                left: .6rem;
-                                top: 50%;
-                                transform: translateY(-50%);
-                                color: #9aa3b2
-                            }
-
-                            .input-icon .input-icon-suffix {
-                                position: absolute;
-                                right: .6rem;
-                                top: 50%;
-                                transform: translateY(-50%);
-                                color: #9aa3b2
-                            }
-
-                            .input-icon .form-control {
-                                padding-left: 1.6rem;
-                                padding-right: 2.2rem
-                            }
-
-                            /* specialties */
-                            .chips-wrap {
-                                display: flex;
-                                flex-wrap: wrap;
-                                gap: .4rem;
-                                min-height: 38px;
-                                padding: .35rem;
-                                background: #0d162a;
-                                border: 1px solid var(--border);
-                                border-radius: 10px
-                            }
-
-                            .chip2 {
-                                display: inline-flex;
-                                align-items: center;
-                                gap: .4rem;
-                                background: #13203a;
-                                border: 1px solid #2a3854;
-                                border-radius: 999px;
-                                padding: .28rem .6rem;
-                                color: #cfe0ff;
-                                font-size: .85rem
-                            }
-
-                            .chip2 .x {
-                                opacity: .7;
-                                cursor: pointer
-                            }
-
-                            .chip2 .x:hover {
-                                opacity: 1
-                            }
-
-                            .spec-results {
-                                position: relative;
-                                margin-top: .25rem
-                            }
-
-                            .spec-results .menu {
-                                position: absolute;
-                                z-index: 10;
-                                width: 100%;
-                                background: #0f1a2e;
-                                border: 1px solid var(--border);
-                                border-radius: 10px;
-                                max-height: 240px;
-                                overflow: auto;
-                                box-shadow: 0 8px 24px rgba(0, 0, 0, .35)
-                            }
-
-                            .spec-results .item {
-                                padding: .5rem .6rem;
-                                border-bottom: 1px solid var(--border);
-                                cursor: pointer
-                            }
-
-                            .spec-results .item:hover {
-                                background: #111f37
-                            }
-
-                            /* sticky save bar */
-                            .savebar {
-                                position: sticky;
-                                bottom: 0;
-                                margin-top: 12px;
-                                background: linear-gradient(180deg, rgba(15, 22, 40, 0) 0%, #0f1628 35%);
-                                padding-top: 10px
-                            }
-
-                            .savebar .inner {
-                                background: #0f1a2e;
-                                border: 1px solid var(--border);
-                                border-radius: 12px;
-                                padding: 10px;
-                                display: flex;
-                                justify-content: flex-end
-                            }
-                        </style>
-                    @endpush
 
                     <!-- Header -->
                     <div class="hdr-bar">
@@ -524,8 +527,8 @@
                                 <div>
                                     <label class="form-label small subtle mb-1">Meeting Link</label>
                                     <div class="input-icon">
-                                        <input id="meeting_link" type="url" 
-                                            class="form-control" value="{{ $profile?->meeting_link}}">
+                                        <input id="meeting_link" type="url" class="form-control"
+                                            value="{{ $profile?->meeting_link }}">
                                     </div>
                                 </div>
                             </div>

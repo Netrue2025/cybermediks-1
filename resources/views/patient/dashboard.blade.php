@@ -169,6 +169,114 @@
             background: var(--success);
             border-color: var(--success);
         }
+
+        .badge-soft {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .25rem .55rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            font-size: .85rem;
+            background: #0e162b;
+            color: #cfe0ff
+        }
+
+        .badge-on {
+            background: rgba(34, 197, 94, .08);
+            border-color: #1f6f43
+        }
+
+        .badge-off {
+            background: rgba(148, 163, 184, .18);
+            border-color: #334155
+        }
+
+        .price-pill {
+            background: #0d162a;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .25rem .65rem;
+            font-weight: 700
+        }
+
+        .spec-chip {
+            background: #13203a;
+            border: 1px solid #2a3854;
+            border-radius: 999px;
+            padding: .22rem .6rem;
+            color: #cfe0ff;
+            font-size: .85rem
+        }
+
+        .slot-pill {
+            background: #0e162b;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .25rem .6rem
+        }
+
+        .rx-row {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .rx-badge {
+            background: #10203a;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .2rem .5rem;
+            color: #cfe0ff;
+        }
+
+        .rx-status {
+            background: var(--chip);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .2rem .6rem;
+            text-transform: capitalize;
+        }
+
+
+        .badge-soft {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .18rem .55rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            font-size: .8rem;
+            background: #0e162b
+        }
+
+        .badge-pending {
+            border-color: #334155
+        }
+
+        .badge-ready {
+            border-color: #1f6f43;
+            background: rgba(34, 197, 94, .08)
+        }
+
+        .badge-picked {
+            border-color: #1f6f43;
+            background: rgba(34, 197, 94, .16)
+        }
+
+        .badge-cancelled {
+            border-color: #6f2b2b;
+            background: rgba(239, 68, 68, .08)
+        }
+
+        .price-pill {
+            background: #0d162a;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: .18rem .55rem;
+            font-weight: 600
+        }
     </style>
 @endpush
 
@@ -207,6 +315,131 @@
             </div>
         </div>
     </div>
+
+
+
+    <br><br>
+
+
+    <div class="cardx mb-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="fa-solid fa-file-prescription"></i>
+            <h5 class="m-0">My Prescriptions</h5>
+        </div>
+        <div class="section-subtle mb-3">View, refill, and manage your prescriptions</div>
+
+        <div class="row g-2">
+            <div class="col-lg-6">
+                <input id="rxSearch" class="form-control" placeholder="Search by drug, doctor, or code..."
+                    value="{{ request('q') }}">
+            </div>
+            <div class="col-lg-3">
+                <select id="rxStatus" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>Expired</option>
+                    <option value="refill_requested" {{ request('status') === 'refill_requested' ? 'selected' : '' }}>Refill
+                        requested</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="rxList">
+        @include('patient.prescriptions._list', ['prescriptions' => $prescriptions])
+    </div>
+
+    <!-- View dialog -->
+    <div class="modal fade" id="rxViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background:var(--card); color:var(--text);">
+                <div class="modal-header">
+                    <h6 class="modal-title">Prescription</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="rxViewBody" class="small"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Choose Pharmacy Modal -->
+    <div class="modal fade" id="pharmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background:var(--card); color:var(--text);">
+                <div class="modal-header">
+                    <h6 class="modal-title"><i class="fa-solid fa-store me-1"></i> Choose a Pharmacy</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-8">
+                            <input id="pharmSearch" class="form-control" placeholder="Search pharmacy by name…">
+                        </div>
+                        <div class="col-md-4">
+                            <select id="pharmFilter" class="form-select">
+                                <option value="">All</option>
+                                <option value="24_7">Open 24/7</option>
+                                <option value="delivery">Has delivery</option> {{-- optional, if you track this --}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="pharmList" class="d-flex flex-column gap-2">
+                        <div class="text-center text-secondary py-3">Searching…</div>
+                    </div>
+
+                    <div class="d-grid mt-3">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quote Review Modal -->
+    <div class="modal fade" id="quoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background:var(--card); color:var(--text);">
+                <div class="modal-header">
+                    <h6 class="modal-title"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Quote Review</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="quoteBody">
+                        <div class="text-center text-secondary py-3">Loading…</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="me-auto section-subtle">
+                        <span id="quoteTotal" class="price-pill">$0.00</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmQuotedItems" disabled>Confirm
+                        Items</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+    <br><br>
+
+
+
+
+
+
+
+
 
     {{-- Find Doctors --}}
     <div class="cardx mt-3">
@@ -292,56 +525,6 @@
         </div>
     </div>
 
-    @push('styles')
-        <style>
-            .badge-soft {
-                display: inline-flex;
-                align-items: center;
-                gap: .35rem;
-                padding: .25rem .55rem;
-                border-radius: 999px;
-                border: 1px solid var(--border);
-                font-size: .85rem;
-                background: #0e162b;
-                color: #cfe0ff
-            }
-
-            .badge-on {
-                background: rgba(34, 197, 94, .08);
-                border-color: #1f6f43
-            }
-
-            .badge-off {
-                background: rgba(148, 163, 184, .18);
-                border-color: #334155
-            }
-
-            .price-pill {
-                background: #0d162a;
-                border: 1px solid var(--border);
-                border-radius: 999px;
-                padding: .25rem .65rem;
-                font-weight: 700
-            }
-
-            .spec-chip {
-                background: #13203a;
-                border: 1px solid #2a3854;
-                border-radius: 999px;
-                padding: .22rem .6rem;
-                color: #cfe0ff;
-                font-size: .85rem
-            }
-
-            .slot-pill {
-                background: #0e162b;
-                border: 1px solid var(--border);
-                border-radius: 999px;
-                padding: .25rem .6rem
-            }
-        </style>
-    @endpush
-
 
     {{-- Doctor list --}}
     <div class="mt-3 d-flex flex-column gap-3" id="doctorsList"></div>
@@ -404,7 +587,8 @@
                             <i class="fa-solid fa-video me-1"></i> Join meeting
                         </a>
                         <button style="display: none" id="closeModal" data-bs-dismiss="modal"></button>
-                        <button class="btn btn-outline-light" id="endAppointment" data-apt-id="{{ $acceptedAppt->id }}">End Appointment</button>
+                        <button class="btn btn-outline-light" id="endAppointment"
+                            data-apt-id="{{ $acceptedAppt->id }}">End Appointment</button>
                     </div>
                 </div>
             </div>
@@ -655,5 +839,257 @@
                 .fail(xhr => flash('danger', xhr.responseJSON?.message || 'Failed to send'))
                 .always(() => unlockBtn($btn));
         });
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        (function() {
+            const $list = $('#rxList');
+            let currentOrderIdForQuote = null;
+            let currentRxIdForQuote = null;
+            let t = null;
+
+            function fetchList() {
+                const q = $('#rxSearch').val();
+                const status = $('#rxStatus').val();
+                $.get(`{{ route('patient.prescriptions.index') }}`, {
+                    q,
+                    status
+                }, function(html) {
+                    $list.html(html);
+                });
+            }
+
+            $('#rxSearch').on('input', function() {
+                clearTimeout(t);
+                t = setTimeout(fetchList, 300);
+            });
+            $('#rxStatus').on('change', fetchList);
+
+            // View: read JSON payload embedded in row
+            $(document).on('click', '[data-rx-view]', function() {
+                const payload = $(this).data('rx-view'); // stringified JSON
+                const rx = typeof payload === 'string' ? JSON.parse(payload) : payload;
+
+                let itemsHtml = rx.items.map(i => {
+                    const bought = i.status === 'purchased';
+                    const badge = i.status ?
+                        `<span class="badge-soft ms-1">${i.status.replaceAll('_',' ')}</span>` : '';
+                    const price = (i.line_total ?? i.unit_price) ?
+                        `<span class="price-pill ms-2">$${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
+                        '';
+                    return `<li class="${bought ? 'opacity-50' : ''}">
+                ${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}
+                ${badge}${price}
+                </li>`;
+                }).join('');
+
+                let html = `
+                    <div class="mb-2">
+                        <span class="rx-badge">Rx ${rx.code}</span>
+                        <span class="rx-status ms-2">${(rx.dispense || rx.status || '').toString().replaceAll('_',' ')}</span>
+                    </div>
+                    <div class="mb-2"><strong>Doctor:</strong> ${rx.doctor}</div>
+                    ${rx.notes ? `<div class="mb-3"><strong>Notes:</strong> ${rx.notes}</div>` : ``}
+                    <div class="mb-2"><strong>Items</strong></div>
+                    <ul class="mb-0">${itemsHtml}</ul>
+                `;
+                $('#rxViewBody').html(html);
+                new bootstrap.Modal(document.getElementById('rxViewModal')).show();
+            });
+
+
+            // Refill click (placeholder: route to your refill flow)
+            $(document).on('click', '[data-rx-refill]', function() {
+                const id = $(this).data('rx-refill');
+                window.location.href = `/patient/prescriptions/${id}/refill`; // implement when ready
+            });
+
+
+            let currentRxId = null;
+            const $pharmModal = $('#pharmModal');
+            const $pharmList = $('#pharmList');
+            const $pharmSearch = $('#pharmSearch');
+            const $pharmFilter = $('#pharmFilter');
+            let searchTimer = null;
+
+            // Open modal and load pharmacies
+            $(document).on('click', '[data-rx-buy]', function() {
+                currentRxId = $(this).data('rx-buy');
+                if (!currentRxId) return;
+                $pharmModal.modal('show');
+                loadPharmacies();
+            });
+
+            $pharmSearch.on('input', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(loadPharmacies, 300);
+            });
+            $pharmFilter.on('change', loadPharmacies);
+
+            function loadPharmacies() {
+                const q = $pharmSearch.val() || '';
+                const filter = $pharmFilter.val() || '';
+                $pharmList.html(`<div class="text-center text-secondary py-3">Loading…</div>`);
+                $.get(`{{ route('patient.prescriptions.pharmacies', ['rx' => '__ID__']) }}`.replace('__ID__',
+                        currentRxId), {
+                        q,
+                        filter
+                    })
+                    .done(html => $pharmList.html(html))
+                    .fail(() => $pharmList.html(
+                        `<div class="text-center text-danger py-3">Failed to load pharmacies</div>`));
+            }
+
+            // Select pharmacy -> assign to prescription
+            $(document).on('click', '[data-pharm-select]', function() {
+                const pharmId = $(this).data('pharm-select');
+                const $btn = $(this);
+                if (!pharmId || !currentRxId) return;
+
+                lockBtn($btn);
+                $.post(`{{ route('patient.prescriptions.assignPharmacy', ['rx' => '__ID__']) }}`.replace(
+                        '__ID__', currentRxId), {
+                        _token: `{{ csrf_token() }}`,
+                        pharmacy_id: pharmId
+                    })
+                    .done(res => {
+                        // Always close the picker
+                        $pharmModal.modal('hide');
+
+                        // If server returned a quote, show it immediately
+                        if (res && res.quote) {
+                            currentOrderIdForQuote = res.order_id;
+                            currentRxIdForQuote =
+                                currentRxId; // <- you already have currentRxId in your page
+                            renderQuoteModal(res.order_id, res.quote); // signature can stay the same
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal'))
+                                .show();
+                        } else {
+                            flash('success', res.message || 'Pharmacy selected');
+                            try {
+                                (typeof fetchList === 'function') && fetchList();
+                            } catch (e) {}
+                        }
+                    })
+
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to assign pharmacy');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            $(document).on('click', '[data-dsp-confirm-order]', function() {
+                const orderId = $(this).data('dsp-confirm-order');
+                const $btn = $(this);
+                lockBtn($btn);
+
+                $.post(
+                        `{{ route('patient.orders.confirmDeliveryFee', ['order' => '__OID__']) }}`.replace(
+                            '__OID__', orderId), {
+                            _token: `{{ csrf_token() }}`
+                        }
+                    )
+                    .done(res => {
+                        flash('success', res.message || 'Delivery fee confirmed');
+                        location.reload();
+                    })
+                    .fail(err => {
+                        flash('danger', err.responseJSON?.message || 'Failed');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+
+
+
+            function renderQuoteModal(orderId, q) {
+                currentOrderIdForQuote = orderId;
+
+                const available = (q.available || []).map(a => {
+                    const unit = Number(a.unit_price || 0);
+                    const line = Number(a.line_total || unit);
+                    return `
+                    <tr>
+                        <td>${escapeHtml(a.drug || '')}</td>
+                        <td class="text-end">$${unit.toFixed(2)}</td>
+                        <td class="text-end">$${line.toFixed(2)}</td>
+                    </tr>
+                    `;
+                }).join('');
+
+                const unavailable = (q.unavailable || []).map(u => `
+                    <li>${escapeHtml(u.drug || '')}${u.reason ? ` — <span class="section-subtle">${escapeHtml(u.reason)}</span>` : ''}</li>
+                `).join('');
+
+                const table = available ?
+                    `
+                        <div class="mb-2 fw-semibold">Available items</div>
+                        <div class="table-responsive">
+                        <table class="table table-borderless table-darkish align-middle mb-3">
+                            <thead>
+                            <tr>
+                                <th>Drug</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Line Total</th>
+                            </tr>
+                            </thead>
+                            <tbody>${available}</tbody>
+                        </table>
+                        </div>
+                    ` :
+                    `<div class="text-warning mb-2">No matching items found in this pharmacy inventory.</div>`;
+
+                const unvBlock = unavailable ?
+                    `
+                        <div class="mb-2 fw-semibold">Unavailable here</div>
+                        <ul class="mb-0 small">${unavailable}</ul>
+                    ` :
+                    '';
+
+                $('#quoteBody').html(`${table}${unvBlock}`);
+                const total = Number(q.items_total || 0);
+                $('#quoteTotal').text(`$${total.toFixed(2)}`);
+                $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
+            }
+
+            // Confirm the quoted items for this order
+            $(document)
+                .off('click.quote', '#btnConfirmQuotedItems')
+                .on('click.quote', '#btnConfirmQuotedItems', function() {
+                    const $btn = $(this);
+                    if (!currentRxIdForQuote) return; // we confirm by PRESCRIPTION
+
+                    lockBtn($btn);
+                    $.post(
+                            `{{ route('patient.prescriptions.confirmPrice', ['rx' => '__RX__']) }}`
+                            .replace('__RX__', currentRxIdForQuote), {
+                                _token: `{{ csrf_token() }}`
+                            }
+                        )
+                        .done(res => {
+                            flash('success', res.message || 'Items confirmed');
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal')).hide();
+                            try {
+                                (typeof fetchList === 'function') && fetchList();
+                            } catch (e) {}
+                        })
+                        .fail(xhr => {
+                            flash('danger', xhr.responseJSON?.message || 'Failed to confirm');
+                        })
+                        .always(() => unlockBtn($btn));
+                });
+
+
+
+            // tiny HTML escaper for safe rendering
+            function escapeHtml(s) {
+                return String(s || '')
+                    .replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+            }
+
+        })();
     </script>
 @endpush

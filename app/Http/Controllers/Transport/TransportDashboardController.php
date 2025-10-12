@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Transport;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\PharmacyProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -56,22 +57,12 @@ class TransportDashboardController extends Controller
 
         return view('transport.pharmacies.index', compact('pharmacies', 'q'));
     }
-    public function profile(User $pharmacy)
-    {
-        // ensure it's a pharmacy
-        if ($pharmacy->role !== 'pharmacy') {
-            abort(404);
-        }
-
-        $profile = PharmacyProfile::where('user_id', $pharmacy->id)->first();
-
-        return view('transport.pharmacies._profile', compact('pharmacy', 'profile'));
-    }
 
 
     public function showProfile()
     {
-        return view('transport.profile');
+        $countries = Country::all();
+        return view('transport.profile', compact('countries'));
     }
 
     public function updateProfile(Request $r)
@@ -84,7 +75,7 @@ class TransportDashboardController extends Controller
             'phone'      => ['nullable', 'string', 'max:40'],
             'gender'     => ['nullable', 'in:male,female,other'],
             'dob'        => ['nullable', 'date'],
-            'country'    => ['nullable', 'string', 'max:100'],
+            'country_id'    => ['nullable', 'string', 'exists:countries,id'],
             'address'    => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -94,7 +85,7 @@ class TransportDashboardController extends Controller
             'phone'   => $data['phone'] ?? null,
             'gender'  => $data['gender'] ?? null,
             'dob'     => $data['dob'] ?? null,
-            'country' => $data['country'] ?? null,
+            'country_id' => $data['country_id'] ?? null,
             'address' => $data['address'] ?? null,
         ])->save();
 
