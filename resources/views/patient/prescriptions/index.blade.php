@@ -383,6 +383,12 @@
                 const total = Number(q.items_total || 0);
                 $('#quoteTotal').text(`$${total.toFixed(2)}`);
                 $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
+                $('#quoteBody').append(`
+                    <div class="small section-subtle">
+                        Items: ₦${Number(q.items_total).toFixed(2)} ·
+                        Delivery: ₦${Number(q.delivery_fee).toFixed(2)} (${q.distance_km} km @ ₦100/km)
+                    </div>
+                `);
             }
 
             // Confirm the quoted items for this order

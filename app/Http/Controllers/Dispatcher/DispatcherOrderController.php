@@ -19,34 +19,34 @@ class DispatcherOrderController extends Controller
             return response()->json(['message' => 'Already assigned'], 422);
         }
 
-        $order->update(['dispatcher_id' => Auth::id()]);
+        $order->update(['dispatcher_id' => Auth::id(), 'status' => 'dispatcher_price_confirm']);
 
         return response()->json(['status' => 'ok', 'message' => 'Delivery accepted']);
     }
 
-    public function setDeliveryFee(Request $r, Order $order)
-    {
-        if (!in_array($order->status, ['ready', 'dispatcher_price_set'], true)) {
-            return response()->json(['message' => 'You can set delivery fee only when order is ready'], 422);
-        }
+    // public function setDeliveryFee(Request $r, Order $order)
+    // {
+    //     if (!in_array($order->status, ['ready', 'dispatcher_price_set'], true)) {
+    //         return response()->json(['message' => 'You can set delivery fee only when order is ready'], 422);
+    //     }
 
-        if ($order->dispatcher_id && $order->dispatcher_id !== Auth::id()) {
-            return response()->json(['message' => 'This delivery is assigned to another dispatcher'], 403);
-        }
-        if (!$order->dispatcher_id) {
-            $order->dispatcher_id = Auth::id();
-        }
+    //     if ($order->dispatcher_id && $order->dispatcher_id !== Auth::id()) {
+    //         return response()->json(['message' => 'This delivery is assigned to another dispatcher'], 403);
+    //     }
+    //     if (!$order->dispatcher_id) {
+    //         $order->dispatcher_id = Auth::id();
+    //     }
 
-        $data = $r->validate([
-            'dispatcher_price' => 'required|numeric|min:0',
-        ]);
+    //     $data = $r->validate([
+    //         'dispatcher_price' => 'required|numeric|min:0',
+    //     ]);
 
-        $order->dispatcher_price = $data['dispatcher_price'];
-        $order->status           = 'dispatcher_price_set';
-        $order->save();
+    //     $order->dispatcher_price = $data['dispatcher_price'];
+    //     $order->status           = 'dispatcher_price_set';
+    //     $order->save();
 
-        return response()->json(['status' => 'ok', 'message' => 'Delivery fee set. Awaiting patient confirmation.']);
-    }
+    //     return response()->json(['status' => 'ok', 'message' => 'Delivery fee set. Awaiting patient confirmation.']);
+    // }
 
     public function markDelivered(Order $order)
     {

@@ -19,46 +19,71 @@ class DispatcherDashboardController extends Controller
     {
         $dispatcherId = Auth::id();
 
-        // PENDING (unassigned): orders pharmacy marked ready, or in fee stages but not yet claimed
-        $pendingOrders = Order::with([
-            'prescription.patient:id,first_name,last_name,phone,address',
-            'prescription.pharmacy:id,first_name,last_name,address',
-            'prescription:id,code,patient_id,pharmacy_id',
-        ])
-            ->whereNull('dispatcher_id')
-            ->whereIn('status', [
-                'ready',
-                'dispatcher_price_set',
-                'dispatcher_price_confirm',
-            ])
-            ->latest()
-            ->paginate(10, ['*'], 'pending_page');
+        // dispatcher coordinates (adjust if stored elsewhere)
+        $dLat = (float) (auth()->user()->lat ?? 0);
+        $dLng = (float) (auth()->user()->lng ?? 0);
+        $radiusKm = (float) ($request->query('radius_km', 10));
 
-        // ACTIVE (mine): claimed orders in active delivery statuses
+        // Haversine using pharmacy user (pharm.lat/lng). If on profile, see note below.
+        $haversine = "(
+            6371 * 2 * ASIN(SQRT(
+                POWER(SIN(RADIANS(? - pharm.lat) / 2), 2) +
+                COS(RADIANS(?)) * COS(RADIANS(pharm.lat)) *
+                POWER(SIN(RADIANS(? - pharm.lng) / 2), 2)
+            ))
+        )";
+
+        // ---------- PENDING (unassigned, near me) ----------
+        $pendingQuery = Order::query()
+            ->with([
+                'prescription.patient:id,first_name,last_name,phone,address',
+                'prescription.pharmacy:id,first_name,last_name,address,lat,lng',
+                'prescription:id,code,patient_id,pharmacy_id',
+            ])
+            ->join('prescriptions as pr', 'pr.id', '=', 'orders.prescription_id')
+            ->join('users as pharm', 'pharm.id', '=', 'pr.pharmacy_id')
+            ->select('orders.*') // important: avoid ambiguous select columns
+            ->whereNull('orders.dispatcher_id')
+            ->whereIn('orders.status', ['ready', 'dispatcher_price_set', 'dispatcher_price_confirm']);
+
+        if ($dLat && $dLng) {
+            $pendingQuery
+                ->selectRaw("$haversine as distance_km", [$dLat, $dLat, $dLng])
+                ->whereNotNull('pharm.lat')
+                ->whereNotNull('pharm.lng')
+                ->having('distance_km', '<=', $radiusKm)
+                ->orderBy('distance_km');
+        } else {
+            $pendingQuery->latest('orders.id');
+        }
+
+        $pendingOrders = $pendingQuery->paginate(10, ['*'], 'pending_page');
+
+        // ---------- ACTIVE (mine) ----------
         $activeOrders = Order::with([
             'prescription.patient:id,first_name,last_name,phone,address',
-            'prescription.pharmacy:id,first_name,last_name,address',
+            'prescription.pharmacy:id,first_name,last_name,address,lat,lng',
             'prescription:id,code,patient_id,pharmacy_id',
         ])
-            ->where('dispatcher_id', $dispatcherId)
-            ->whereIn('status', [
+            ->where('orders.dispatcher_id', $dispatcherId)   // qualified
+            ->whereIn('orders.status', [                     // qualified
                 'ready',
                 'dispatcher_price_set',
                 'dispatcher_price_confirm',
                 'picked',
             ])
-            ->latest()
+            ->latest('orders.id')
             ->paginate(10, ['*'], 'active_page');
 
         $pendingCount = $pendingOrders->total();
         $activeCount  = $activeOrders->total();
 
-        // Revenue today = sum of dispatcher fees on orders you delivered today
+        // Revenue today (delivered by me today)
         $today = Carbon::today();
-        $revenueToday = Order::where('dispatcher_id', $dispatcherId)
-            ->where('status', 'delivered')
-            ->whereDate('updated_at', $today)
-            ->sum('dispatcher_price');
+        $revenueToday = Order::where('orders.dispatcher_id', $dispatcherId) // qualified
+            ->where('orders.status', 'delivered')                           // qualified
+            ->whereDate('orders.updated_at', $today)                        // qualified
+            ->sum('orders.dispatcher_price');
 
         return view('dispatcher.dashboard', compact(
             'pendingOrders',
@@ -68,6 +93,8 @@ class DispatcherDashboardController extends Controller
             'revenueToday'
         ));
     }
+
+
 
     /* Wallet pages you already had — unchanged except they live here for convenience */
 

@@ -224,7 +224,7 @@
             <div class="col-12">
                 <div class="note-alert py-2 px-3 mb-2 small">
                     <i class="fa-solid fa-triangle-exclamation me-1" aria-hidden="true"></i>
-                    Make sure to <strong>negotiate delivery details</strong> (fee, time window, address confirmation) with
+                    Make sure to <strong>negotiate delivery details</strong> (time window, address confirmation) with
                     the patient.
                 </div>
             </div>
@@ -270,7 +270,8 @@
                             </div>
                         </div>
                         <div class="d-flex flex-column align-items-end gap-2">
-                            @if ($canSetFee)
+                            <span>Delivery Fee: <b>${{ $order->dispatcher_price }}</b></span>
+                            {{-- @if ($canSetFee)
                                 <label for="dspFee{{ $order->id }}" class="visually-hidden">Delivery fee</label>
                                 <div class="input-group input-group-sm" style="width:220px;">
                                     <span class="input-group-text">$</span>
@@ -283,7 +284,7 @@
                                 <div class="text-end subtle small">
                                     {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Please call patient to negotiate price' }}
                                 </div>
-                            @endif
+                            @endif --}}
                             <div class="d-flex flex-wrap gap-2">
                                 @if ($phone)
                                     <a class="btn btn-outline-light btn-sm" href="tel:{{ $phone }}"><i
@@ -343,7 +344,8 @@
                             </div>
                         </div>
                         <div class="d-flex flex-column align-items-end gap-2">
-                            @if ($canSetFee)
+                            <span>Delivery Fee: ${{ $order->dispatcher_price }}</span>
+                            {{-- @if ($canSetFee)
                                 <label for="dspFee{{ $order->id }}" class="visually-hidden">Delivery fee</label>
                                 <div class="input-group input-group-sm" style="width:220px;">
                                     <span class="input-group-text">$</span>
@@ -356,7 +358,7 @@
                                 <div class="text-end subtle small">
                                     {{ $st === 'dispatcher_price_set' ? 'Waiting for patient to confirm delivery fee' : 'Propose a delivery fee to the patient' }}
                                 </div>
-                            @endif
+                            @endif --}}
                             <div class="d-flex flex-wrap gap-2">
                                 @if ($st === 'picked')
                                     <button class="btn btn-success btn-sm" data-delivered="{{ $order->id }}"><i
@@ -433,29 +435,29 @@
             });
 
             // Set delivery fee
-            $(document).on('click', '[data-dsp-set]', function() {
-                const id = $(this).data('dsp-set');
-                const $btn = $(this);
-                const raw = $('#dspFee' + id).val();
-                const val = parseFloat(raw);
-                if (isNaN(val) || val < 0) {
-                    flash('danger', 'Enter a valid amount');
-                    return;
-                }
-                lockBtn($btn);
-                $.post(`{{ route('dispatcher.orders.setDeliveryFee', ':id') }}`.replace(':id', id), {
-                        _token: `{{ csrf_token() }}`,
-                        dispatcher_price: val
-                    })
-                    .done(res => {
-                        flash('success', res.message || 'Fee set');
-                        window.location.reload();
-                    })
-                    .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed');
-                    })
-                    .always(() => unlockBtn($btn));
-            });
+            // $(document).on('click', '[data-dsp-set]', function() {
+            //     const id = $(this).data('dsp-set');
+            //     const $btn = $(this);
+            //     const raw = $('#dspFee' + id).val();
+            //     const val = parseFloat(raw);
+            //     if (isNaN(val) || val < 0) {
+            //         flash('danger', 'Enter a valid amount');
+            //         return;
+            //     }
+            //     lockBtn($btn);
+            //     $.post(`{{ route('dispatcher.orders.setDeliveryFee', ':id') }}`.replace(':id', id), {
+            //             _token: `{{ csrf_token() }}`,
+            //             dispatcher_price: val
+            //         })
+            //         .done(res => {
+            //             flash('success', res.message || 'Fee set');
+            //             window.location.reload();
+            //         })
+            //         .fail(err => {
+            //             flash('danger', err.responseJSON?.message || 'Failed');
+            //         })
+            //         .always(() => unlockBtn($btn));
+            // });
 
             // Mark Delivered
             $(document).on('click', '[data-delivered]', function() {

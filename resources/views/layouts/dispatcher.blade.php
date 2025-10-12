@@ -393,7 +393,7 @@
     <script>
         $('#btnSidebar').on('click', () => $('.sidebar').toggleClass('show'));
     </script>
-    @include('patient.partials.location-modal')
+    @include('dispatcher.partials.location-modal')
     @stack('scripts')
 </body>
 

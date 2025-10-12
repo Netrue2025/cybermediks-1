@@ -213,10 +213,35 @@ class PrescriptionController extends Controller
             }
         });
 
+        // ---- Delivery fee calculation (₦100 per km) ----
+        // Adjust attribute names to your schema.
+        $patientLat  = (float) ($rx->patient->lat   ?? $rx->patient->latitude   ?? 0);
+        $patientLng  = (float) ($rx->patient->lng   ?? $rx->patient->longitude  ?? 0);
+        $pharmacyLat = (float) ($rx->pharmacy->lat  ?? $rx->pharmacy->latitude  ?? 0);
+        $pharmacyLng = (float) ($rx->pharmacy->lng  ?? $rx->pharmacy->longitude ?? 0);
+
+        $distanceKm = 0.0;
+        if ($patientLat && $patientLng && $pharmacyLat && $pharmacyLng) {
+            $distanceKm = $this->distanceKm($patientLat, $patientLng, $pharmacyLat, $pharmacyLng);
+        }
+
+        $ratePerKm    = 100.0; // change to your currency/rate
+        $deliveryFee  = $distanceKm > 0 ? round($distanceKm * $ratePerKm, 2) : 0.0;
+
+        // Persist on the order so the rest of the flow sees it (you already use dispatcher_price as fee)
+        $order->forceFill([
+            'dispatcher_price' => $deliveryFee,
+        ])->save();
+
+        $grandTotal = round((float)$subtotal + (float)$deliveryFee, 2);
+
         return [
             'ok'          => true,
             'status'      => $order->fresh()->status,
             'items_total' => $subtotal ?: 0,
+            'delivery_fee' => $deliveryFee,
+            'distance_km'  => round($distanceKm, 2),
+            'grand_total'  => $grandTotal,
             'available'   => $ai['available'] ?? [],
             'unavailable' => $ai['unavailable'] ?? [],
             'message'     => $subtotal > 0
@@ -224,6 +249,21 @@ class PrescriptionController extends Controller
                 : 'No matching items found in this pharmacy inventory.',
         ];
     }
+
+    private function distanceKm(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        // Haversine formula
+        $earthRadius = 6371; // km
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
+    }
+
 
 
     public function confirm(Request $r, Prescription $rx)

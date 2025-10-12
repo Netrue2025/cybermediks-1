@@ -78,7 +78,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/verify',   [VerificationController::class, 'showVerify'])->name('verify.show');
     Route::post('/verify/send', [VerificationController::class, 'sendVerifyCode'])->middleware('throttle:5,1')->name('verify.send');
     Route::post('/verify',       [VerificationController::class, 'verify'])->name('verify');
-
+    Route::post('/location', [PatientLocationController::class, 'store'])->name('location.update');
     Route::post('/wallet/withdraw', [WithdrawalRequestController::class, 'requestWithdraw'])->name('wallet.withdraw');
 });
 

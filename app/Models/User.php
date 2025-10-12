@@ -24,6 +24,8 @@ class User extends Authenticatable
         'country_id',
         'password',
         'role',
+        'lat',
+        'lng',
         'phone',
         'gender',
         'dob',
