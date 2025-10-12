@@ -319,6 +319,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/appointments', [AdminAppointmentsController::class, 'index'])->name('appointments.index');
 
     Route::get('/transactions', [AdminTransactionsController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/revenue', [AdminTransactionsController::class, 'revenue'])->name('transactions.revenue');
 
     Route::get('/dispatchers', [AdminDispatchersController::class, 'index'])->name('dispatchers.index');
     Route::get('/dispatchers/{dispatcher}/profile', [AdminDispatchersController::class, 'profile'])->name('dispatchers.profile');

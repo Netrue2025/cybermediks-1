@@ -31,7 +31,7 @@
                 <i class="fa-solid fa-gauge"></i><span>Dashboard</span>
             </a>
 
-             <a class="item {{ request()->routeIs('admin.products.index') ? 'active' : '' }}"
+            <a class="item {{ request()->routeIs('admin.products.index') ? 'active' : '' }}"
                 href="{{ route('admin.products.index') }}">
                 <i class="fa-solid fa-box"></i><span>Products</span>
             </a>
@@ -68,10 +68,16 @@
                 href="{{ route('admin.appointments.index') }}">
                 <i class="fa-solid fa-calendar-check"></i><span>Appointments</span>
             </a>
-            <a class="item {{ request()->routeIs('admin.transactions.*') ? 'active' : '' }}"
+            <a class="item {{ request()->routeIs('admin.transactions.*') && !request()->routeIs('admin.transactions.revenue') ? 'active' : '' }}"
                 href="{{ route('admin.transactions.index') }}">
                 <i class="fa-solid fa-wallet"></i><span>Transactions</span>
             </a>
+
+            <a class="item {{ request()->routeIs('admin.transactions.revenue') ? 'active' : '' }}"
+                href="{{ route('admin.transactions.revenue') }}">
+                <i class="fa-solid fa-chart-line"></i><span>Revenues</span>
+            </a>
+
 
             <a class="item {{ request()->routeIs('admin.withdrawals.*') ? 'active' : '' }}"
                 href="{{ route('admin.withdrawals.index') }}">
