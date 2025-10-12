@@ -64,6 +64,11 @@
         .input-icon input {
             padding-left: 2rem
         }
+
+        tr th,
+        tr td {
+            color: white !important;
+        }
     </style>
 @endpush
 
@@ -105,6 +110,7 @@
                     <tr class="section-subtle">
                         <th>Date</th>
                         <th>User</th>
+                        <th>Role</th>
                         <th>Type</th>
                         <th>Purpose</th>
                         <th>Amount</th>
@@ -131,6 +137,12 @@
                                 <div class="section-subtle small">{{ $t->user?->email }}</div>
                             </td>
                             <td>
+                                <span class="badge-soft badge-credit">
+                                    <i class="fa-solid"></i>
+                                    {{ ucfirst($t->user?->role) }}
+                                </span>
+                            </td>
+                            <td>
                                 <span class="badge-soft {{ $badgeCls }}">
                                     <i class="fa-solid {{ $isCredit ? 'fa-circle-arrow-down' : 'fa-circle-arrow-up' }}"></i>
                                     {{ ucfirst($t->type) }}
@@ -149,6 +161,74 @@
             </table>
         </div>
 
-        <div class="mt-2">{{ $tx->withQueryString()->onEachSide(1)->links() }}</div>
+
+
+        @php
+            $paginator = $tx->withQueryString();
+            $current = $paginator->currentPage();
+            $last = $paginator->lastPage();
+
+            // emulate onEachSide(1)
+            $start = max(1, $current - 1);
+            $end = min($last, $current + 1);
+
+            // generate URLs for the limited range
+            $pages = $paginator->getUrlRange($start, $end);
+        @endphp
+
+        @if ($paginator->hasPages())
+            <div class="mt-3 d-flex justify-content-center">
+                <nav>
+                    <ul class="pagination">
+                        {{-- Previous --}}
+                        @if ($paginator->onFirstPage())
+                            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $paginator->previousPageUrl() }}" rel="prev">&laquo;</a>
+                            </li>
+                        @endif
+
+                        {{-- First + leading ellipsis --}}
+                        @if ($start > 1)
+                            <li class="page-item"><a class="page-link" href="{{ $paginator->url(1) }}">1</a></li>
+                            @if ($start > 2)
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            @endif
+                        @endif
+
+                        {{-- Page range (onEachSide = 1) --}}
+                        @foreach ($pages as $page => $url)
+                            @if ($page == $current)
+                                <li class="page-item active" aria-current="page"><span
+                                        class="page-link">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link"
+                                        href="{{ $url }}">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+
+                        {{-- Trailing ellipsis + last --}}
+                        @if ($end < $last)
+                            @if ($end < $last - 1)
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            @endif
+                            <li class="page-item"><a class="page-link"
+                                    href="{{ $paginator->url($last) }}">{{ $last }}</a></li>
+                        @endif
+
+                        {{-- Next --}}
+                        @if ($paginator->hasMorePages())
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $paginator->nextPageUrl() }}" rel="next">&raquo;</a>
+                            </li>
+                        @else
+                            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        @endif
+                    </ul>
+                </nav>
+            </div>
+        @endif
+
     </div>
 @endsection

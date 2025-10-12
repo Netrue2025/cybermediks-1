@@ -87,7 +87,8 @@
             font-size: .85rem
         }
 
-        table th, table td {
+        table th,
+        table td {
             color: white !important;
         }
     </style>
@@ -112,7 +113,7 @@
                 <select class="form-select" name="status">
                     <option value="">All statuses</option>
                     @foreach (['pending', 'price_assigned', 'price_confirmed', 'ready', 'picked', 'cancelled'] as $st)
-                        <option value="{{ $st }}" @selected($status === $st)>
+                        <option value="{{ $st }}" @selected($orderStatus === $st)>
                             {{ ucwords(str_replace('_', ' ', $st)) }}</option>
                     @endforeach
                 </select>
@@ -135,28 +136,43 @@
                         <th>Patient / Doctor</th>
                         <th>Pharmacy / Dispatcher</th>
                         <th>Items</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th class="text-end" style="width:280px;">Assign</th>
+                        <th>Totals</th> {{-- was Amount --}}
+                        <th>Status</th> {{-- now shows Order status (fallback to Rx) --}}
+                        {{-- <th class="text-end" style="width:280px;">Assign</th> --}}
+
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($rx as $r)
                         @php
+                            $o = $r->order;
                             $itemsPreview = $r->items?->pluck('drug')->take(3)->implode(', ');
                             if (($r->items?->count() ?? 0) > 3) {
                                 $itemsPreview .= '…';
                             }
-                            $disp = $r->dispense_status ?? 'pending';
+
+                            // prefer ORDER status; fallback to prescription dispense_status
+                            $status = $o?->status ?? ($r->dispense_status ?? 'pending');
+
                             $badgeMap = [
+                                // order-centric states
+                                'ready' => 'badge-ready',
+                                'dispatcher_price_set' => 'badge-pending',
+                                'dispatcher_price_confirm' => 'badge-ready',
+                                'picked' => 'badge-picked',
+                                'delivered' => 'badge-picked',
+                                'cancelled' => 'badge-cancelled',
+                                // legacy Rx states
                                 'pending' => 'badge-pending',
                                 'price_assigned' => 'badge-price_assigned',
                                 'price_confirmed' => 'badge-price_confirmed',
-                                'ready' => 'badge-ready',
-                                'picked' => 'badge-picked',
-                                'cancelled' => 'badge-cancelled',
                             ];
-                            $cls = $badgeMap[$disp] ?? 'badge-pending';
+                            $cls = $badgeMap[$status] ?? 'badge-pending';
+
+                            // totals (prefer order’s items_total, fallback to rx total_amount)
+                            $itemsTotal = $o?->items_subtotal ?? $r->total_amount;
+                            $deliveryFee = $o?->dispatcher_price;
+                            $money = fn($v) => is_null($v) ? '—' : '$' . number_format((float) $v, 2, '.', ',');
 
                             // payload for Quick View
                             $viewPayload = [
@@ -170,10 +186,11 @@
                                     ($r->pharmacy->first_name ?? '') . ' ' . ($r->pharmacy->last_name ?? ''),
                                 ),
                                 'dispatcher' => trim(
-                                    ($r->dispatcher->first_name ?? '') . ' ' . ($r->dispatcher->last_name ?? ''),
+                                    ($o?->dispatcher?->first_name ?? '') . ' ' . ($o?->dispatcher?->last_name ?? ''),
                                 ),
-                                'dispense_status' => $disp,
-                                'amount' => $r->total_amount,
+                                'status' => $status,
+                                'items_subtotal' => $itemsTotal,
+                                'delivery_fee' => $deliveryFee,
                                 'notes' => $r->notes,
                                 'items' =>
                                     $r->items
@@ -190,6 +207,7 @@
                                         ->values() ?? [],
                             ];
                         @endphp
+
                         <tr>
                             {{-- Rx --}}
                             <td>
@@ -215,29 +233,32 @@
                                     {{ $r->pharmacy?->first_name ? $r->pharmacy?->first_name . ' ' . $r->pharmacy?->last_name : '—' }}
                                 </div>
                                 <div class="cell-sub">
-                                    {{ $r->dispatcher?->first_name ? 'Disp: ' . $r->dispatcher?->first_name . ' ' . $r->dispatcher?->last_name : 'Disp: —' }}
+                                    {{ $o?->dispatcher?->first_name ? 'Disp: ' . $o->dispatcher->first_name . ' ' . $o->dispatcher->last_name : 'Disp: —' }}
                                 </div>
                             </td>
+
 
                             {{-- Items --}}
                             <td>
                                 <span class="chip">{{ $itemsPreview ?: '—' }}</span>
                             </td>
 
-                            {{-- Amount --}}
+                            {{-- Totals --}}
                             <td>
-                                {{ is_null($r->total_amount) ? '—' : '$' . number_format($r->total_amount, 2, '.', ',') }}
+                                <div><strong>Items:</strong> {{ $money($itemsTotal) }}</div>
+                                <div class="cell-sub"><strong>Delivery:</strong> {{ $money($deliveryFee) }}</div>
                             </td>
 
-                            {{-- Status --}}
+                            {{-- Status (order first, rx fallback) --}}
                             <td>
                                 <span class="badge-soft {{ $cls }}">
-                                    {{ ucwords(str_replace('_', ' ', $disp)) }}
+                                    {{ ucwords(str_replace('_', ' ', $status)) }}
                                 </span>
                             </td>
 
+
                             {{-- Assign --}}
-                            <td class="text-end">
+                            {{-- <td class="text-end">
                                 <div class="d-flex flex-column flex-lg-row gap-2 justify-content-end input-slim">
                                     <form method="POST" action="{{ route('admin.prescriptions.reassignPharmacy', $r) }}"
                                         class="d-flex gap-2 align-items-stretch">
@@ -267,7 +288,7 @@
                                         <button class="btn btn-ghost btn-sm">Assign</button>
                                     </form>
                                 </div>
-                            </td>
+                            </td> --}}
                         </tr>
                     @empty
                         <tr>
@@ -300,7 +321,6 @@
 @push('scripts')
     <script>
         (function() {
-            // Quick View
             $(document).on('click', '[data-rx-view]', function() {
                 const payload = $(this).data('rx-view');
                 const rx = typeof payload === 'string' ? JSON.parse(payload) : payload;
@@ -316,35 +336,36 @@
                 }).join('');
 
                 const html = `
-      <div class="d-flex flex-wrap justify-content-between align-items-start mb-2">
-        <div>
-          <div class="fw-semibold">Rx #${rx.code}</div>
-          <div class="section-subtle small">${rx.created_at ?? ''}</div>
-        </div>
-        <div><span class="badge-soft">${(rx.dispense_status||'pending').replaceAll('_',' ')}</span></div>
-      </div>
+                    <div class="d-flex flex-wrap justify-content-between align-items-start mb-2">
+                        <div>
+                        <div class="fw-semibold">Rx #${rx.code}</div>
+                        <div class="section-subtle small">${rx.created_at ?? ''}</div>
+                        </div>
+                        <div><span class="badge-soft">${(rx.status||'pending').replaceAll('_',' ')}</span></div>
+                    </div>
 
-      <div class="row g-3 mb-2">
-        <div class="col-md-4"><div class="section-subtle small">Patient</div><div class="fw-semibold">${rx.patient||'—'}</div></div>
-        <div class="col-md-4"><div class="section-subtle small">Doctor</div><div class="fw-semibold">${rx.doctor||'—'}</div></div>
-        <div class="col-md-4"><div class="section-subtle small">Pharmacy / Dispatcher</div>
-          <div class="fw-semibold">${rx.pharmacy||'—'}</div>
-          <div class="cell-sub">${rx.dispatcher?('Disp: '+rx.dispatcher):''}</div>
-        </div>
-      </div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-4"><div class="section-subtle small">Patient</div><div class="fw-semibold">${rx.patient||'—'}</div></div>
+                        <div class="col-md-4"><div class="section-subtle small">Doctor</div><div class="fw-semibold">${rx.doctor||'—'}</div></div>
+                        <div class="col-md-4"><div class="section-subtle small">Pharmacy / Dispatcher</div>
+                        <div class="fw-semibold">${rx.pharmacy||'—'}</div>
+                        <div class="cell-sub">${rx.dispatcher?('Disp: '+rx.dispatcher):'Disp: —'}</div>
+                        </div>
+                    </div>
 
-      <div class="row g-3">
-        <div class="col-md-8">
-          <div class="section-subtle small mb-1">Items</div>
-          <ul class="mb-0">${itemsHtml || '<li>—</li>'}</ul>
-        </div>
-        <div class="col-md-4">
-          <div class="section-subtle small mb-1">Amount</div>
-          <div class="fw-bold">${money(rx.amount)}</div>
-          ${rx.notes ? `<div class="section-subtle small mt-3"><strong>Notes</strong><div>${rx.notes}</div></div>`:''}
-        </div>
-      </div>
-    `;
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                        <div class="section-subtle small mb-1">Items</div>
+                        <ul class="mb-0">${itemsHtml || '<li>—</li>'}</ul>
+                        </div>
+                        <div class="col-md-4">
+                        <div class="section-subtle small mb-1">Totals</div>
+                        <div><strong>Items:</strong> ${money(rx.items_subtotal)}</div>
+                        <div><strong>Delivery:</strong> ${money(rx.delivery_fee)}</div>
+                        ${rx.notes ? `<div class="section-subtle small mt-3"><strong>Notes</strong><div>${rx.notes}</div></div>`:''}
+                        </div>
+                    </div>
+                `;
 
                 $('#rxViewBody').html(html);
                 new bootstrap.Modal(document.getElementById('rxViewModal')).show();

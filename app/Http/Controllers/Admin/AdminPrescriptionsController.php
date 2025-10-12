@@ -11,24 +11,60 @@ class AdminPrescriptionsController extends Controller
 {
     public function index(Request $r)
     {
-        $status = $r->query('status');
-        $q      = trim((string)$r->query('q'));
+        $q            = trim((string) $r->query('q', ''));
+        $rxStatus     = $r->query('rx_status');    // e.g. pending/ready/...
+        $orderStatus  = $r->query('order_status'); // e.g. ready/dispatcher_price_set/...
 
-        $rx = Prescription::with(['patient', 'doctor', 'pharmacy', 'items'])
-            ->when($status, fn($w) => $w->where('dispense_status', $status))
+        $rx = Prescription::query()
+            ->with([
+                'patient:id,first_name,last_name',
+                'doctor:id,first_name,last_name',
+                'pharmacy:id,first_name,last_name',
+                'items:id,prescription_id,drug,dose,frequency,days,quantity,directions',
+                // Order + dispatcher
+                'order:id,prescription_id,dispatcher_id,status,items_subtotal,dispatcher_price,created_at,updated_at',
+                'order.dispatcher:id,first_name,last_name',
+            ])
+            // filter by prescription status (old Rx flow)
+            ->when($rxStatus, fn($w) => $w->where('dispense_status', $rxStatus))
+            // filter by order status (new flow)
+            ->when(
+                $orderStatus,
+                fn($w) =>
+                $w->whereHas('order', fn($o) => $o->where('status', $orderStatus))
+            )
             ->when($q !== '', function ($w) use ($q) {
-                $w->where('code', 'like', "%$q%")
-                    ->orWhereHas('patient', fn($p) => $p->where('first_name', 'like', "%$q%")->orWhere('last_name', 'like', "%$q%"))
-                    ->orWhereHas('doctor', fn($d) => $d->where('first_name', 'like', "%$q%")->orWhere('last_name', 'like', "%$q%"));
+                $w->where('code', 'like', "%{$q}%")
+                    ->orWhereHas('patient', fn($p) =>
+                    $p->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%"))
+                    ->orWhereHas('doctor', fn($d) =>
+                    $d->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%"));
             })
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
-        $pharmacies  = User::where('role', 'pharmacy')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
-        $dispatchers = User::where('role', 'dispatcher')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+        // simple assignment dropdowns
+        $pharmacies  = User::where('role', 'pharmacy')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name']);
 
-        return view('admin.prescriptions.index', compact('rx', 'status', 'q', 'pharmacies', 'dispatchers'));
+        $dispatchers = User::where('role', 'dispatcher')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name']);
+
+        return view('admin.prescriptions.index', [
+            'rx'           => $rx,
+            'q'            => $q,
+            'rxStatus'     => $rxStatus,
+            'orderStatus'  => $orderStatus,
+            'pharmacies'   => $pharmacies,
+            'dispatchers'  => $dispatchers,
+        ]);
     }
+
 
     public function reassignPharmacy(Request $r, Prescription $rx)
     {

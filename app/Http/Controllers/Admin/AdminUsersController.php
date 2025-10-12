@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -10,38 +11,62 @@ class AdminUsersController extends Controller
 {
     public function index(Request $r)
     {
-        $q        = trim((string) $r->query('q', ''));
-        $role     = $r->query('role');          // optional, if you still want it
-        $country  = trim((string) $r->query('country', '')); // NEW
+        $q = trim((string) $r->query('q', ''));
+        $rawRole = $r->query('role');                 // optional
+        $countryId = $r->query('country_id');         // preferred filter (FK)
+        $countryName = trim((string) $r->query('country', '')); // legacy text filter (optional)
 
-        // For a dropdown of available countries (from patients only)
-        $countries = User::where('role', 'patient')
-            ->whereNotNull('country')
-            ->select('country')->distinct()
-            ->orderBy('country')
-            ->pluck('country')
-            ->map(fn($c) => strtoupper($c));
+        // Optional: constrain role to a known set; default to 'patient'
+        $allowedRoles = ['patient', 'doctor', 'pharmacy', 'dispatcher', 'admin'];
+        $role = in_array($rawRole, $allowedRoles, true) ? $rawRole : 'patient';
+
+        // For a dropdown in the UI
+        $countries = Country::orderBy('name')->get(['id', 'name', 'iso2']);
 
         $users = User::query()
-            ->where('role', 'patient')
-            ->when($role, fn($w) => $w->where('role', $role))
+            ->with(['country:id,name,iso2'])                 // if you have a belongsTo relation `country()`
+            ->where('role', $role)
             ->when($q !== '', function ($w) use ($q) {
-                $w->where(function ($x) use ($q) {
-                    $x->where('first_name', 'like', "%$q%")
-                        ->orWhere('last_name', 'like', "%$q%")
-                        ->orWhere('email', 'like', "%$q%");
+                $like = "%{$q}%";
+                $w->where(function ($x) use ($like) {
+                    $x->where('first_name', 'like', $like)
+                        ->orWhere('last_name',  'like', $like)
+                        ->orWhere('email',      'like', $like)
+                        ->orWhere('phone',      'like', $like); // optional if you store phone
                 });
             })
-            // FILTER BY COUNTRY (case-insensitive exact match)
-            ->when($country !== '', function ($w) use ($country) {
-                $w->whereRaw('LOWER(country) = ?', [strtolower($country)]);
+            // Preferred: filter by foreign key
+            ->when(filled($countryId), fn($w) => $w->where('country_id', $countryId))
+
+            // Legacy fallback: if you still have a plain text `country` column OR want name-based matching
+            ->when($countryName !== '' && empty($countryId), function ($w) use ($countryName) {
+                $w->where(function ($x) use ($countryName) {
+                    // If you have a countries table + relation:
+                    $x->whereHas(
+                        'country',
+                        fn($c) =>
+                        $c->whereRaw('LOWER(name) = ?', [strtolower($countryName)])
+                            ->orWhereRaw('LOWER(iso2) = ?', [strtolower($countryName)])
+                    );
+                    // If you still keep a legacy users.country text column, uncomment:
+                    // ->orWhereRaw('LOWER(country) = ?', [strtolower($countryName)]);
+                });
             })
+
             ->orderBy('first_name')
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.users.index', compact('users', 'q', 'role', 'country', 'countries'));
+        return view('admin.users.index', [
+            'users'      => $users,
+            'q'          => $q,
+            'role'       => $role,
+            'countryId'  => $countryId,
+            'country'    => $countryName, // for the legacy input, if you keep it in the form
+            'countries'  => $countries,
+        ]);
     }
+
 
 
 

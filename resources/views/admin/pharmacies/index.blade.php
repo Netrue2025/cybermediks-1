@@ -87,12 +87,16 @@
 
             <div class="col-md-3">
                 <label class="form-label small section-subtle mb-1">Country</label>
-                <select class="form-select" name="country">
+                <select name="country_id" class="form-select">
                     <option value="">All countries</option>
                     @foreach ($countries as $c)
-                        <option value="{{ $c }}" @selected(strtoupper($country ?? '') === $c)>{{ $c }}</option>
+                        <option value="{{ $c->id }}"
+                            {{ (string) $c->id === (string) request('country_id') ? 'selected' : '' }}>
+                            {{ $c->name }} ({{ $c->iso2 }})
+                        </option>
                     @endforeach
                 </select>
+
             </div>
 
             <div class="col-md-2">

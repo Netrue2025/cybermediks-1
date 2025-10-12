@@ -70,6 +70,9 @@
         .input-icon input {
             padding-left: 2rem
         }
+        tr th, tr td {
+            color: white !important;
+        }
     </style>
 @endpush
 
@@ -86,7 +89,7 @@
                 <label class="form-label small section-subtle mb-1">Status</label>
                 <select class="form-select" name="status">
                     <option value="">All statuses</option>
-                    @foreach (['scheduled', 'completed', 'cancelled', 'no_show'] as $st)
+                    @foreach (['scheduled', 'completed', 'cancelled', 'pending'] as $st)
                         <option value="{{ $st }}" @selected($status === $st)>
                             {{ ucwords(str_replace('_', ' ', $st)) }}</option>
                     @endforeach
@@ -115,13 +118,13 @@
         <div class="table-responsive">
             <table class="table table-borderless table-hover table-striped table-darkish align-middle">
                 <thead>
-                    <tr class="section-subtle">
+                    <tr class="section-subtle" style="color: white !important;">
                         <th>Date & Time</th>
                         <th>Patient</th>
                         <th>Doctor</th>
                         <th>Type</th>
                         <th>Status</th>
-                        <th>Title</th>
+                        {{-- <th>Title</th> --}}
                     </tr>
                 </thead>
                 <tbody>
@@ -156,7 +159,7 @@
                             <td><span
                                     class="badge-soft {{ $badge }}">{{ ucwords(str_replace('_', ' ', $st)) }}</span>
                             </td>
-                            <td>{{ $a->title ?: '—' }}</td>
+                            {{-- <td>{{ $a->title ?: '—' }}</td> --}}
                         </tr>
                     @empty
                         <tr>

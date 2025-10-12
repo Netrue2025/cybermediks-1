@@ -29,6 +29,11 @@
             color: var(--muted);
             font-size: .85rem
         }
+
+        tr th,
+        tr td {
+            color: white !important;
+        }
     </style>
 @endpush
 

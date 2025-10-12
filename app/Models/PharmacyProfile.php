@@ -22,4 +22,9 @@ class PharmacyProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function scopeWhereUserCountry($q, $countryId)
+    {
+        return $q->whereHas('user', fn($u) => $u->where('country_id', $countryId));
+    }
 }

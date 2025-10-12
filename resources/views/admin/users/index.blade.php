@@ -113,12 +113,16 @@
 
             <div class="col-md-3">
                 <label class="form-label small section-subtle mb-1">Country</label>
-                <select class="form-select" name="country">
+                <select name="country_id" class="form-select">
                     <option value="">All countries</option>
                     @foreach ($countries as $c)
-                        <option value="{{ $c }}" @selected(strtoupper($country ?? '') === $c)>{{ $c }}</option>
+                        <option value="{{ $c->id }}"
+                            {{ (string) $c->id === (string) request('country_id') ? 'selected' : '' }}>
+                            {{ $c->name }}
+                        </option>
                     @endforeach
                 </select>
+
             </div>
 
             <div class="col-md-2">
@@ -180,7 +184,7 @@
                             <td>{{ $u->email }}</td>
                             <td>{{ $u->phone ?? '-' }}</td>
                             <td>{{ ucfirst($u->gender ?? '-') }}</td>
-                            <td>{{ strtoupper($u->country ?? '-') }}</td>
+                            <td>{{ strtoupper($u->country->name ?? '-') }}</td>
                             <td>
                                 <span class="chip">
                                     <i class="fa-solid {{ $roleChipIcon }} me-1"></i>{{ ucfirst($u->role) }}
@@ -221,7 +225,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center section-subtle py-4">No users found</td>
+                            <td colspan="9" class="text-center section-subtle py-4">No users found</td>
                         </tr>
                     @endforelse
                 </tbody>

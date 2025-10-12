@@ -11,37 +11,60 @@ class AdminPharmaciesController extends Controller
 {
     public function index(Request $r)
     {
-        $q        = trim((string) $r->query('q', ''));
-        $country  = trim((string) $r->query('country', ''));
+        $q           = trim((string) $r->query('q', ''));
+        $countryId   = $r->query('country_id');                 // preferred FK filter
+        $countryName = trim((string) $r->query('country', '')); // legacy text filter (optional)
 
-        // Countries that actually have pharmacies
-        $countries = User::where('role', 'pharmacy')
-            ->whereNotNull('country')
-            ->select('country')->distinct()
-            ->orderBy('country')
-            ->pluck('country');
+        // Return ALL countries for the dropdown
+        $countries = \App\Models\Country::orderBy('name')->get(['id', 'name', 'iso2']);
 
-        $pharmacies = User::with(['pharmacyProfile'])
+        $pharmacies = \App\Models\User::with([
+            'pharmacyProfile',
+            'country:id,name,iso2', // optional, to show country name/flag
+        ])
             ->where('role', 'pharmacy')
+
+            // search
             ->when($q !== '', function ($w) use ($q) {
-                $w->where(function ($x) use ($q) {
-                    $x->where('first_name', 'like', "%{$q}%")
-                        ->orWhere('last_name',  'like', "%{$q}%")
-                        ->orWhere('email',      'like', "%{$q}%");
+                $like = "%{$q}%";
+                $w->where(function ($x) use ($like) {
+                    $x->where('first_name', 'like', $like)
+                        ->orWhere('last_name',  'like', $like)
+                        ->orWhere('email',      'like', $like);
                 });
             })
-            // COUNTRY FILTER (case-insensitive exact)
-            ->when($country !== '', function ($w) use ($country) {
-                $w->whereRaw('LOWER(country) = ?', [strtolower($country)]);
-                // or use LIKE for partials:
-                // $w->where('country', 'like', "%{$country}%");
+
+            // preferred: filter by country FK
+            ->when(filled($countryId), fn($w) => $w->where('country_id', $countryId))
+
+            // legacy: accept free-text country name or ISO2 if no country_id provided
+            ->when($countryName !== '' && empty($countryId), function ($w) use ($countryName) {
+                $needle = strtolower($countryName);
+                $w->where(function ($x) use ($needle) {
+                    // if you have users.country_id + relation
+                    $x->whereHas('country', function ($c) use ($needle) {
+                        $c->whereRaw('LOWER(name) = ?', [$needle])
+                            ->orWhereRaw('LOWER(iso2) = ?', [$needle]);
+                    });
+
+                    // if you still keep a legacy users.country text column, you can also honor it:
+                    // ->orWhereRaw('LOWER(country) = ?', [$needle]);
+                });
             })
+
             ->orderBy('first_name')
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.pharmacies.index', compact('pharmacies', 'q', 'country', 'countries'));
+        return view('admin.pharmacies.index', [
+            'pharmacies' => $pharmacies,
+            'q'          => $q,
+            'country'    => $countryName, // keep legacy param if your form still has it
+            'countryId'  => $countryId,
+            'countries'  => $countries,   // **all** countries for the dropdown
+        ]);
     }
+
 
 
     public function profile(User $pharmacy)

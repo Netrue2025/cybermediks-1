@@ -7,6 +7,7 @@ use App\Models\Country;
 use App\Models\DoctorCredential;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -14,16 +15,23 @@ class HealthDashboardController extends Controller
 {
     public function index()
     {
-        // If your DB stores approved as "verified", use 'verified' below. 
-        // If it stores "approved", change accordingly.
-        $pending  = DoctorCredential::where('status', 'pending')->count();
-        $approved = DoctorCredential::where('status', 'approved')->count();
+        $countryId = Auth::user()->country_id;
 
-        $total = User::where('role', 'doctor')->count();
+        $pending = DoctorCredential::where('status', 'pending')
+            ->whereHas('doctor', fn($q) => $q->where('country_id', $countryId))
+            ->count();
 
-        // Fetch recent credentials to display (don’t load everything)
+        $approved = DoctorCredential::where('status', 'approved')
+            ->whereHas('doctor', fn($q) => $q->where('country_id', $countryId))
+            ->count();
+
+        $total = User::where('role', 'doctor')
+            ->where('country_id', $countryId)
+            ->count();
+
         $credentials = DoctorCredential::with('doctor')
             ->where('status', 'pending')
+            ->whereHas('doctor', fn($q) => $q->where('country_id', $countryId))
             ->latest()
             ->take(20)
             ->get();
@@ -31,30 +39,42 @@ class HealthDashboardController extends Controller
         return view('health.dashboard', compact('pending', 'approved', 'total', 'credentials'));
     }
 
+
     public function doctorIndex(Request $r)
     {
-        $q = trim((string) $r->query('q'));
+        $q         = trim((string) $r->query('q'));
+        $countryId = auth()->user()->country_id;
 
-        $doctors = User::with(['doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration', 'specialties'])
-            ->where('role', 'doctor')
+        $doctors = User::with([
+            'doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration',
+            'specialties'
+        ])
+            ->doctors()
+            ->inCountry($countryId)
             ->when($q !== '', function ($w) use ($q) {
                 $w->where(function ($x) use ($q) {
-                    $x->where('first_name', 'like', "%$q%")
-                        ->orWhere('last_name', 'like', "%$q%")
-                        ->orWhereHas('doctorProfile', fn($p) => $p->where('title', 'like', "%$q%"));
+                    $x->where('first_name', 'like', "%{$q}%")
+                        ->orWhere('last_name', 'like', "%{$q}%")
+                        ->orWhereHas('doctorProfile', fn($p) => $p->where('title', 'like', "%{$q}%"));
                 });
             })
             ->orderBy('first_name')
             ->paginate(20);
 
-        $credentials = DoctorCredential::with('doctor')->where('status', 'pending')->latest()->take(10)->get();
+        $credentials = DoctorCredential::with('doctor')
+            ->where('status', 'pending')
+            ->whereDoctorCountry($countryId)
+            ->latest()
+            ->take(10)
+            ->get();
 
         return view('health.doctors.index', compact('doctors', 'q', 'credentials'));
     }
 
     public function credentials(User $doctor)
     {
-        // authorize admin as you already do
+        abort_unless($doctor->country_id === auth()->user()->country_id, 403);
+
         $docs = DoctorCredential::where('doctor_id', $doctor->id)
             ->orderByDesc('created_at')
             ->get();
@@ -62,26 +82,31 @@ class HealthDashboardController extends Controller
         return view('health.doctors._credentials', compact('doctor', 'docs'));
     }
 
-    public function approveCredential(Request $r, $id)
+    public function approveCredential(Request $r, User $doctor)
     {
-        // Expecting ->input('credential_id')
+        abort_unless($doctor->country_id === auth()->user()->country_id, 403);
+
         $credId = (int) $r->input('credential_id');
-        $cred = DoctorCredential::where('doctor_id', $id)->findOrFail($credId);
-        $cred->update(['status' => 'approved']); // requires status column
+
+        $cred = DoctorCredential::where('doctor_id', $doctor->id)->findOrFail($credId);
+        $cred->update(['status' => 'approved']);
+
         return back()->with('success', 'Credential approved');
     }
 
-    public function rejectCredential(Request $r, $id)
+    public function rejectCredential(Request $r, User $doctor)
     {
-        $r->validate([
-            'reason' => 'required|string'
-        ]);
-        // Expecting ->input('credential_id')
+        abort_unless($doctor->country_id === auth()->user()->country_id, 403);
+
+        $r->validate(['reason' => 'required|string']);
         $credId = (int) $r->input('credential_id');
-        $cred = DoctorCredential::where('doctor_id', $id)->findOrFail($credId);
-        $cred->update(['status' => 'rejected', 'review_notes' => $r->reason]); // requires status column
+
+        $cred = DoctorCredential::where('doctor_id', $doctor->id)->findOrFail($credId);
+        $cred->update(['status' => 'rejected', 'review_notes' => $r->reason]);
+
         return back()->with('success', 'Credential rejected');
     }
+
 
     public function showProfile()
     {

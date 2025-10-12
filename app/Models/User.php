@@ -60,8 +60,6 @@ class User extends Authenticatable
         return $this->belongsTo(Country::class, 'country_id', 'id');
     }
 
-    
-
     public function doctorProfile()
     {
         return $this->hasOne(DoctorProfile::class, 'doctor_id');
@@ -147,5 +145,20 @@ class User extends Authenticatable
     public function getCountryNameAttribute(): string
     {
         return $this->country?->name;
+    }
+
+    public function scopeInCountry($q, $id)
+    {
+        return $q->where('country_id', $id);
+    }
+
+    public function scopeDoctors($q)
+    {
+        return $q->where('role', 'doctor');
+    }
+
+    public function scopePharmacies($q)
+    {
+        return $q->where('role', 'pharmacy');
     }
 };
