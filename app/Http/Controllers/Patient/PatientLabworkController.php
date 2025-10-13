@@ -105,7 +105,7 @@ class PatientLabworkController extends Controller
                         ->orWhere('email', 'like', "%{$q}%");
                 });
             })
-            ->select('id', 'first_name', 'last_name', 'name', 'email')
+            ->select('id', 'first_name', 'last_name', 'email')
             ->orderBy('first_name')->take(50)->get();
 
         return view('patient.labworks._provider_list', compact('providers'))->render();
