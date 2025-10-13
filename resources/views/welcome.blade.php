@@ -149,11 +149,67 @@
                 </ul>
 
                 <!-- right buttons -->
+
                 <ul class="navbar-nav ms-auto gap-3">
-                    <li class="nav-item"><a class="nav-link" href="#"><i
-                                class="fa-solid fa-cart-shopping"></i></a></li>
-                    <li class="nav-item"><a class="btn btn-sm btn-dark" href="{{ route('login.show') }}">Login</a></li>
-                    <li class="nav-item"><a class="btn btn-sm btn-success" href="{{ route('register.show') }}">Sign Up</a></li>
+                    @auth
+                        @php
+                            $user = auth()->user();
+                            $role = $user->role;
+                            $dashboardRoute = '';
+
+                            switch ($role) {
+                                case 'patient':
+                                    $dashboardRoute = route('patient.dashboard');
+                                    break;
+
+                                case 'pharmacist':
+                                    $dashboardRoute = route('pharmacist.dashboard');
+                                    break;
+
+                                case 'doctor':
+                                    $dashboardRoute = route('doctor.dashboard');
+                                    break;
+
+                                case 'dispatcher':
+                                    $dashboardRoute = route('dispatcher.dashboard');
+                                    break;
+
+                                case 'labtech':
+                                    $dashboardRoute = route('labtech.dashboard');
+                                    break;
+
+                                case 'health':
+                                    $dashboardRoute = route('health.dashboard');
+                                    break;
+
+                                case 'transport':
+                                    $dashboardRoute = route('transport.dashboard');
+                                    break;
+
+                                default:
+                                    $dashboardRoute = '#';
+                                    break;
+                            }
+                        @endphp
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ $dashboardRoute }}">
+                                <i class="fa-solid fa-house me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form action="{{ route('logout') }}" method="POST" id="logout-form" class="d-inline">
+                                @csrf
+                                <button class="btn btn-sm btn-gradient">Logout</button>
+                            </form>
+                        </li>
+                    @endauth
+                    @guest
+                        <li class="nav-item"><a class="nav-link" href="#"><i
+                                    class="fa-solid fa-cart-shopping"></i></a></li>
+                        <li class="nav-item"><a class="btn btn-sm btn-dark" href="{{ route('login.show') }}">Login</a></li>
+                        <li class="nav-item"><a class="btn btn-sm btn-success" href="{{ route('register.show') }}">Sign
+                                Up</a></li>
+                    @endguest
                 </ul>
             </div>
 

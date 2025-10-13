@@ -72,33 +72,45 @@
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav ms-auto align-items-center gap-2">
                     @auth
-                    @php
-                        $user = auth()->user();
-                        $role = $user->role;
-                        $dashboardRoute = '';
+                        @php
+                            $user = auth()->user();
+                            $role = $user->role;
+                            $dashboardRoute = '';
 
-                        switch ($role) {
-                            case 'patient':
-                                $dashboardRoute = route('patient.dashboard');
-                                break;
+                            switch ($role) {
+                                case 'patient':
+                                    $dashboardRoute = route('patient.dashboard');
+                                    break;
 
-                            case 'pharmacist':
-                                $dashboardRoute = route('pharmacist.dashboard');
-                                break;
-                            
-                            case 'doctor':
-                                $dashboardRoute = route('doctor.dashboard');
-                                break;
+                                case 'pharmacist':
+                                    $dashboardRoute = route('pharmacist.dashboard');
+                                    break;
 
-                            case 'dispatcher':
-                                $dashboardRoute = route('dispatcher.dashboard');
-                                break;
-                            
-                            default:
-                                $dashboardRoute = '#';
-                                break;
-                        }
-                    @endphp
+                                case 'doctor':
+                                    $dashboardRoute = route('doctor.dashboard');
+                                    break;
+
+                                case 'dispatcher':
+                                    $dashboardRoute = route('dispatcher.dashboard');
+                                    break;
+
+                                case 'labtech':
+                                    $dashboardRoute = route('labtech.dashboard');
+                                    break;
+                                
+                                case 'health':
+                                    $dashboardRoute = route('health.dashboard');
+                                    break;
+                                
+                                case 'transport':
+                                    $dashboardRoute = route('transport.dashboard');
+                                    break;
+
+                                default:
+                                    $dashboardRoute = '#';
+                                    break;
+                            }
+                        @endphp
                         <li class="nav-item">
                             <a class="nav-link" href="{{ $dashboardRoute }}">
                                 <i class="fa-solid fa-house me-1"></i> Dashboard
