@@ -49,8 +49,10 @@
                         <div class="subtle small">If enabled, hours below are ignored.</div>
                     </div>
                     <div class="form-check form-switch m-0">
+                        <input type="hidden" name="is_24_7" value="0">
                         <input type="checkbox" class="form-check-input" name="is_24_7" value="1"
-                            {{ old('is_24_7', $profile->is_24_7) ? 'checked' : '' }}>
+                            {{ old('is_24_7', (int) $profile->is_24_7) ? 'checked' : '' }}>
+
                     </div>
                 </div>
             </div>
