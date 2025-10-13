@@ -102,7 +102,6 @@ class PatientLabworkController extends Controller
                 $w->where(function ($x) use ($q) {
                     $x->where('first_name', 'like', "%{$q}%")
                         ->orWhere('last_name', 'like', "%{$q}%")
-                        ->orWhere('name', 'like', "%{$q}%")
                         ->orWhere('email', 'like', "%{$q}%");
                 });
             })
