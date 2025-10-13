@@ -531,7 +531,7 @@
                         <button type="button" class="btn btn-outline-light flex-fill" data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="button" class="btn flex-fill" id="endChat" data-close="{{ $active->id }}"
+                        <button type="button" class="btn flex-fill" id="endChat" data-close="{{ $active?->id }}"
                             style="background:linear-gradient(135deg,#3b82f6,#06b6d4);color:#fff;border:0;">
                             Close Chat
                         </button>
