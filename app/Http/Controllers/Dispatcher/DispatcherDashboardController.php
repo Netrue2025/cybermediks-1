@@ -22,7 +22,7 @@ class DispatcherDashboardController extends Controller
         // dispatcher coordinates (adjust if stored elsewhere)
         $dLat = (float) (auth()->user()->lat ?? 0);
         $dLng = (float) (auth()->user()->lng ?? 0);
-        $radiusKm = (float) ($request->query('radius_km', 10));
+        $radiusKm = (float) ($request->query('radius_km', 20));
 
         // Haversine using pharmacy user (pharm.lat/lng). If on profile, see note below.
         $haversine = "(
@@ -93,8 +93,6 @@ class DispatcherDashboardController extends Controller
             'revenueToday'
         ));
     }
-
-
 
     /* Wallet pages you already had — unchanged except they live here for convenience */
 
