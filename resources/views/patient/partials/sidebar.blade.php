@@ -55,12 +55,12 @@
             </a>
 
             {{-- Optional: browsing/selecting providers (only include if you’ve wired the route) --}}
-            @if (Route::has('patient.labworks.providers'))
+            {{-- @if (Route::has('patient.labworks.providers'))
                 <a class="item {{ request()->routeIs('patient.labworks.providers') ? 'active' : '' }}"
                     href="{{ route('patient.labworks.providers') }}">
                     <i class="fa-solid fa-hospital-user"></i><span>Lab Providers</span>
                 </a>
-            @endif
+            @endif --}}
             {{-- /LABWORK --}}
 
             <a class="item {{ request()->routeIs('patient.appointments.index') ? 'active' : '' }}"
