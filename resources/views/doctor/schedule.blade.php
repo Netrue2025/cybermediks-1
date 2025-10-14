@@ -16,6 +16,17 @@
             border-radius: 10px;
             padding: 10px;
         }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        .field-error {
+            color: #f8d7da;
+            border-left: 3px solid #dc3545;
+            padding-left: .5rem;
+            margin-top: .25rem;
+        }
     </style>
 @endpush
 
@@ -38,10 +49,17 @@
                         <div class="slot d-flex align-items-center justify-content-between mb-2">
                             <div class="fw-semibold">{{ $d }}</div>
                             <div class="d-flex gap-2 align-items-center">
-                                <input type="time" class="form-control form-control-sm" name="start[{{ $d }}]"
+
+                                <input type="time" step="60" class="form-control form-control-sm"
+                                    name="start[{{ $d }}]" value="{{ substr($row['start'], 0, 5) }}">
+                                <input type="time" step="60" class="form-control form-control-sm"
+                                    name="end[{{ $d }}]" value="{{ substr($row['end'], 0, 5) }}">
+
+
+                                {{-- <input type="time" class="form-control form-control-sm" name="start[{{ $d }}]"
                                     value="{{ $row['start'] }}">
                                 <input type="time" class="form-control form-control-sm" name="end[{{ $d }}]"
-                                    value="{{ $row['end'] }}">
+                                    value="{{ $row['end'] }}"> --}}
                                 <div class="form-check form-switch m-0">
                                     <input class="form-check-input" type="checkbox" name="enabled[{{ $d }}]"
                                         {{ $row['enabled'] ? 'checked' : '' }}>
@@ -97,17 +115,80 @@
     <script>
         $('#schedForm').on('submit', function(e) {
             e.preventDefault();
-            const $btn = $('#btnSaveSched');
-            lockBtn($btn);
 
-            $.post(`{{ route('doctor.schedule.store') }}`, $(this).serialize())
+            const $form = $(this);
+            const $btn = $('#btnSaveSched');
+
+            // helpers
+            const toInputName = (laravelKey) => laravelKey.replace(/\.(\w+)/g, '[$1]');
+            const clearErrors = () => {
+                $form.find('.is-invalid').removeClass('is-invalid');
+                $form.find('.field-error').remove();
+                $('#schedErrors').remove();
+            };
+            const showTopErrors = (messages) => {
+                if (!messages.length) return;
+                const html = `
+      <div id="schedErrors" class="alert alert-danger mt-2">
+        <div class="fw-semibold mb-1">Please fix the following:</div>
+        <ul class="m-0 ps-3">${messages.map(m => `<li>${m}</li>`).join('')}</ul>
+      </div>`;
+                $form.prepend(html);
+            };
+
+            lockBtn($btn);
+            clearErrors();
+
+            $.post(`{{ route('doctor.schedule.store') }}`, $form.serialize())
                 .done(res => {
                     flash('success', res.message || 'Schedule saved');
                 })
                 .fail(err => {
-                    const msg = err.responseJSON?.message || 'Failed to save schedule';
-                    flash('danger', msg);
-                    if (err.responseJSON?.errors) console.warn(err.responseJSON.errors);
+                    const status = err.status;
+                    const payload = err.responseJSON || {};
+                    const msg = payload.message || 'Failed to save schedule';
+                    const errors = payload.errors || {};
+
+                    // Collect non-mapped messages to show at top
+                    const topMessages = [];
+                    if (status !== 422) topMessages.push(msg);
+
+                    // Map each Laravel error (e.g. "start.Mon") to input name "start[Mon]"
+                    let firstInvalid = null;
+                    Object.entries(errors).forEach(([key, messages]) => {
+                        const inputName = toInputName(key);
+                        const $field = $form.find(`[name="${inputName}"]`);
+
+                        if ($field.length) {
+                            // Mark invalid + append error under the row
+                            $field.addClass('is-invalid');
+                            // Place error at the row level if available, else right after the field
+                            const $row = $field.closest('.slot');
+                            const $host = $row.length ? $row : $field.parent();
+                            $host.append(
+                                `<div class="invalid-feedback d-block field-error">${messages[0]}</div>`
+                            );
+
+                            if (!firstInvalid) firstInvalid = $field;
+                        } else {
+                            // If we can't find the field, push to top errors
+                            topMessages.push(messages[0]);
+                        }
+                    });
+
+                    // Top errors (unknown keys or generic)
+                    if (!Object.keys(errors).length) topMessages.push(msg);
+                    showTopErrors(topMessages);
+
+                    // Scroll to first invalid input
+                    if (firstInvalid && firstInvalid.length) {
+                        $('html, body').animate({
+                            scrollTop: firstInvalid.offset().top - 120
+                        }, 250);
+                        firstInvalid.trigger('focus');
+                    }
+
+                    flash('danger', 'Please fix the highlighted errors.');
                 })
                 .always(() => unlockBtn($btn));
         });

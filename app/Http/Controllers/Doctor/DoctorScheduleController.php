@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\DoctorSchedule;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use PhpParser\Comment\Doc;
 
 class DoctorScheduleController extends Controller
@@ -40,46 +42,110 @@ class DoctorScheduleController extends Controller
             ->take(12)
             ->get();
 
-        return view('doctor.schedule', compact('schedule','upcoming'));
+        return view('doctor.schedule', compact('schedule', 'upcoming'));
     }
 
     public function store(Request $request)
     {
-        $docId = Auth::id();
-        $weeknames = DoctorSchedule::weekdays(); // 1..7 => Mon..Sun
+        $docId     = Auth::id();
+        $weeknames = DoctorSchedule::weekdays();          // [1=>'Mon', 2=>'Tue', ... 7=>'Sun']
+        $labels    = array_values($weeknames);            // ['Mon','Tue',...,'Sun']
+        $labelSet  = array_flip($labels);                 // fast lookup
 
-        // Validate incoming arrays: start[Mon], end[Mon], enabled[Mon]
-        $data = $request->validate([
-            'start'   => ['required','array'],
-            'end'     => ['required','array'],
-            'enabled' => ['array'], // checkbox only sends for checked
+        // Pull arrays and coerce types
+        $start   = (array) $request->input('start', []);
+        $end     = (array) $request->input('end', []);
+        $enabled = (array) $request->input('enabled', []); // checkboxes: only present when checked
+
+        // 1) Basic shape validation and allowed keys check
+        $v = Validator::make($request->all(), [
+            'start'   => ['required', 'array'],
+            'end'     => ['required', 'array'],
+            'enabled' => ['sometimes', 'array'],
         ]);
 
-        // Normalize & save per day
-        foreach ($weeknames as $weekday => $label) {
-            $start = $data['start'][$label] ?? null;
-            $end   = $data['end'][$label] ?? null;
-            $en    = array_key_exists($label, ($data['enabled'] ?? [])); // checked => key exists
+        // Reject unknown keys to prevent tampering
+        $unknownStart   = array_diff(array_keys($start),   $labels);
+        $unknownEnd     = array_diff(array_keys($end),     $labels);
+        $unknownEnabled = array_diff(array_keys($enabled), $labels);
 
-            // Basic per-day validation
-            if ($en) {
-                // both must be valid HH:MM and end > start
-                $request->validate([
-                    "start.$label" => ['required','date_format:H:i'],
-                    "end.$label"   => ['required','date_format:H:i','after:start.'.$label],
-                ]);
+        if (!empty($unknownStart) || !empty($unknownEnd) || !empty($unknownEnabled)) {
+            $v->after(function ($v) use ($unknownStart, $unknownEnd, $unknownEnabled) {
+                if ($unknownStart)   $v->errors()->add('start',   'Invalid weekday keys: ' . implode(', ', $unknownStart));
+                if ($unknownEnd)     $v->errors()->add('end',     'Invalid weekday keys: ' . implode(', ', $unknownEnd));
+                if ($unknownEnabled) $v->errors()->add('enabled', 'Invalid weekday keys: ' . implode(', ', $unknownEnabled));
+            });
+        }
+
+        // 2) Per-day rules when enabled: require valid times, end > start
+        $v->after(function ($v) use ($labels, $start, $end, $enabled) {
+            foreach ($labels as $label) {
+                $isEnabled = array_key_exists($label, $enabled);
+
+                // If not enabled, skip strict time validation
+                if (!$isEnabled) {
+                    continue;
+                }
+
+                $s = $start[$label] ?? null;
+                $e = $end[$label]   ?? null;
+
+                if (!$s) {
+                    $v->errors()->add("start.$label", "Start time is required for $label.");
+                    continue;
+                }
+                if (!$e) {
+                    $v->errors()->add("end.$label", "End time is required for $label.");
+                    continue;
+                }
+
+                // Format check
+                try {
+                    $cs = Carbon::createFromFormat('H:i', $s);
+                } catch (\Exception $ex) {
+                    $v->errors()->add("start.$label", "Start time must be HH:MM.");
+                    $cs = null;
+                }
+
+                try {
+                    $ce = Carbon::createFromFormat('H:i', $e);
+                } catch (\Exception $ex) {
+                    $v->errors()->add("end.$label", "End time must be HH:MM.");
+                    $ce = null;
+                }
+
+                if ($cs && $ce && $ce->lessThanOrEqualTo($cs)) {
+                    $v->errors()->add("end.$label", "End time must be after start time for $label.");
+                }
             }
+        });
+
+        if ($v->fails()) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Please fix the highlighted errors.',
+                'errors'  => $v->errors(),
+            ], 422);
+        }
+
+        // 3) Persist: loop Mon..Sun by weekday number key
+        foreach ($weeknames as $weekday => $label) {
+            $isEnabled = array_key_exists($label, $enabled);
+
+            // For disabled days: store null times + enabled=false
+            $sVal = $isEnabled ? ($start[$label] ?? null) : null;
+            $eVal = $isEnabled ? ($end[$label]   ?? null) : null;
 
             DoctorSchedule::updateOrCreate(
                 ['doctor_id' => $docId, 'weekday' => $weekday],
                 [
-                    'start_time' => $en ? $start : null,
-                    'end_time'   => $en ? $end   : null,
-                    'enabled'    => $en,
+                    'start_time' => $sVal,
+                    'end_time'   => $eVal,
+                    'enabled'    => $isEnabled,
                 ]
             );
         }
 
-        return response()->json(['status'=>'success','message'=>'Schedule saved']);
+        return response()->json(['status' => 'success', 'message' => 'Schedule saved']);
     }
 }
