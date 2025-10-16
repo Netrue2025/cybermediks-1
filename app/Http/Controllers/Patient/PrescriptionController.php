@@ -33,6 +33,12 @@ class PrescriptionController extends Controller
                 'order.items:id,order_id,prescription_item_id,status,unit_price,line_total'
             ])
             ->forPatient($user->id)
+            ->when($request->from === 'dashboard', function ($query) {
+                $query->where(function ($q) {
+                    $q->whereHas('order', fn($oq) => $oq->whereNotIn('status', ['delivered']))
+                        ->orDoesntHave('order');
+                });
+            })
             ->statusIs($status)
             ->search($request->get('q'))
             ->orderByDesc('created_at')

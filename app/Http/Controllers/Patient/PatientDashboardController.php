@@ -68,8 +68,6 @@ class PatientDashboardController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-            dd($prescriptions);
-
         return view('patient.dashboard', [
             'pendingAppointments'   => $pendingAppointments,
             'activeRxCount'  => $activeRxCount,

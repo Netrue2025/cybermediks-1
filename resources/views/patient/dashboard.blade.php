@@ -865,7 +865,7 @@
                 const status = $('#rxStatus').val() || '';
                 const url = pageUrl || `{{ route('patient.prescriptions.index') }}`;
 
-                return $.get(url, {
+                return $.get(url + '?from=dashboard', {
                     q,
                     status
                 }).done(function(html) {
