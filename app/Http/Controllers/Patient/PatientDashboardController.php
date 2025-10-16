@@ -60,7 +60,7 @@ class PatientDashboardController extends Controller
                 'order.items:id,order_id,prescription_item_id,status,unit_price,line_total'
             ])
             ->forPatient($userId)
-            ->whereNotIn('status', ['completed'])
+            ->whereNotIn('status', ['delivered'])
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
