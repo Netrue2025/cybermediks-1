@@ -22,15 +22,14 @@ class PatientOrderController extends Controller
     {
         $order = $rx->order()->with('items')->firstOrFail();
         if ($order->status !== 'quoted') {
-            return response()->json(['message'=>'Not ready for confirmation'], 422);
+            return response()->json(['message' => 'Not ready for confirmation'], 422);
         }
 
         DB::transaction(function () use ($order) {
-            $order->items()->where('status','quoted')->update(['status'=>'patient_confirmed']);
+            $order->items()->where('status', 'quoted')->update(['status' => 'patient_confirmed']);
             $order->update(['status' => 'patient_confirmed']);
         });
 
         return back()->with('ok', 'Items confirmed.');
     }
-    
 }

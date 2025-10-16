@@ -322,12 +322,20 @@
 
 
     <div class="cardx mb-3">
-        <div class="d-flex align-items-center gap-2 mb-2">
-            <i class="fa-solid fa-file-prescription"></i>
-            <h5 class="m-0">My Prescriptions</h5>
-        </div>
-        <div class="section-subtle mb-3">View, refill, and manage your prescriptions</div>
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-file-prescription"></i>
+                <h5 class="m-0">My Prescriptions</h5>
+            </div>
 
+            <button id="btnRxRefresh" type="button" class="btn btn-outline-light btn-sm">
+                <span id="rxRefreshSpin" class="spinner-border spinner-border-sm me-1 d-none" role="status"
+                    aria-hidden="true"></span>
+                Refresh
+            </button>
+        </div>
+
+        <div class="section-subtle mb-3">View, refill, and manage your prescriptions</div>
         <div class="row g-2">
             <div class="col-lg-6">
                 <input id="rxSearch" class="form-control" placeholder="Search by drug, doctor, or code..."
@@ -849,23 +857,49 @@
             let currentOrderIdForQuote = null;
             let currentRxIdForQuote = null;
             let t = null;
+            const $btnRefresh = $('#btnRxRefresh');
+            const $spin = $('#rxRefreshSpin');
 
-            function fetchList() {
-                const q = $('#rxSearch').val();
-                const status = $('#rxStatus').val();
-                $.get(`{{ route('patient.prescriptions.index') }}`, {
+            function fetchList(pageUrl = null) {
+                const q = $('#rxSearch').val() || '';
+                const status = $('#rxStatus').val() || '';
+                const url = pageUrl || `{{ route('patient.prescriptions.index') }}`;
+
+                return $.get(url, {
                     q,
                     status
-                }, function(html) {
+                }).done(function(html) {
                     $list.html(html);
+                });
+            }
+
+            function refreshRxList(pageUrl = null) {
+                $btnRefresh.prop('disabled', true);
+                $spin.removeClass('d-none');
+                return fetchList(pageUrl).always(function() {
+                    $btnRefresh.prop('disabled', false);
+                    $spin.addClass('d-none');
                 });
             }
 
             $('#rxSearch').on('input', function() {
                 clearTimeout(t);
-                t = setTimeout(fetchList, 300);
+                t = setTimeout(() => refreshRxList(), 300);
             });
-            $('#rxStatus').on('change', fetchList);
+            $('#rxStatus').on('change', refreshRxList());
+
+            $btnRefresh.on('click', function() {
+                refreshRxList();
+            });
+
+            // NEW: AJAX pagination inside #rxList
+            $(document).on('click', '#rxList .pagination a', function(e) {
+                e.preventDefault();
+                const url = this.href;
+                if (!url) return;
+                refreshRxList(url);
+            });
+
 
             // View: read JSON payload embedded in row
             $(document).on('click', '[data-rx-view]', function() {
@@ -1096,6 +1130,95 @@
                     .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
             }
 
+            // --- Config ---
+            const POLL_MS = 3000; // how often to check
+            const IDLE_GRACE_MS = 1200; // “user not typing” window
+
+            // --- State ---
+            let inFlight = false;
+            let nextTimer = null;
+            let lastUserActivityAt = Date.now();
+            let lastStartedAt = 0;
+            let lastFinishedAt = 0;
+
+            // If your previous code defined these, we reuse them:
+            //   const $btnRefresh = $('#btnRxRefresh');
+            //   const $spin = $('#rxRefreshSpin');
+
+            // Ensure refreshRxList returns a jqXHR/Promise and toggles the button/spinner.
+            // If you copied the earlier snippet, it already does.
+            function startAutoPolling() {
+                // guard: don’t create multiple loops
+                if (nextTimer) return;
+                scheduleNext();
+            }
+
+            function stopAutoPolling() {
+                if (nextTimer) {
+                    clearTimeout(nextTimer);
+                    nextTimer = null;
+                }
+            }
+
+            function scheduleNext() {
+                stopAutoPolling();
+                nextTimer = setTimeout(tick, POLL_MS);
+            }
+
+            function idleEnough() {
+                return (Date.now() - lastUserActivityAt) >= IDLE_GRACE_MS;
+            }
+
+            function tick() {
+                // Skip if tab not visible or user busy or request running
+                if (document.hidden || !idleEnough() || inFlight) {
+                    return scheduleNext();
+                }
+
+                inFlight = true;
+                lastStartedAt = Date.now();
+
+                // Kick the refresh (reuse your function)
+                // If you don’t want the top-right button spinner during auto, you can
+                // add a flag to refreshRxList; but it’s fine to show a tiny spinner.
+                refreshRxList()
+                    .always(function() {
+                        inFlight = false;
+                        lastFinishedAt = Date.now();
+                        scheduleNext();
+                    });
+            }
+
+            // --- Wire user activity (pause while typing/selecting) ---
+            function bumpIdle() {
+                lastUserActivityAt = Date.now();
+            }
+
+            $(document).on('input', '#rxSearch', bumpIdle);
+            $(document).on('change', '#rxStatus', bumpIdle);
+
+            // If you have more interactive inputs inside the list, track them too:
+            $(document).on('input change', '#rxList :input', bumpIdle);
+
+            // Pause when tab hidden; resume when visible
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    stopAutoPolling();
+                } else {
+                    // user came back—reset idle and schedule soon
+                    bumpIdle();
+                    scheduleNext();
+                }
+            });
+
+            // If your manual Refresh button exists, make sure it doesn’t break the loop
+            $(document).on('click', '#btnRxRefresh', function() {
+                bumpIdle(); // treat as user activity
+                // When manual refresh finishes, the loop will scheduleNext() again automatically
+            });
+
+            // Kick it off
+            startAutoPolling();
         })();
     </script>
 @endpush

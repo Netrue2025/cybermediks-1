@@ -47,7 +47,7 @@ class DoctorMessengerController extends Controller
 
         $active = $openConversationId ? $openConvo : null;
 
-        $patientId = $active? $openConvo->patient_id : null;
+        $patientId = $active ? $openConvo->patient_id : null;
         $patientDetails = $active ? $openConvo->patient->fullName : null;
         $appointmentId = $active ? $openConvo->appointment_id : null;
 

@@ -253,6 +253,10 @@
         });
 
         // Boot
+        setInterval(() => {
+            fetchConversations();
+        }, 5000);
+
         fetchConversations();
 
         // If coming from “Chat” button: support both ?doctor and ?doctor_id

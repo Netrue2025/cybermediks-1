@@ -69,12 +69,20 @@
 
 @section('content')
     <div class="cardx mb-3">
-        <div class="d-flex align-items-center gap-2 mb-2">
-            <i class="fa-solid fa-file-prescription"></i>
-            <h5 class="m-0">My Prescriptions</h5>
-        </div>
-        <div class="section-subtle mb-3">View, refill, and manage your prescriptions</div>
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-file-prescription"></i>
+                <h5 class="m-0">My Prescriptions</h5>
+            </div>
 
+            <button id="btnRxRefresh" type="button" class="btn btn-outline-light btn-sm">
+                <span id="rxRefreshSpin" class="spinner-border spinner-border-sm me-1 d-none" role="status"
+                    aria-hidden="true"></span>
+                Refresh
+            </button>
+        </div>
+
+        <div class="section-subtle mb-3">View, refill, and manage your prescriptions</div>
         <div class="row g-2">
             <div class="col-lg-6">
                 <input id="rxSearch" class="form-control" placeholder="Search by drug, doctor, or code..."
@@ -427,6 +435,379 @@
                     .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
             }
 
+        })();
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        (function() {
+            const $list = $('#rxList');
+            let currentOrderIdForQuote = null;
+            let currentRxIdForQuote = null;
+            let t = null;
+            const $btnRefresh = $('#btnRxRefresh');
+            const $spin = $('#rxRefreshSpin');
+
+            function fetchList(pageUrl = null) {
+                const q = $('#rxSearch').val() || '';
+                const status = $('#rxStatus').val() || '';
+                const url = pageUrl || `{{ route('patient.prescriptions.index') }}`;
+
+                return $.get(url, {
+                    q,
+                    status
+                }).done(function(html) {
+                    $list.html(html);
+                });
+            }
+
+            function refreshRxList(pageUrl = null) {
+                $btnRefresh.prop('disabled', true);
+                $spin.removeClass('d-none');
+                return fetchList(pageUrl).always(function() {
+                    $btnRefresh.prop('disabled', false);
+                    $spin.addClass('d-none');
+                });
+            }
+
+            $('#rxSearch').on('input', function() {
+                clearTimeout(t);
+                t = setTimeout(() => refreshRxList(), 300);
+            });
+            $('#rxStatus').on('change', refreshRxList());
+
+            $btnRefresh.on('click', function() {
+                refreshRxList();
+            });
+
+            // NEW: AJAX pagination inside #rxList
+            $(document).on('click', '#rxList .pagination a', function(e) {
+                e.preventDefault();
+                const url = this.href;
+                if (!url) return;
+                refreshRxList(url);
+            });
+
+
+            // View: read JSON payload embedded in row
+            $(document).on('click', '[data-rx-view]', function() {
+                const payload = $(this).data('rx-view'); // stringified JSON
+                const rx = typeof payload === 'string' ? JSON.parse(payload) : payload;
+
+                let itemsHtml = rx.items.map(i => {
+                    const bought = i.status === 'purchased';
+                    const badge = i.status ?
+                        `<span class="badge-soft ms-1">${i.status.replaceAll('_',' ')}</span>` : '';
+                    const price = (i.line_total ?? i.unit_price) ?
+                        `<span class="price-pill ms-2">$${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
+                        '';
+                    return `<li class="${bought ? 'opacity-50' : ''}">
+                ${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}
+                ${badge}${price}
+                </li>`;
+                }).join('');
+
+                let html = `
+                    <div class="mb-2">
+                        <span class="rx-badge">Rx ${rx.code}</span>
+                        <span class="rx-status ms-2">${(rx.dispense || rx.status || '').toString().replaceAll('_',' ')}</span>
+                    </div>
+                    <div class="mb-2"><strong>Doctor:</strong> ${rx.doctor}</div>
+                    ${rx.notes ? `<div class="mb-3"><strong>Notes:</strong> ${rx.notes}</div>` : ``}
+                    <div class="mb-2"><strong>Items</strong></div>
+                    <ul class="mb-0">${itemsHtml}</ul>
+                `;
+                $('#rxViewBody').html(html);
+                new bootstrap.Modal(document.getElementById('rxViewModal')).show();
+            });
+
+
+            // Refill click (placeholder: route to your refill flow)
+            $(document).on('click', '[data-rx-refill]', function() {
+                const id = $(this).data('rx-refill');
+                window.location.href = `/patient/prescriptions/${id}/refill`; // implement when ready
+            });
+
+
+            let currentRxId = null;
+            const $pharmModal = $('#pharmModal');
+            const $pharmList = $('#pharmList');
+            const $pharmSearch = $('#pharmSearch');
+            const $pharmFilter = $('#pharmFilter');
+            let searchTimer = null;
+
+            // Open modal and load pharmacies
+            $(document).on('click', '[data-rx-buy]', function() {
+                currentRxId = $(this).data('rx-buy');
+                if (!currentRxId) return;
+                $pharmModal.modal('show');
+                loadPharmacies();
+            });
+
+            $pharmSearch.on('input', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(loadPharmacies, 300);
+            });
+            $pharmFilter.on('change', loadPharmacies);
+
+            function loadPharmacies() {
+                const q = $pharmSearch.val() || '';
+                const filter = $pharmFilter.val() || '';
+                $pharmList.html(`<div class="text-center text-secondary py-3">Loading…</div>`);
+                $.get(`{{ route('patient.prescriptions.pharmacies', ['rx' => '__ID__']) }}`.replace('__ID__',
+                        currentRxId), {
+                        q,
+                        filter
+                    })
+                    .done(html => $pharmList.html(html))
+                    .fail(() => $pharmList.html(
+                        `<div class="text-center text-danger py-3">Failed to load pharmacies</div>`));
+            }
+
+            // Select pharmacy -> assign to prescription
+            $(document).on('click', '[data-pharm-select]', function() {
+                const pharmId = $(this).data('pharm-select');
+                const $btn = $(this);
+                if (!pharmId || !currentRxId) return;
+
+                lockBtn($btn);
+                $.post(`{{ route('patient.prescriptions.assignPharmacy', ['rx' => '__ID__']) }}`.replace(
+                        '__ID__', currentRxId), {
+                        _token: `{{ csrf_token() }}`,
+                        pharmacy_id: pharmId
+                    })
+                    .done(res => {
+                        // Always close the picker
+                        $pharmModal.modal('hide');
+
+                        // If server returned a quote, show it immediately
+                        if (res && res.quote) {
+                            currentOrderIdForQuote = res.order_id;
+                            currentRxIdForQuote =
+                                currentRxId; // <- you already have currentRxId in your page
+                            renderQuoteModal(res.order_id, res.quote); // signature can stay the same
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal'))
+                                .show();
+                        } else {
+                            flash('success', res.message || 'Pharmacy selected');
+                            try {
+                                (typeof fetchList === 'function') && fetchList();
+                            } catch (e) {}
+                        }
+                    })
+
+                    .fail(xhr => {
+                        flash('danger', xhr.responseJSON?.message || 'Failed to assign pharmacy');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+            $(document).on('click', '[data-dsp-confirm-order]', function() {
+                const orderId = $(this).data('dsp-confirm-order');
+                const $btn = $(this);
+                lockBtn($btn);
+
+                $.post(
+                        `{{ route('patient.orders.confirmDeliveryFee', ['order' => '__OID__']) }}`.replace(
+                            '__OID__', orderId), {
+                            _token: `{{ csrf_token() }}`
+                        }
+                    )
+                    .done(res => {
+                        flash('success', res.message || 'Delivery fee confirmed');
+                        location.reload();
+                    })
+                    .fail(err => {
+                        flash('danger', err.responseJSON?.message || 'Failed');
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+
+
+
+
+            function renderQuoteModal(orderId, q) {
+                currentOrderIdForQuote = orderId;
+
+                const available = (q.available || []).map(a => {
+                    const unit = Number(a.unit_price || 0);
+                    const line = Number(a.line_total || unit);
+                    return `
+                    <tr>
+                        <td>${escapeHtml(a.drug || '')}</td>
+                        <td class="text-end">$${unit.toFixed(2)}</td>
+                        <td class="text-end">$${line.toFixed(2)}</td>
+                    </tr>
+                    `;
+                }).join('');
+
+                const unavailable = (q.unavailable || []).map(u => `
+                    <li>${escapeHtml(u.drug || '')}${u.reason ? ` — <span class="section-subtle">${escapeHtml(u.reason)}</span>` : ''}</li>
+                `).join('');
+
+                const table = available ?
+                    `
+                        <div class="mb-2 fw-semibold">Available items</div>
+                        <div class="table-responsive">
+                        <table class="table table-borderless table-darkish align-middle mb-3">
+                            <thead>
+                            <tr>
+                                <th>Drug</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Line Total</th>
+                            </tr>
+                            </thead>
+                            <tbody>${available}</tbody>
+                        </table>
+                        </div>
+                    ` :
+                    `<div class="text-warning mb-2">No matching items found in this pharmacy inventory.</div>`;
+
+                const unvBlock = unavailable ?
+                    `
+                        <div class="mb-2 fw-semibold">Unavailable here</div>
+                        <ul class="mb-0 small">${unavailable}</ul>
+                    ` :
+                    '';
+
+                $('#quoteBody').html(`${table}${unvBlock}`);
+                const total = Number(q.items_total || 0);
+                $('#quoteTotal').text(`$${total.toFixed(2)}`);
+                $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
+                $('#quoteBody').append(`
+                    <div class="small section-subtle">
+                        Items: ₦${Number(q.items_total).toFixed(2)} ·
+                        Delivery: ₦${Number(q.delivery_fee).toFixed(2)} (${q.distance_km} km @ ₦100/km)
+                    </div>
+                `);
+            }
+
+            // Confirm the quoted items for this order
+            $(document)
+                .off('click.quote', '#btnConfirmQuotedItems')
+                .on('click.quote', '#btnConfirmQuotedItems', function() {
+                    const $btn = $(this);
+                    if (!currentRxIdForQuote) return; // we confirm by PRESCRIPTION
+
+                    lockBtn($btn);
+                    $.post(
+                            `{{ route('patient.prescriptions.confirmPrice', ['rx' => '__RX__']) }}`
+                            .replace('__RX__', currentRxIdForQuote), {
+                                _token: `{{ csrf_token() }}`
+                            }
+                        )
+                        .done(res => {
+                            flash('success', res.message || 'Items confirmed');
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal')).hide();
+                            try {
+                                (typeof fetchList === 'function') && fetchList();
+                            } catch (e) {}
+                        })
+                        .fail(xhr => {
+                            flash('danger', xhr.responseJSON?.message || 'Failed to confirm');
+                        })
+                        .always(() => unlockBtn($btn));
+                });
+
+
+
+            // tiny HTML escaper for safe rendering
+            function escapeHtml(s) {
+                return String(s || '')
+                    .replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+            }
+
+            // --- Config ---
+            const POLL_MS = 3000; // how often to check
+            const IDLE_GRACE_MS = 1200; // “user not typing” window
+
+            // --- State ---
+            let inFlight = false;
+            let nextTimer = null;
+            let lastUserActivityAt = Date.now();
+            let lastStartedAt = 0;
+            let lastFinishedAt = 0;
+
+            // If your previous code defined these, we reuse them:
+            //   const $btnRefresh = $('#btnRxRefresh');
+            //   const $spin = $('#rxRefreshSpin');
+
+            // Ensure refreshRxList returns a jqXHR/Promise and toggles the button/spinner.
+            // If you copied the earlier snippet, it already does.
+            function startAutoPolling() {
+                // guard: don’t create multiple loops
+                if (nextTimer) return;
+                scheduleNext();
+            }
+
+            function stopAutoPolling() {
+                if (nextTimer) {
+                    clearTimeout(nextTimer);
+                    nextTimer = null;
+                }
+            }
+
+            function scheduleNext() {
+                stopAutoPolling();
+                nextTimer = setTimeout(tick, POLL_MS);
+            }
+
+            function idleEnough() {
+                return (Date.now() - lastUserActivityAt) >= IDLE_GRACE_MS;
+            }
+
+            function tick() {
+                // Skip if tab not visible or user busy or request running
+                if (document.hidden || !idleEnough() || inFlight) {
+                    return scheduleNext();
+                }
+
+                inFlight = true;
+                lastStartedAt = Date.now();
+
+                // Kick the refresh (reuse your function)
+                // If you don’t want the top-right button spinner during auto, you can
+                // add a flag to refreshRxList; but it’s fine to show a tiny spinner.
+                refreshRxList()
+                    .always(function() {
+                        inFlight = false;
+                        lastFinishedAt = Date.now();
+                        scheduleNext();
+                    });
+            }
+
+            // --- Wire user activity (pause while typing/selecting) ---
+            function bumpIdle() {
+                lastUserActivityAt = Date.now();
+            }
+
+            $(document).on('input', '#rxSearch', bumpIdle);
+            $(document).on('change', '#rxStatus', bumpIdle);
+
+            // If you have more interactive inputs inside the list, track them too:
+            $(document).on('input change', '#rxList :input', bumpIdle);
+
+            // Pause when tab hidden; resume when visible
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    stopAutoPolling();
+                } else {
+                    // user came back—reset idle and schedule soon
+                    bumpIdle();
+                    scheduleNext();
+                }
+            });
+
+            // If your manual Refresh button exists, make sure it doesn’t break the loop
+            $(document).on('click', '#btnRxRefresh', function() {
+                bumpIdle(); // treat as user activity
+                // When manual refresh finishes, the loop will scheduleNext() again automatically
+            });
+
+            // Kick it off
+            startAutoPolling();
         })();
     </script>
 @endpush

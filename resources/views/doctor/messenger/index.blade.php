@@ -724,13 +724,12 @@
             // light polling every 6s only if a thread is open and window focused
             setInterval(function() {
                 const id = $('#convId').val();
-                if (!id || !document.hasFocus()) return;
                 $.get(`{{ url('/doctor/messenger') }}/${id}`, function(html) {
                     // naive replace; your partial already renders newest state and marks read
                     $chatBody.html(html);
                     scrollBottom();
                 });
-            }, 6000);
+            }, 5000);
 
             $('#addItem').on('click', function() {
                 const i = rxIndex++;
