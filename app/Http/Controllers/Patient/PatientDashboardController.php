@@ -57,10 +57,13 @@ class PatientDashboardController extends Controller
                 'doctor:id,first_name,last_name',
                 'items:id,prescription_id,drug,dose,frequency,days,quantity,directions',
                 'order:id,prescription_id,patient_id,pharmacy_id,status,items_subtotal,dispatcher_price,grand_total',
-                'order.items:id,order_id,prescription_item_id,status,unit_price,line_total'
+                'order.items:id,order_id,prescription_item_id,status,unit_price,line_total',
             ])
             ->forPatient($userId)
-            ->whereNotIn('status', ['delivered'])
+            ->where(function ($q) {
+                $q->whereHas('order', fn($oq) => $oq->whereNotIn('status', ['delivered']))
+                    ->orDoesntHave('order');
+            })
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
