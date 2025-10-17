@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Specialty;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PatientDashboardController extends Controller
 {
@@ -27,6 +28,25 @@ class PatientDashboardController extends Controller
             ->whereNotNull('meeting_link')
             ->orderByDesc('updated_at')
             ->first();
+
+        $timer = $acceptedAppt->doctor->doctorProfile->avg_duration ?? 15;
+
+        $endEpoch = null;
+
+        // DB “now” in UTC (fallback to PHP time() if DB call fails)
+        $row = DB::selectOne("SELECT UNIX_TIMESTAMP(UTC_TIMESTAMP()) AS ts");
+        $nowEpoch = $row ? (int) $row->ts : time();
+
+        if ($acceptedAppt) {
+            $updatedTs = optional($acceptedAppt->updated_at)?->getTimestamp();
+            if ($updatedTs) {
+                $endEpoch = $updatedTs + ((int) $timer * 60);
+            }
+        }
+
+        $remaining = $endEpoch ? max(0, $endEpoch - $nowEpoch) : 0;
+
+        // dd($timer);
         // Active prescriptions
         $activeRxCount = Prescription::where('patient_id', $userId)
             ->where('status', 'active')->count();
@@ -74,7 +94,13 @@ class PatientDashboardController extends Controller
             'nearbyCount'    => $nearbyCount,
             'specialties'    => $specialties,
             'acceptedAppt'   => $acceptedAppt,
-            'prescriptions'  => $prescriptions
+            'meetingTimer'   => $timer,
+            'prescriptions'  => $prescriptions,
+            'acceptedAppt'   => $acceptedAppt,
+            'meetingTimer'   => $timer,
+            'meet_end_epoch' => $endEpoch,
+            'meet_now_epoch' => $nowEpoch,
+            'meet_remaining' => $remaining
         ]);
     }
 

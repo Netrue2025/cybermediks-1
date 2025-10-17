@@ -328,10 +328,14 @@
                 <h5 class="m-0">My Prescriptions</h5>
             </div>
 
-            <button id="btnRxRefresh" type="button" class="btn btn-outline-light btn-sm">
+            <button id="btnRxRefresh" type="button" class="btn btn-outline-light btn-sm" style="display: none;">
                 <span id="rxRefreshSpin" class="spinner-border spinner-border-sm me-1 d-none" role="status"
                     aria-hidden="true"></span>
                 Refresh
+            </button>
+            <button class="btn btn-sm btn-gradient" type="button" data-bs-toggle="collapse"
+                data-bs-target="#rxListCollapse" aria-expanded="true" aria-controls="rxListCollapse">
+                Collapse &UpArrow;
             </button>
         </div>
 
@@ -353,9 +357,12 @@
         </div>
     </div>
 
-    <div id="rxList">
-        @include('patient.prescriptions._list', ['prescriptions' => $prescriptions])
+    <div class="collapse show" id="rxListCollapse">
+        <div id="rxList">
+            @include('patient.prescriptions._list', ['prescriptions' => $prescriptions])
+        </div>
     </div>
+
 
     <!-- View dialog -->
     <div class="modal fade" id="rxViewModal" tabindex="-1" aria-hidden="true">
@@ -493,6 +500,7 @@
             @endforeach
         </div>
     </div>
+
     {{-- Doctor Quick View Modal --}}
     <div class="modal fade" id="doctorModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -566,12 +574,28 @@
                                 {{ optional($acceptedAppt->scheduled_at)->format('M d, Y · g:ia') ?? '—' }}
                             </div>
                         </div>
+                        <h3 class="mb-2">
+                            Time left: <span id="meetingCountdown">--:--</span>
+                        </h3>
 
-                        <div class="mb-2">
-                            <div class="subtle small">Meeting link</div>
+                        <div id="meetingCountdownMeta" data-end-epoch="{{ (int) ($meet_end_epoch ?? 0) }}"
+                            data-now-epoch="{{ (int) ($meet_now_epoch ?? 0) }}"></div>
+
+                        <small id="meetingCountdownDebug" class="text-muted d-block mt-1"></small>
+
+
+
+
+
+
+
+
+
+
+                        {{-- <div class="mb-2">
                             <div class="d-flex align-items-center gap-2">
                                 <input id="apModalLink" class="form-control" readonly
-                                    value="{{ $acceptedAppt->meeting_link }}">
+                                    value="{{ $acceptedAppt->meeting_link }}" style="visibility: hidden">
                                 <button class="btn btn-ghost" id="apCopyLink">
                                     <i class="fa-regular fa-copy me-1"></i> Copy
                                 </button>
@@ -581,7 +605,7 @@
                                 </a>
                             </div>
                             <div class="small mt-1" id="apCopyNote" style="display:none;">Copied!</div>
-                        </div>
+                        </div> --}}
 
                         <div class="alert alert-info mt-3 mb-0 small"
                             style="background:#0f1a2e;border:1px solid var(--border);color:#cfe0ff;">
@@ -1219,6 +1243,93 @@
 
             // Kick it off
             startAutoPolling();
+        })();
+    </script>
+    <script>
+        (function() {
+            function initMeetingCountdown() {
+                const meta = document.getElementById('meetingCountdownMeta');
+                const label = document.getElementById('meetingCountdown');
+                const debug = document.getElementById('meetingCountdownDebug');
+                const join = document.getElementById('apJoinNow');
+                const endBtn = document.getElementById('endAppointment');
+
+                if (!meta || !label) return;
+
+                // Pull & coerce numbers
+                const endEpoch = Number(meta.getAttribute('data-end-epoch')) || 0;
+                const nowEpoch = Number(meta.getAttribute('data-now-epoch')) || 0;
+
+                if (!endEpoch || !nowEpoch) {
+                    debug && (debug.textContent = `Missing epochs → end:${endEpoch} now:${nowEpoch}`);
+                    return;
+                }
+
+                // Align client time to DB "now"
+                const clientNow = Math.floor(Date.now() / 1000);
+                const skew = nowEpoch - clientNow;
+
+                // Show what we’re using (debug)
+                debug && (debug.textContent = `end:${endEpoch} now(DB):${nowEpoch} skew:${skew}`);
+
+                // UI helpers
+                function endUI() {
+                    label.textContent = '00:00';
+                    if (join) {
+                        join.classList.add('disabled');
+                        join.setAttribute('aria-disabled', 'true');
+                        join.setAttribute('tabindex', '-1');
+                        join.textContent = 'Meeting ended';
+                        join.removeAttribute('href');
+                    }
+                    if (endBtn) {
+                        endBtn.disabled = false;
+                        endBtn.classList.remove('disabled');
+                    }
+                }
+
+                function fmt(sec) {
+                    const m = Math.floor(sec / 60),
+                        s = sec % 60;
+                    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                }
+
+                // tick loop
+                function tick() {
+                    const now = Math.floor(Date.now() / 1000) + skew; // DB-aligned current time
+                    const remaining = Math.max(0, endEpoch - now);
+
+                    label.textContent = fmt(remaining);
+
+                    if (remaining <= 0) {
+                        endUI();
+                        clearInterval(timer);
+                    }
+                }
+
+                // Start
+                tick(); // render immediately so you see it
+                const timer = setInterval(tick, 1000);
+
+                // Clean up on modal close
+                const modal = document.getElementById('apAcceptedModal');
+                modal && modal.addEventListener('hidden.bs.modal', () => clearInterval(timer), {
+                    once: true
+                });
+            }
+
+            // Run once DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initMeetingCountdown);
+            } else {
+                initMeetingCountdown();
+            }
+
+            // Also re-init when modal is shown (useful if DOM is updated dynamically)
+            const modal = document.getElementById('apAcceptedModal');
+            modal && modal.addEventListener('shown.bs.modal', initMeetingCountdown);
+
+            // If you use PJAX/Livewire/Turbo and replace DOM, call initMeetingCountdown() after replacement.
         })();
     </script>
 @endpush
