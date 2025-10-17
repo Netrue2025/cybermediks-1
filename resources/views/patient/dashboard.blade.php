@@ -581,8 +581,6 @@
                         <div id="meetingCountdownMeta" data-end-epoch="{{ (int) ($meet_end_epoch ?? 0) }}"
                             data-now-epoch="{{ (int) ($meet_now_epoch ?? 0) }}"></div>
 
-                        <small id="meetingCountdownDebug" class="text-muted d-block mt-1" style="display:none"></small>
-
 
 
 
@@ -1250,7 +1248,6 @@
             function initMeetingCountdown() {
                 const meta = document.getElementById('meetingCountdownMeta');
                 const label = document.getElementById('meetingCountdown');
-                const debug = document.getElementById('meetingCountdownDebug');
                 const join = document.getElementById('apJoinNow');
                 const endBtn = document.getElementById('endAppointment');
 
@@ -1261,7 +1258,6 @@
                 const nowEpoch = Number(meta.getAttribute('data-now-epoch')) || 0;
 
                 if (!endEpoch || !nowEpoch) {
-                    debug && (debug.textContent = `Missing epochs → end:${endEpoch} now:${nowEpoch}`);
                     return;
                 }
 
@@ -1269,8 +1265,6 @@
                 const clientNow = Math.floor(Date.now() / 1000);
                 const skew = nowEpoch - clientNow;
 
-                // Show what we’re using (debug)
-                debug && (debug.textContent = `end:${endEpoch} now(DB):${nowEpoch} skew:${skew}`);
 
                 // UI helpers
                 function endUI() {
