@@ -55,22 +55,151 @@
 
         /* keeps button width stable */
     </style>
+    <style>
+        :root {
+            --accent1: #8758e8;
+            --accent2: #e0568a;
+            --muted: #9aa3b2;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #fff;
+        }
+
+        /* NAV */
+        .navbar {
+            background: rgba(15, 23, 42, 0.35) !important;
+            /* dark but see-through */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .navbar-brand:hover {
+            color: #fff;
+        }
+
+        .nav-link {
+            color: #e5e7eb !important;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: #fff !important;
+        }
+
+        /* gradient underline on active */
+        .nav-link.active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 100%;
+            height: 3px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+        }
+
+        .btn-gradient {
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            color: #fff !important;
+            border: none;
+        }
+
+        .btn-gradient:hover {
+            opacity: .92;
+        }
+
+        /* HERO */
+        .hero-wrap {
+            position: relative;
+            width: 100%;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(9, 15, 29, .75) 0%, rgba(9, 15, 29, .55) 40%, rgba(9, 15, 29, .85) 100%),
+                url('/images/doctor.webp') center/cover no-repeat;
+        }
+
+        .hero-inner {
+            position: relative;
+            width: 100%;
+            padding: 120px 0 80px;
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 900;
+            line-height: 1.08;
+            font-size: clamp(2rem, 4.5vw, 3.5rem);
+        }
+
+        .brand-gradient {
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .lead-sub {
+            color: #d1d5db;
+            font-size: 1.1rem;
+        }
+
+        .btn-ghost {
+            background: rgba(14, 22, 43, .8);
+            border: 1px solid #283652;
+            color: #e5e7eb;
+        }
+
+        .btn-ghost:hover {
+            background: #1a2845;
+            color: #fff;
+        }
+    </style>
     @stack('styles')
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg app-navbar">
+    <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <a class="navbar-brand brand-gradient fw-bold" href="{{ url('/') }}">
-                {{ config('app.name') }}
-            </a>
-
+            <a class="navbar-brand" href="{{ route('home') }}">CYBERMEDIKS</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
             <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav ms-auto align-items-center gap-2">
+                <!-- left brand -->
+                <a class="navbar-brand me-auto" style="visibility:hidden" href="#">CYBERMEDIKS</a>
+
+                <!-- center links -->
+                <ul class="navbar-nav mx-auto gap-4">
+                    <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Home</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('online.store') ? 'active' : '' }}" href="{{ route('online.store') }}">
+                            <i class="fa-solid fa-cart me-1"></i> Store
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- right buttons -->
+
+                <ul class="navbar-nav ms-auto gap-3">
                     @auth
                         @php
                             $user = auth()->user();
@@ -97,11 +226,11 @@
                                 case 'labtech':
                                     $dashboardRoute = route('labtech.dashboard');
                                     break;
-                                
+
                                 case 'health':
                                     $dashboardRoute = route('health.dashboard');
                                     break;
-                                
+
                                 case 'transport':
                                     $dashboardRoute = route('transport.dashboard');
                                     break;
@@ -124,19 +253,15 @@
                         </li>
                     @endauth
                     @guest
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login.show') }}">
-                                <i class="fa-solid fa-right-to-bracket me-1"></i> Login
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-sm btn-gradient" href="{{ route('register.show') }}">
-                                <i class="fa-solid fa-user-plus me-1"></i> Register
-                            </a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="#"><i
+                                    class="fa-solid fa-cart-shopping"></i></a></li>
+                        <li class="nav-item"><a class="btn btn-sm btn-dark" href="{{ route('login.show') }}">Login</a></li>
+                        <li class="nav-item"><a class="btn btn-sm btn-success" href="{{ route('register.show') }}">Sign
+                                Up</a></li>
                     @endguest
                 </ul>
             </div>
+
         </div>
     </nav>
 

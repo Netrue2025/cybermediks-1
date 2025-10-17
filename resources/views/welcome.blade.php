@@ -145,7 +145,11 @@
                 <!-- center links -->
                 <ul class="navbar-nav mx-auto gap-4">
                     <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('patient.store') }}">Store</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('online.store') }}">
+                            <i class="fa-solid fa-cart me-1"></i> Store
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- right buttons -->

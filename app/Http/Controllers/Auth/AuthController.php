@@ -29,7 +29,7 @@ class AuthController extends Controller
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', 'in:doctor,pharmacy,dispatcher,patient,labtech,health,transport'],
+            'role' => ['required', 'string', 'in:hospital,pharmacy,dispatcher,patient,labtech,health,transport'],
             'country_id' => ['required', 'string', 'exists:countries,id'],
             'password' => ['required', 'confirmed', Password::min(6)],
         ]);

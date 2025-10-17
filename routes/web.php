@@ -33,6 +33,7 @@ use App\Http\Controllers\Doctor\DoctorWalletController;
 use App\Http\Controllers\Health\HealthDashboardController;
 use App\Http\Controllers\Labtech\LabtechDashboardController;
 use App\Http\Controllers\Labtech\LabtechLabworkController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\Patient\DoctorBrowseController;
 use App\Http\Controllers\Patient\PatientAppointmentController;
 use App\Http\Controllers\Patient\PatientDashboardController;
@@ -56,6 +57,8 @@ use App\Http\Controllers\WithdrawalRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+
+Route::get('/store',[PageController::class, 'onlineStore'] )->name('online.store');
 
 
 Route::get('/login',    [AuthController::class, 'showLogin'])->name('login.show');

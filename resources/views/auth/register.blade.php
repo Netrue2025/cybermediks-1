@@ -122,7 +122,7 @@
                                     <select name="role" class="form-select" required>
                                         <option value="" disabled selected>Select Role</option>
                                         <option value="patient">Patient</option>
-                                        <option value="doctor">Doctor</option>
+                                        <option value="hospital">Hospital</option>
                                         <option value="pharmacy">Pharmacy</option>
                                         <option value="dispatcher">Dispatch Rider</option>
                                         <option value="labtech">Laboratory Technician</option>
