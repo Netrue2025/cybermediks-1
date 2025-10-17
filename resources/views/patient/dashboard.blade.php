@@ -548,7 +548,7 @@
         <button class="btn btn-outline-light d-none" id="btnMore"><span class="btn-text">Load more</span></button>
     </div>
 
-    @if (!empty($acceptedAppt))
+    @if (!empty($acceptedAppt) && (($meet_remaining ?? 0) > 60))
         <!-- Accepted Appointment Modal -->
         <div class="modal fade" id="apAcceptedModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -581,7 +581,7 @@
                         <div id="meetingCountdownMeta" data-end-epoch="{{ (int) ($meet_end_epoch ?? 0) }}"
                             data-now-epoch="{{ (int) ($meet_now_epoch ?? 0) }}"></div>
 
-                        <small id="meetingCountdownDebug" class="text-muted d-block mt-1"></small>
+                        <small id="meetingCountdownDebug" class="text-muted d-block mt-1" style="display:none"></small>
 
 
 
