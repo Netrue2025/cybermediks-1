@@ -63,6 +63,15 @@ class DoctorDashboardController extends Controller
             ->where('status', 'active')
             ->latest()->take(6)->get();
 
+        if (request()->ajax()) {
+            $videoCallQueue = view('doctor.partials._video_call_queue', ['videoQueue' => $videoQueue, 'videoQueueCount' => $videoQueueCount])->render();
+            $pendingRequest = view('doctor.partials._pending_request', ['pendingConvs' => $pendingConvs, 'pendingRequestsCount' => $pendingRequestsCount])->render();
+            $activeRequest = view('doctor.partials._active_request', ['activeConvs' => $activeConvs, 'activeConsultationsCount' => $activeConsultationsCount])->render();
+
+
+            return response()->json(['videoCallQueue' => $videoCallQueue, 'pendingRequest' => $pendingRequest, 'activeRequest' => $activeRequest]);
+        }
+
         return view('doctor.dashboard', compact(
             'activeConsultationsCount',
             'pendingRequestsCount',

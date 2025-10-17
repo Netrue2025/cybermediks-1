@@ -287,28 +287,6 @@
 @section('content')
     {{-- METRICS --}}
     <div class="row g-3">
-        {{-- <div class="col-lg-4">
-            <div class="cardx">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="subtle">Pending Requests</div>
-                        <div class="metric">{{ $pendingRequestsCount }}</div>
-                    </div>
-                    <div class="pill"><i class="fa-solid fa-users fs-5" style="color:#efed86;"></i></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="cardx">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="subtle">Active Consultations</div>
-                        <div class="metric">{{ $activeConsultationsCount }}</div>
-                    </div>
-                    <div class="pill"><i class="fa-solid fa-comments fs-5" style="color:#86bcef;"></i></div>
-                </div>
-            </div>
-        </div> --}}
 
         <div class="col-lg-6">
             <div class="cardx" style="cursor: pointer;"
@@ -337,90 +315,12 @@
 
     </div>
 
-
-
     {{-- VIDEO CALL QUEUE --}}
-    <div class="cardx mt-3">
-        <div class="sec-head cursor-pointer" onclick="window.location.href='{{ route('doctor.queue') }}'">
-            <i class="fa-regular fa-folder-open"></i>
-            <span>Video Call Queue</span>
-            @isset($videoQueueCount)
-                <span class="badge bg-secondary ms-2">{{ $videoQueueCount }}</span>
-            @endisset
-        </div>
-
-
-
-        @if ($videoQueueCount > 0)
-            <div class="d-flex flex-column gap-2">
-                @foreach ($videoQueue as $appt)
-                    <div class="ps-row d-flex justify-content-between align-items-center">
-                        <div class="me-2">
-                            <div class="fw-semibold">
-                                {{ $appt->patient?->first_name }} {{ $appt->patient?->last_name }}
-                                <span class="badge bg-info ms-2">Video</span>
-                            </div>
-                            <div class="subtle small">Reason: {{ $appt->reason }}</div>
-                            <div class="subtle small">Scheduled at:
-                                {{ $appt->scheduled_at ? $appt->scheduled_at->format('M d, Y h:i A') : 'As soon as possible' }}
-                            </div>
-                            @if (!empty($appt->meeting_link))
-                                <div class="subtle small mt-1">
-                                    Meeting: <a class="link-light text-decoration-none" href="{{ $appt->meeting_link }}"
-                                        target="_blank">
-                                        Open link
-                                    </a>
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="d-flex flex-column align-items-end gap-2" style="min-width:260px;">
-                            @if ($appt->status === 'pending')
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-success btn-sm" data-accept-appt="{{ $appt->id }}">
-                                        <i class="fa-solid fa-check me-1"></i> Accept
-                                    </button>
-                                    <button class="btn btn-outline-light btn-sm" data-reject-appt="{{ $appt->id }}">
-                                        <i class="fa-solid fa-xmark me-1"></i> Reject
-                                    </button>
-                                </div>
-                            @elseif (in_array($appt->status, ['accepted', 'scheduled']))
-                                <button class="btn btn-outline-light btn-sm" data-reject-appt="{{ $appt->id }}">
-                                    <i class="fa-solid fa-xmark me-1"></i> Reject
-                                </button>
-
-                                @if (!$appt->prescription_issued)
-                                    <button class="btn btn-gradient" id="btnPrescription"
-                                        data-patientid="{{ $appt->patient?->id }}"
-                                        data-patientname="{{ $appt->patient?->first_name . ' ' . $appt->patient?->last_name }}"
-                                        data-appointmentid="{{ $appt->id }}">Add Prescription</button>
-                                @endif
-                                @if (!empty($appt->meeting_link))
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-success btn-sm" data-completed-appt="{{ $appt->id }}">
-                                            <i class="fa-solid fa-check me-1"></i> Mark Completed
-                                        </button>
-                                    </div>
-                                @endif
-
-
-
-                                <div class="subtle small">The patient will automatically see this link</div>
-                            @else
-                                <span class="subtle small text-uppercase">{{ ucfirst($appt->status) }}</span>
-                            @endif
-
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="empty">
-                <div class="ico"><i class="fa-solid fa-users"></i></div>
-                <div>No patients in the video call queue.</div>
-            </div>
-        @endif
-
+    <div class="cardx mt-3" id="videoCallQueue">
+        @include('doctor.partials._video_call_queue', [
+            'videoQueue' => $videoQueue,
+            'videoQueueCount' => $videoQueueCount,
+        ])
 
     </div>
 
@@ -457,8 +357,7 @@
                             </div>
                             <div class="col-lg-3">
                                 <label class="form-label">Refills</label>
-                                <input type="number" min="0" value="0" class="form-control"
-                                    name="refills">
+                                <input type="number" min="0" value="0" class="form-control" name="refills">
                             </div>
                         </div>
 
@@ -482,8 +381,7 @@
                                     </div>
                                     <div class="col-lg-2">
                                         <label class="form-label">Days</label>
-                                        <input class="form-control" type="number" name="items[0][days]"
-                                            placeholder="7">
+                                        <input class="form-control" type="number" name="items[0][days]" placeholder="7">
                                     </div>
                                     <div class="col-lg-2">
                                         <label class="form-label">Qty</label>
@@ -556,98 +454,14 @@
     <div class="row g-3 mt-1">
 
         {{-- Pending Patient Requests --}}
-        <div class="col-lg-6">
-            <div class="cardx h-100">
-                <div class="sec-head d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-user-group"></i> Pending Patient Requests</span>
-                    <a href="{{ route('doctor.patients', ['tab' => 'pending']) }}"
-                        class="text-decoration-none subtle small">
-                        View all <i class="fa-solid fa-arrow-right-long ms-1"></i>
-                    </a>
-                </div>
+        <div class="col-lg-6" id="pendingRequestSection">
+            @include('doctor.partials._pending_request', ['pendingConvs' => $pendingConvs, 'pendingRequestsCount' => $pendingRequestsCount])
 
-                @if ($pendingConvs->isEmpty())
-                    <a href="{{ route('doctor.patients', ['tab' => 'pending']) }}" class="sec-wrap link-card">
-                        <div class="empty">
-                            <div class="ico"><i class="fa-solid fa-user-group"></i></div>
-                            <div>No new patient requests</div>
-                        </div>
-                        <span class="stretched-link"></span>
-                    </a>
-                @else
-                    <div class="d-flex flex-column gap-2">
-                        @foreach ($pendingConvs as $c)
-                            <div class="ps-row d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-semibold">{{ $c->patient?->first_name }} {{ $c->patient?->last_name }}
-                                    </div>
-                                    <div class="subtle small">Requested {{ $c->created_at?->diffForHumans() }}</div>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-success btn-sm" data-accept="{{ $c->id }}">
-                                        <i class="fa-solid fa-check me-1"></i> Accept
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" data-reject="{{ $c->id }}">
-                                        <i class="fa-solid fa-xmark me-1"></i> Reject
-                                    </button>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        <a href="{{ route('doctor.patients', ['tab' => 'pending']) }}" class="btn btn-ghost w-100">
-                            See all pending ({{ $pendingRequestsCount }})
-                        </a>
-                    </div>
-                @endif
-            </div>
         </div>
 
         {{-- Active Consultations --}}
-        <div class="col-lg-6">
-            <div class="cardx h-100">
-                <div class="sec-head d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-check-double" style="color:#22c55e;"></i> Active Consultations</span>
-                    <a href="{{ route('doctor.messenger', ['filter' => 'active']) }}"
-                        class="text-decoration-none subtle small">
-                        View all <i class="fa-solid fa-arrow-right-long ms-1"></i>
-                    </a>
-                </div>
-
-                @if ($activeConvs->isEmpty())
-                    <a href="{{ route('doctor.messenger', ['filter' => 'active']) }}" class="sec-wrap link-card">
-                        <div class="empty">
-                            <div class="ico"><i class="fa-regular fa-message"></i></div>
-                            <div>No active consultations<br>
-                                <span class="subtle">Accept a patient request to begin.</span>
-                            </div>
-                        </div>
-                        <span class="stretched-link"></span>
-                    </a>
-                @else
-                    <div class="d-flex flex-column gap-2">
-                        @foreach ($activeConvs as $c)
-                            <div class="ps-row d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-semibold">{{ $c->patient?->first_name }} {{ $c->patient?->last_name }}
-                                    </div>
-                                    <div class="subtle small">Active since {{ $c->updated_at?->diffForHumans() }}</div>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <a href="{{ route('doctor.messenger', ['conversation' => $c->id, 'filter' => 'active']) }}"
-                                        class="btn btn-gradient btn-sm">Open Chat</a>
-                                    {{-- <button class="btn btn-outline-light btn-sm" data-close="{{ $c->id }}">
-                                        <i class="fa-solid fa-xmark me-1"></i> Close
-                                    </button> --}}
-                                </div>
-                            </div>
-                        @endforeach
-
-                        <a href="{{ route('doctor.messenger', ['filter' => 'active']) }}" class="btn btn-ghost w-100">
-                            See all active ({{ $activeConsultationsCount }})
-                        </a>
-                    </div>
-                @endif
-            </div>
+        <div class="col-lg-6" id="activeRequestSection">
+            @include('doctor.partials._active_request', ['activeConvs' => $activeConvs, 'activeConsultationsCount' => $activeConsultationsCount])
         </div>
 
     </div>
@@ -660,6 +474,30 @@
         (function() {
 
 
+            function autoLoader() {
+                const url = `{{ route('doctor.dashboard') }}`;
+
+                return $.get(url, ).done(function(res) {
+                    console.log(res);
+
+                    if (res.videoCallQueue) {
+                        $("#videoCallQueue").html(res.videoCallQueue);
+                    }
+
+                    if (res.pendingRequest) {
+                        $("#pendingRequestSection").html(res.pendingRequest);
+                    }
+
+                    if (res.activeRequest) {
+                        $("#activeRequestSection").html(res.activeRequest);
+                    }
+                });
+            }
+
+            setInterval(() => {
+                autoLoader()
+            }, 5000);
+
             // Accept (pending -> active)
             $(document).on('click', '[data-accept]', function() {
                 const id = $(this).data('accept');
@@ -671,7 +509,7 @@
                     })
                     .done(res => {
                         flash('success', res.message || 'Accepted');
-                        location.reload(); // simplest; or remove row & update counts dynamically
+                        autoLoader()
                     })
                     .fail(err => {
                         flash('danger', err.responseJSON?.message || 'Failed to accept');
@@ -690,7 +528,7 @@
                     })
                     .done(res => {
                         flash('success', res.message || 'Rejected');
-                        location.reload();
+                        autoLoader()
                     })
                     .fail(err => {
                         flash('danger', err.responseJSON?.message || 'Failed to reject');
@@ -709,7 +547,7 @@
                     })
                     .done(res => {
                         flash('success', res.message || 'Closed');
-                        location.reload();
+                        autoLoader()
                     })
                     .fail(err => {
                         flash('danger', err.responseJSON?.message || 'Failed to close');
@@ -727,7 +565,7 @@
                     })
                     .done(res => {
                         flash('success', res.message || 'Accepted');
-                        location.reload();
+                        autoLoader()
                     })
                     .fail(xhr => {
                         flash('danger', xhr.responseJSON?.message || 'Failed to accept');
@@ -747,8 +585,8 @@
                 const $btn = $(this);
 
                 //if (is_required === 0) {
-                 //   flash('danger', 'Prescription is required');
-                   // return;
+                //   flash('danger', 'Prescription is required');
+                // return;
                 //}
 
                 lockBtn($btn);
@@ -758,7 +596,7 @@
                     })
                     .done(res => {
                         flash('success', res.message || 'Accepted');
-                        location.reload();
+                        autoLoader();
                     })
                     .fail(xhr => {
                         flash('danger', xhr.responseJSON?.message || 'Failed to accept');
@@ -790,7 +628,7 @@
                     })
                     .done(res => {
                         flash('success', res.message || 'Rejected');
-                        location.reload();
+                        autoLoader();
                     })
                     .fail(xhr => {
                         flash('danger', xhr.responseJSON?.message || 'Failed to reject');
@@ -832,7 +670,7 @@
                     success: function(res) {
                         flash('success', res.message || 'Prescription issued');
                         if (res.redirect) {
-                            window.location.href = res.redirect;
+                            autoLoader()
                         } else {
                             // fallback: clear the form for another entry
                             $('#rxForm')[0].reset();
