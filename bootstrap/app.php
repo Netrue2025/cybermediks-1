@@ -13,15 +13,19 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
 
         $middleware->alias([
-            'patient' => \App\Http\Middleware\PatientMiddleware::class,
-            'doctor'  => \App\Http\Middleware\DoctorMiddleware::class,
-            'dispatcher' => \App\Http\Middleware\DispatcherMiddleware::class,
-            'pharmacy' => \App\Http\Middleware\PharmacyMiddleware::class,
-            'transport' => \App\Http\Middleware\TransportMiddleware::class,
-            'health' => \App\Http\Middleware\HealthMiddleware::class,
-            'labtech' => \App\Http\Middleware\LabTechMiddleware::class,
-            'admin'   => \App\Http\Middleware\AdminMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'mustVerify' => \App\Http\Middleware\MustVerify::class,
+            // 'patient' => \App\Http\Middleware\PatientMiddleware::class,
+            // 'doctor'  => \App\Http\Middleware\DoctorMiddleware::class,
+            // 'dispatcher' => \App\Http\Middleware\DispatcherMiddleware::class,
+            // 'pharmacy' => \App\Http\Middleware\PharmacyMiddleware::class,
+            // 'transport' => \App\Http\Middleware\TransportMiddleware::class,
+            // 'health' => \App\Http\Middleware\HealthMiddleware::class,
+            // 'labtech' => \App\Http\Middleware\LabTechMiddleware::class,
+            // 'admin'   => \App\Http\Middleware\AdminMiddleware::class,
         ]);
+
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

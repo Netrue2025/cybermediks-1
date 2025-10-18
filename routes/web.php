@@ -31,6 +31,7 @@ use App\Http\Controllers\Doctor\DoctorQueueController;
 use App\Http\Controllers\Doctor\DoctorScheduleController;
 use App\Http\Controllers\Doctor\DoctorWalletController;
 use App\Http\Controllers\Health\HealthDashboardController;
+use App\Http\Controllers\Hospital\HospitalDashboardController;
 use App\Http\Controllers\Labtech\LabtechDashboardController;
 use App\Http\Controllers\Labtech\LabtechLabworkController;
 use App\Http\Controllers\PageController;
@@ -58,7 +59,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
-Route::get('/store',[PageController::class, 'onlineStore'] )->name('online.store');
+Route::get('/store', [PageController::class, 'onlineStore'])->name('online.store');
 
 
 Route::get('/login',    [AuthController::class, 'showLogin'])->name('login.show');
@@ -87,7 +88,7 @@ Route::middleware('auth')->group(function () {
 
 // PATIENT ROUTES
 
-Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'patient'])->group(function () {
+Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'mustVerify', 'role:patient'])->group(function () {
 
     Route::get('/dashboard', [PatientDashboardController::class, 'index'])->name('dashboard');
     Route::get('/store', [PatientDashboardController::class, 'products'])->name('store');
@@ -152,7 +153,7 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'pat
 
 
 // DOCTOR ROUTES
-Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'doctor'])->group(function () {
+Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'mustVerify', 'role:doctor'])->group(function () {
     Route::get('/dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
 
 
@@ -216,7 +217,7 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'docto
 
 // PHARMACY ROUTES
 
-Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'pharmacy'])->group(function () {
+Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'mustVerify', 'role:pharmacy'])->group(function () {
 
     Route::get('/dashboard', [PharmacyDashboardController::class, 'index'])->name('dashboard');
 
@@ -271,7 +272,7 @@ Route::prefix('pharmacy')->name('pharmacy.')->middleware(['auth', 'verified', 'p
 
 // DISPATCHER ROUTES
 
-Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified', 'dispatcher'])->group(function () {
+Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified', 'mustVerify', 'role:dispatcher'])->group(function () {
 
     Route::get('/dashboard', [DispatcherDashboardController::class, 'index'])->name('dashboard');
 
@@ -299,7 +300,7 @@ Route::prefix('dispatcher')->name('dispatcher.')->middleware(['auth', 'verified'
 
 // ADMIN ROUTES
 
-Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'mustVerify', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
@@ -357,7 +358,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
 // HEALTH ROUTES
 
-Route::middleware(['auth', 'verified', 'health'])->prefix('health')->name('health.')->group(function () {
+Route::middleware(['auth', 'verified', 'mustVerify', 'role:health'])->prefix('health')->name('health.')->group(function () {
     Route::get('/', [HealthDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/doctors', [HealthDashboardController::class, 'doctorIndex'])->name('doctors.index');
@@ -373,7 +374,7 @@ Route::middleware(['auth', 'verified', 'health'])->prefix('health')->name('healt
 
 // TRANSPORT ROUTES
 
-Route::middleware(['auth', 'verified', 'transport'])->prefix('transport')->name('transport.')->group(function () {
+Route::middleware(['auth', 'verified', 'mustVerify', 'role:transport'])->prefix('transport')->name('transport.')->group(function () {
     Route::get('/', [TransportDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/pharmacies', [TransportDashboardController::class, 'pharmacyIndex'])->name('pharmacies.index');
@@ -389,7 +390,7 @@ Route::middleware(['auth', 'verified', 'transport'])->prefix('transport')->name(
 
 // LABTECH ROUTES
 
-Route::prefix('labtech')->name('labtech.')->middleware(['auth', 'verified', 'labtech'])->group(function () {
+Route::prefix('labtech')->name('labtech.')->middleware(['auth', 'verified', 'mustVerify', 'role:labtech'])->group(function () {
 
     Route::get('/dashboard', [LabtechDashboardController::class, 'index'])->name('dashboard');
 
@@ -419,4 +420,18 @@ Route::prefix('labtech')->name('labtech.')->middleware(['auth', 'verified', 'lab
     Route::get('/profile', [LabtechDashboardController::class, 'showProfile'])->name('profile');
     Route::post('/profile', [LabtechDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/password', [LabtechDashboardController::class, 'updatePassword'])->name('profile.password');
+});
+
+// HEALTH ROUTES
+
+Route::middleware(['auth', 'verified', 'mustVerify', 'role:hospital'])->prefix('hospital')->name('hospital.')->group(function () {
+    Route::get('/', [HospitalDashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/doctors', [HospitalDashboardController::class, 'doctorIndex'])->name('doctors.index');
+    Route::post('/doctors/create', [HospitalDashboardController::class, 'register'])->name('doctors.create');
+    Route::get('/doctors/{doctor}/credentials', [HospitalDashboardController::class, 'credentials'])->name('doctors.credentials');
+
+    Route::get('/profile', [HospitalDashboardController::class, 'showProfile'])->name('profile');
+    Route::post('/profile', [HospitalDashboardController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/password', [HospitalDashboardController::class, 'updatePassword'])->name('profile.password');
 });

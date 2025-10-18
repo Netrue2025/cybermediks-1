@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -24,6 +26,7 @@ class User extends Authenticatable
         'country_id',
         'password',
         'role',
+        'hospital_id',
         'lat',
         'lng',
         'phone',
@@ -157,6 +160,11 @@ class User extends Authenticatable
     public function scopeDoctors($q)
     {
         return $q->where('role', 'doctor');
+    }
+
+    public function scopeHospitals($q)
+    {
+        return $q->where('role', 'hospital');
     }
 
     public function scopePharmacies($q)

@@ -85,6 +85,13 @@ class AuthController extends Controller
                 default:
                     $redirect = 'patient.dashboard';
             }
+            if (!auth()->user()->email_verified_at) {
+                (new VerificationController())->sendVerifyCode();
+                return response()->json([
+                    'ok' => true,
+                    'redirect' => route('verify.show')
+                ]);
+            }
             return response()->json([
                 'ok' => true,
                 'redirect' => route($redirect)

@@ -25,4 +25,9 @@ class DoctorCredential extends Model
     {
         return $q->whereHas('doctor', fn($u) => $u->where('country_id', $countryId));
     }
+
+    public function scopeWhereDoctorHospital($q, $hospitalId)
+    {
+        return $q->whereHas('doctor', fn($u) => $u->where('hospital_id', $hospitalId));
+    }
 }
