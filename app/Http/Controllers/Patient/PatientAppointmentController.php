@@ -50,7 +50,7 @@ class PatientAppointmentController extends Controller
             'payment_status' => 'unpaid',
             'reason'        => $data['reason'] ?? null,
         ]);
-        $redirect = route('patient.appointments.index');
+        $redirect = route('patient.dashboard');
 
         if ($data['type'] === 'chat') {
             // check if there is a previous convo with the doctor
@@ -66,7 +66,8 @@ class PatientAppointmentController extends Controller
             } else {
                 $conversation->update(['status' => 'pending', 'appointment_id' => $appt->id]);
             }
-            $redirect = route('patient.messages') . '?c=' . $conversation->id;
+            // $redirect = route('patient.messages') . '?c=' . $conversation->id;
+            $redirect = route('patient.dashboard');
         }
 
         return response()->json([
