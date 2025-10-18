@@ -455,13 +455,19 @@
 
         {{-- Pending Patient Requests --}}
         <div class="col-lg-6" id="pendingRequestSection">
-            @include('doctor.partials._pending_request', ['pendingConvs' => $pendingConvs, 'pendingRequestsCount' => $pendingRequestsCount])
+            @include('doctor.partials._pending_request', [
+                'pendingConvs' => $pendingConvs,
+                'pendingRequestsCount' => $pendingRequestsCount,
+            ])
 
         </div>
 
         {{-- Active Consultations --}}
         <div class="col-lg-6" id="activeRequestSection">
-            @include('doctor.partials._active_request', ['activeConvs' => $activeConvs, 'activeConsultationsCount' => $activeConsultationsCount])
+            @include('doctor.partials._active_request', [
+                'activeConvs' => $activeConvs,
+                'activeConsultationsCount' => $activeConsultationsCount,
+            ])
         </div>
 
     </div>
@@ -474,25 +480,21 @@
         (function() {
 
 
+            function replaceIfChanged($container, html) {
+                if ($container.length && $container.html().trim() !== String(html).trim()) {
+                    $container.html(html);
+                }
+            }
+
             function autoLoader() {
                 const url = `{{ route('doctor.dashboard') }}`;
-
-                return $.get(url, ).done(function(res) {
-                    console.log(res);
-
-                    if (res.videoCallQueue) {
-                        $("#videoCallQueue").html(res.videoCallQueue);
-                    }
-
-                    if (res.pendingRequest) {
-                        $("#pendingRequestSection").html(res.pendingRequest);
-                    }
-
-                    if (res.activeRequest) {
-                        $("#activeRequestSection").html(res.activeRequest);
-                    }
+                return $.get(url).done(function(res) {
+                    if (res.videoCallQueue) replaceIfChanged($('#videoCallQueue'), res.videoCallQueue);
+                    if (res.pendingRequest) replaceIfChanged($('#pendingRequestSection'), res.pendingRequest);
+                    if (res.activeRequest) replaceIfChanged($('#activeRequestSection'), res.activeRequest);
                 });
             }
+
 
             setInterval(() => {
                 autoLoader()
@@ -573,9 +575,10 @@
                     .always(() => unlockBtn($btn));
             });
 
+
             $("#newPrescription").on('click', function() {
                 $("#closeModalBtn").trigger('click');
-                $("#btnPrescription").trigger('click');
+                $(".btnPrescription").trigger('click');
             })
 
             // mark completed
@@ -691,16 +694,44 @@
                 });
             });
 
-            $('#btnPrescription').on('click', function() {
-                let appointmentId = $(this).data('appointmentid');
-                let patientId = $(this).data('patientid');
-                let patientName = $(this).data('patientname');
-                let patientDetails = patientName + ' (ID: ' + patientId + ')';
-                $("#patientId").val(patientId)
-                $("#appointmentId").val(appointmentId)
-                $("#patientDetails").text(patientDetails);
-                new bootstrap.Modal(document.getElementById('prescriptionModal')).show();
+            $(document).off('click', '.btnPrescription').on('click', '.btnPrescription', function(e) {
+                e.preventDefault();
+
+                const $btn = $(this);
+                const appointmentId = $btn.data('appointmentId') ?? $btn.data('appointmentid');
+                const patientId = $btn.data('patientId') ?? $btn.data('patientid');
+                const patientName = $btn.data('patientName') ?? $btn.data('patientname');
+
+                $('#patientId').val(patientId);
+                $('#appointmentId').val(appointmentId);
+                $('#patientDetails').text(`${patientName} (ID: ${patientId})`);
+
+                const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('prescriptionModal'));
+                modal.show();
             });
+
+            let pollId = setInterval(autoLoader, 5000);
+
+            function pausePolling() {
+                if (pollId) {
+                    clearInterval(pollId);
+                    pollId = null;
+                }
+            }
+
+            function resumePolling() {
+                if (!pollId) {
+                    pollId = setInterval(autoLoader, 5000);
+                }
+            }
+
+            // Pause on any modal show; resume when last modal closes
+            document.addEventListener('show.bs.modal', pausePolling);
+            document.addEventListener('hidden.bs.modal', function() {
+                // Only resume if no modals are visible
+                if ($('.modal.show').length === 0) resumePolling();
+            });
+
 
         })();
     </script>

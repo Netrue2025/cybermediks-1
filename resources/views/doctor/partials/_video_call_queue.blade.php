@@ -48,7 +48,7 @@
                         </button>
 
                         @if (!$appt->prescription_issued)
-                            <button class="btn btn-gradient" id="btnPrescription"
+                            <button class="btn btn-gradient btnPrescription"
                                 data-patientid="{{ $appt->patient?->id }}"
                                 data-patientname="{{ $appt->patient?->first_name . ' ' . $appt->patient?->last_name }}"
                                 data-appointmentid="{{ $appt->id }}">Add Prescription</button>
