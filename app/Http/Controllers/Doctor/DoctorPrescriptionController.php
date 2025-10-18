@@ -30,7 +30,7 @@ class DoctorPrescriptionController extends Controller
     {
         $data = $request->validate([
             'patient_id'         => ['required', 'integer', 'exists:users,id'],
-            'appointment_id'     => ['required', 'integer', 'exists:appointments,id'],
+            'appointment_id'     => ['nullable', 'integer', 'exists:appointments,id'],
             'encounter'          => ['required', Rule::in(['video', 'chat', 'in_person'])],
             'refills'            => ['nullable', 'integer', 'min:0'],
             'notes'              => ['nullable', 'string', 'max:255'],
@@ -45,33 +45,34 @@ class DoctorPrescriptionController extends Controller
 
         $doctorId = Auth::id();
 
-        $appointment = Appointment::where('doctor_id', $doctorId)->where('patient_id', $data['patient_id'])->where('id', $data['appointment_id'])->first();
+        if (!$request->has('appointment_id')) {
+            $appointment = Appointment::where('doctor_id', $doctorId)->where('patient_id', $data['patient_id'])->orderByDesc('updated_at')->first();
+        } else {
+            $appointment = Appointment::where('doctor_id', $doctorId)->where('patient_id', $data['patient_id'])->where('id', $data['appointment_id'])->first();
+        }
 
-        if (!$appointment)
-        {
+
+
+        if (!$appointment) {
             return response()->json(['message' => 'You cannont add a prescription for this appointment'], 422);
         }
-        
 
-        if ($appointment->type === 'chat')
-        {
+
+        if ($appointment->type === 'chat') {
             // check if conversation has been closed
             $convo = Conversation::where('appointment_id', $appointment->id)->where('doctor_id', $doctorId)->where('patient_id', $data['patient_id'])->first();
-            if (!$convo)
-            {
+            if (!$convo) {
                 return response()->json(['message' => 'You cannont add a prescription for this appointment, no conversation found'], 422);
             }
 
-            if ($convo->status === 'closed')
-            {
+            if ($convo->status === 'closed') {
                 return response()->json(['message' => 'You cannont add a prescription for this conversation, it has been closed already.'], 422);
             }
-
         }
 
         // Create parent prescription
         $rx = Prescription::create([
-            'appointment_id' => $data['appointment_id'],  // or pass one if creating from appointment
+            'appointment_id' => $appointment->id,  // or pass one if creating from appointment
             'patient_id'     => $data['patient_id'],
             'doctor_id'      => $doctorId,
             'code'           => 'RX-' . now()->format('Y') . '-' . str_pad((string) (Prescription::max('id') + 1), 6, '0', STR_PAD_LEFT),
