@@ -461,43 +461,56 @@
         <div class="section-title">
             <i class="fa-solid fa-magnifying-glass"></i>
             <h5 class="m-0">Find Doctors</h5>
-        </div>
-        <div class="section-subtle">Search and start a consultation with available doctors</div>
 
-        <div class="row g-2 align-items-center">
-            <div class="col-lg-8">
-                <div class="search-wrap">
-                    <i class="fa-solid fa-magnifying-glass icon"></i>
-                    <input class="form-control" placeholder="Search doctors by name or title..." id="doctorSearch">
-                </div>
-            </div>
-            <div class="col-lg-2">
-                <select class="form-select" id="specialtySelect">
-                    <option value="">All Specialties</option>
-                    @foreach ($specialties as $s)
-                        <option value="{{ $s->id }}">{{ $s->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-lg-2 d-flex align-items-center justify-content-lg-end mt-2 mt-lg-0">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="onlyAvailable">
-                </div>
-                <label class="switch-label" for="onlyAvailable">Show available only</label>
-            </div>
         </div>
+        <button class="btn btn-sm btn-gradient" style="float: right !important;" type="button"
+            data-bs-toggle="collapse" data-bs-target="#doctorsSection" aria-expanded="true"
+            aria-controls="doctorsSection">
+            Collapse &UpArrow;
+        </button>
 
-        {{-- Specialties (chips) --}}
-        <div class="spec-grid mt-3" id="specGrid">
-            <div class="spec-tile active" data-spec="">
-                <i class="fa-regular fa-circle icon" style="color:#9aa3b2;"></i><span>All</span>
-            </div>
-            @foreach ($specialties as $s)
-                <div class="spec-tile" data-spec="{{ $s->id }}">
-                    <i class="fa-solid {{ $s->icon }} icon"
-                        style="color:{{ $s->color }};"></i><span>{{ $s->name }}</span>
+        <div class="collapse show" id="doctorsSection">
+            <div class="section-subtle">Search and start a consultation with available doctors </div>
+
+
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-8">
+                    <div class="search-wrap">
+                        <i class="fa-solid fa-magnifying-glass icon"></i>
+                        <input class="form-control" placeholder="Search doctors by name or title..." id="doctorSearch">
+                    </div>
+
                 </div>
-            @endforeach
+                <div class="col-lg-2">
+                    <select class="form-select" id="specialtySelect">
+                        <option value="">All Specialties</option>
+                        @foreach ($specialties as $s)
+                            <option value="{{ $s->id }}">{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-lg-2 d-flex align-items-center justify-content-lg-end mt-2 mt-lg-0">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="onlyAvailable">
+                    </div>
+                    <label class="switch-label" for="onlyAvailable">Show available only</label>
+                </div>
+            </div>
+
+            {{-- Specialties (chips) --}}
+            <div class="spec-grid mt-3" id="specGrid">
+                <div class="spec-tile active" data-spec="">
+                    <i class="fa-regular fa-circle icon" style="color:#9aa3b2;"></i><span>All</span>
+                </div>
+                @foreach ($specialties as $s)
+                    <div class="spec-tile" data-spec="{{ $s->id }}">
+                        <i class="fa-solid {{ $s->icon }} icon"
+                            style="color:{{ $s->color }};"></i><span>{{ $s->name }}</span>
+                    </div>
+                @endforeach
+            </div>
+
+
         </div>
     </div>
 
