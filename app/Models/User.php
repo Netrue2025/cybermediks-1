@@ -69,6 +69,13 @@ class User extends Authenticatable
     {
         return $this->hasOne(DoctorProfile::class, 'doctor_id');
     }
+
+    public function doctorHospital()
+    {
+        return $this->belongsTo(User::class, 'hospital_id', 'id');
+    }
+
+
     public function specialties()
     {
         return $this->belongsToMany(Specialty::class, 'doctor_specialty', 'doctor_id');
@@ -171,4 +178,5 @@ class User extends Authenticatable
     {
         return $q->where('role', 'pharmacy');
     }
+
 };

@@ -46,7 +46,6 @@ class PatientDashboardController extends Controller
 
         $remaining = $endEpoch ? max(0, $endEpoch - $nowEpoch) : 0;
 
-        // dd($timer);
         // Active prescriptions
         $activeRxCount = Prescription::where('patient_id', $userId)
             ->where('status', 'active')->count();

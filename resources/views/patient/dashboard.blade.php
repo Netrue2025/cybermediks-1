@@ -548,7 +548,7 @@
         <button class="btn btn-outline-light d-none" id="btnMore"><span class="btn-text">Load more</span></button>
     </div>
 
-    @if (!empty($acceptedAppt) && (($meet_remaining ?? 0) > 60))
+    @if (!empty($acceptedAppt) && ($meet_remaining ?? 0) > 60)
         <!-- Accepted Appointment Modal -->
         <div class="modal fade" id="apAcceptedModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -748,10 +748,16 @@
             <div class="avatar-sm">${d.initials}</div>
             <div class="flex-grow-1">
                 <div class="fw-semibold">${d.first_name} ${d.last_name}</div>
+                <span class="chip text-success">
+                    <span class="me-1" style="display:inline-block;width:8px;height:8px;background:${dot};border-radius:50%;"></span>
+                <b>Hospital : ${d.hospital ?? 'Not Under any hospital'}</b>
+                </span>
+                
                 <span class="chip">
                 <span class="me-1" style="display:inline-block;width:8px;height:8px;background:${dot};border-radius:50%;"></span>
                 ${d.available ? 'Online' : 'Offline'}
                 </span>
+                
                 ${specs ? `<span class="chip ms-2">${specs}</span>` : ''}
                 <div class="mt-2">${next}</div>
                 <div class="mt-2">Charges: $${d.charges}</div>
