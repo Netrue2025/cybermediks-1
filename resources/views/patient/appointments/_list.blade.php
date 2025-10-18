@@ -45,7 +45,7 @@
 
                         {{-- Meeting link (video only) --}}
                         @if ($a->type === 'video' && $meeting && $a->status == 'accepted')
-                            <a class="btn btn-outline-light btn-sm" href="{{ $meeting }}" target="_blank"
+                            <a class="btn btn-outline-light btn-sm" href="{{ route('patient.dashboard') }}"
                                 rel="noopener">
                                 <i class="fa-solid fa-video me-1"></i> Open Meeting
                             </a>
