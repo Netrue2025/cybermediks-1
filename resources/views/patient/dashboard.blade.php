@@ -359,7 +359,13 @@
 
     <div class="collapse show" id="rxListCollapse">
         <div id="rxList">
-            @include('patient.prescriptions._list', ['prescriptions' => $prescriptions])
+            @include('patient.prescriptions._list', [
+                'prescriptions' => $prescriptions,
+                'acceptedAppt' => $acceptedAppt,
+                'meet_remaining' => $meet_remaining,
+                'meet_end_epoch' => $meet_end_epoch,
+                'meet_now_epoch' => $meet_now_epoch,
+            ])
         </div>
     </div>
 
@@ -561,82 +567,7 @@
         <button class="btn btn-outline-light d-none" id="btnMore"><span class="btn-text">Load more</span></button>
     </div>
 
-    @if (!empty($acceptedAppt) && ($meet_remaining ?? 0) > 60)
-        <!-- Accepted Appointment Modal -->
-        <div class="modal fade" id="apAcceptedModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content" style="background:#121a2c;border:1px solid var(--border);border-radius:18px;">
-                    <div class="modal-header border-0">
-                        <h5 class="modal-title">
-                            <i class="fa-solid fa-video me-2"></i>Appointment Accepted
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
 
-                    <div class="modal-body">
-                        <div class="mb-2">
-                            <div class="subtle small">Doctor</div>
-                            <div id="apModalDoctor" class="fw-semibold">
-                                {{ $acceptedAppt->doctor?->full_name ?? ($acceptedAppt->doctor?->name ?? '—') }}
-                            </div>
-                        </div>
-
-                        <div class="mb-2">
-                            <div class="subtle small">Scheduled time</div>
-                            <div id="apModalWhen" class="fw-semibold">
-                                {{ optional($acceptedAppt->scheduled_at)->format('M d, Y · g:ia') ?? '—' }}
-                            </div>
-                        </div>
-                        <h3 class="mb-2">
-                            Time left: <span id="meetingCountdown">--:--</span>
-                        </h3>
-
-                        <div id="meetingCountdownMeta" data-end-epoch="{{ (int) ($meet_end_epoch ?? 0) }}"
-                            data-now-epoch="{{ (int) ($meet_now_epoch ?? 0) }}"></div>
-
-
-
-
-
-
-
-
-
-
-                        {{-- <div class="mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <input id="apModalLink" class="form-control" readonly
-                                    value="{{ $acceptedAppt->meeting_link }}" style="visibility: hidden">
-                                <button class="btn btn-ghost" id="apCopyLink">
-                                    <i class="fa-regular fa-copy me-1"></i> Copy
-                                </button>
-                                <a class="btn btn-gradient" id="apOpenLink" target="_blank" rel="noopener"
-                                    href="{{ $acceptedAppt->meeting_link }}">
-                                    <i class="fa-solid fa-up-right-from-square me-1"></i> Open
-                                </a>
-                            </div>
-                            <div class="small mt-1" id="apCopyNote" style="display:none;">Copied!</div>
-                        </div> --}}
-
-                        <div class="alert alert-info mt-3 mb-0 small"
-                            style="background:#0f1a2e;border:1px solid var(--border);color:#cfe0ff;">
-                            Make sure you’re ready a few minutes early. Test your mic/camera before joining.
-                        </div>
-                    </div>
-
-                    <div class="modal-footer border-0">
-                        <a id="apJoinNow" href="{{ $acceptedAppt->meeting_link }}" target="_blank" rel="noopener"
-                            class="btn btn-gradient">
-                            <i class="fa-solid fa-video me-1"></i> Join meeting
-                        </a>
-                        <button style="display: none" id="closeModal" data-bs-dismiss="modal"></button>
-                        <button class="btn btn-outline-light" id="endAppointment"
-                            data-apt-id="{{ $acceptedAppt->id }}">End Appointment</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
 
 
 @endsection
@@ -696,7 +627,6 @@
                     }
 
                     // actions
-                    // forward currently picked date if present
                     const pickedDate = (typeof $ !== 'undefined' && $('#doctorDate').length) ? ($('#doctorDate')
                         .val() || '') : '';
                     const bookUrl = pickedDate ?
@@ -725,7 +655,6 @@
         // expose globally if you want to call from inline onclick
         window.openDoctorModal = openDoctorModal;
 
-
         // --- Simple debounce without lodash
         function debounce(fn, wait) {
             let t;
@@ -745,9 +674,7 @@
             const dot = d.available ? '#22c55e' : '#64748b';
             const specs = (d.specialties || []).join(', ');
             const next = d.next_slot_human ?
-                `<span class="badge" style="border:1px solid var(--border); background:transparent; color:#cfe0ff;">
-                    Next: ${d.next_slot_human}
-                </span>` :
+                `<span class="badge" style="border:1px solid var(--border); background:transparent; color:#cfe0ff;">Next: ${d.next_slot_human}</span>` :
                 `<span class="text-secondary small">No upcoming slots</span>`;
 
             const bookDisabledClass = d.has_availability ? '' : 'disabled';
@@ -757,20 +684,18 @@
                 d.appointment_url;
 
             return `
-            <div class="doctor-row" data-doc-id="${d.id}">
+        <div class="doctor-row" data-doc-id="${d.id}">
             <div class="avatar-sm">${d.initials}</div>
             <div class="flex-grow-1">
                 <div class="fw-semibold">${d.first_name} ${d.last_name}</div>
                 <span class="chip text-success">
                     <span class="me-1" style="display:inline-block;width:8px;height:8px;background:${dot};border-radius:50%;"></span>
-                <b>Hospital : ${d.hospital ?? 'Not Under any hospital'}</b>
+                    <b>Hospital : ${d.hospital ?? 'Not Under any hospital'}</b>
                 </span>
-                
                 <span class="chip">
-                <span class="me-1" style="display:inline-block;width:8px;height:8px;background:${dot};border-radius:50%;"></span>
-                ${d.available ? 'Online' : 'Offline'}
+                    <span class="me-1" style="display:inline-block;width:8px;height:8px;background:${dot};border-radius:50%;"></span>
+                    ${d.available ? 'Online' : 'Offline'}
                 </span>
-                
                 ${specs ? `<span class="chip ms-2">${specs}</span>` : ''}
                 <div class="mt-2">${next}</div>
                 <div class="mt-2">Charges: $${d.charges}</div>
@@ -778,16 +703,14 @@
             </div>
             <div class="d-flex gap-2">
                 <button class="btn btn-gradient" data-doc-view="${d.id}">
-                <i class="fa-regular fa-eye me-1"></i> View
+                    <i class="fa-regular fa-eye me-1"></i> View
                 </button>
                 <a href="${appointmentUrl}" class="btn btn-success ${bookDisabledClass}">
-                <i class="fa-solid fa-file me-1"></i> Book Appointment
+                    <i class="fa-solid fa-file me-1"></i> Book Appointment
                 </a>
             </div>
-            </div>`;
+        </div>`;
         }
-
-
 
         function renderDoctors(res, replace = true) {
             nextUrl = res.next_page_url;
@@ -804,7 +727,7 @@
             const q = $('#doctorSearch').val() || '';
             const specialty_id = $('#specialtySelect').val() || ($('#specGrid .spec-tile.active').data('spec') || '');
             const available = $('#onlyAvailable').is(':checked') ? 1 : 0;
-            const date = $('#doctorDate').val() || ''; // NEW
+            const date = $('#doctorDate').val() || '';
 
             $.get(`{{ route('patient.doctors.index') }}`, {
                     q,
@@ -816,7 +739,6 @@
                 .fail(() => flash('danger', 'Failed to load doctors'));
         }
 
-
         // Events
         $('#doctorSearch').on('input', debounce(() => fetchDoctors(true), 300));
         $('#specialtySelect').on('change', () => fetchDoctors(true));
@@ -825,7 +747,6 @@
         $(document).on('click', '#specGrid .spec-tile', function() {
             $('#specGrid .spec-tile').removeClass('active');
             $(this).addClass('active');
-            // sync dropdown with chip (and clear dropdown when "All")
             const id = $(this).data('spec') || '';
             $('#specialtySelect').val(id);
             fetchDoctors(true);
@@ -856,9 +777,7 @@
             }
         @endif
 
-        // Auto-open if modal exists on the page
-        const modalEl = document.getElementById('apAcceptedModal');
-        if (modalEl) new bootstrap.Modal(modalEl).show();
+        // (REMOVED the old "auto-open if modal exists" here – handled in Rx block after AJAX)
 
         // Copy link
         const copyBtn = document.getElementById('apCopyLink');
@@ -874,22 +793,46 @@
                 });
             });
         }
+    </script>
 
-        $("#endAppointment").on('click', function() {
-            const $btn = $("#endAppointment");
-            const id = $("#endAppointment").data('apt-id')
-            lockBtn($btn);
+    <script>
+        // Remove any old direct bindings to avoid duplicates
+        $(document).off('click', '#endAppointment');
 
-            $.post(`{{ url('patient/appointments/close') }}/${id}`)
-                .done(res => {
-                    flash('success', res.message || 'Appointment closed');
-                    $("#closeModal").trigger('click');
+        // Delegated handler: works even when the button is injected via AJAX
+        $(document).on('click', '#endAppointment', function() {
+            const $btn = $(this);
+            const id = $btn.data('apt-id');
+            if (!id) return;
+
+            if (typeof lockBtn === 'function') lockBtn($btn);
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                '{{ csrf_token() }}';
+
+            $.post(`{{ url('patient/appointments/close') }}/${id}`, {
+                    _token: token
                 })
-                .fail(xhr => flash('danger', xhr.responseJSON?.message || 'Failed to send'))
-                .always(() => unlockBtn($btn));
+                .done(res => {
+                    if (typeof flash === 'function') flash('success', res.message || 'Appointment closed');
+                    const modalEl = document.getElementById('apAcceptedModal');
+                    if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                    try {
+                        typeof fetchList === 'function' && fetchList();
+                    } catch (_) {}
+                })
+                .fail(xhr => {
+                    const msg = xhr?.responseJSON?.message || 'Failed to close appointment';
+                    if (typeof flash === 'function') flash('danger', msg);
+                })
+                .always(() => {
+                    if (typeof unlockBtn === 'function') unlockBtn($btn);
+                });
         });
     </script>
 @endpush
+
+
 
 @push('scripts')
     <script>
@@ -901,16 +844,78 @@
             const $btnRefresh = $('#btnRxRefresh');
             const $spin = $('#rxRefreshSpin');
 
+            // === SMART REFRESH STATE ===
+            let lastRxEtag = null; // for HTTP 304
+            let lastRxSig = null; // for DOM hash fallback
+
+            // === MODAL STATE ===
+            let rxModalOpen = false; // whether the Accepted modal is currently open
+            let lastShownApptId = null; // remember which appointment we already auto-opened
+
+            // Tiny fast hash (djb2 variant)
+            function djb2Hash(str) {
+                let hash = 5381,
+                    i = str.length;
+                while (i) hash = ((hash << 5) + hash) ^ str.charCodeAt(--i);
+                return (hash >>> 0).toString(36);
+            }
+
+            function getCurrentModalApptId() {
+                const endBtn = document.querySelector('#apAcceptedModal #endAppointment');
+                const id = endBtn ? Number(endBtn.getAttribute('data-apt-id')) : null;
+                return Number.isFinite(id) ? id : null;
+            }
+
+            function maybeAutoOpenModal() {
+                const modalEl = document.getElementById('apAcceptedModal');
+                if (!modalEl || rxModalOpen) return;
+                const apptId = getCurrentModalApptId();
+                if (apptId && apptId !== lastShownApptId) {
+                    const bs = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    bs.show();
+                    // lastShownApptId will be set in shown handler for consistency
+                }
+            }
+
+            // Only render when HTML differs. Also, never replace DOM while modal is open.
+            function renderIfChanged(html) {
+                if (rxModalOpen) return false;
+                const incomingSig = djb2Hash(html);
+                if (incomingSig === lastRxSig) return false;
+                lastRxSig = incomingSig;
+                $list.html(html);
+
+                // After fresh HTML lands, if a modal exists, auto-open it (once per appt)
+                maybeAutoOpenModal();
+                return true;
+            }
+
+            // --- FETCH + REFRESH with ETag support ---
             function fetchList(pageUrl = null) {
                 const q = $('#rxSearch').val() || '';
                 const status = $('#rxStatus').val() || '';
-                const url = pageUrl || `{{ route('patient.prescriptions.index') }}`;
+                const base = pageUrl || `{{ route('patient.prescriptions.index') }}`;
+                const url = base + (base.includes('?') ? '&' : '?') + 'from=dashboard';
 
-                return $.get(url + '?from=dashboard', {
-                    q,
-                    status
-                }).done(function(html) {
-                    $list.html(html);
+                return $.ajax({
+                    url,
+                    method: 'GET',
+                    data: {
+                        q,
+                        status
+                    },
+                    headers: lastRxEtag ? {
+                        'If-None-Match': lastRxEtag
+                    } : {},
+                    success: function(html, _textStatus, jqXHR) {
+                        const etag = jqXHR.getResponseHeader('ETag');
+                        if (etag) lastRxEtag = etag;
+                        if (html) renderIfChanged(html);
+                    },
+                    statusCode: {
+                        304: function() {
+                            /* Not Modified — no DOM changes */ }
+                    }
                 });
             }
 
@@ -920,20 +925,37 @@
                 return fetchList(pageUrl).always(function() {
                     $btnRefresh.prop('disabled', false);
                     $spin.addClass('d-none');
+
+                    // Safety after every refresh: if a modal exists but isn't shown yet, open it
+                    maybeAutoOpenModal();
+
+                    // If no modal is visible but a backdrop remains, clean it
+                    if (!$('.modal.show').length && $('.modal-backdrop').length) {
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open').css('padding-right', '');
+                    }
                 });
             }
 
+            // Seed initial signature to avoid first-poll thrash; also auto-open on initial page load if present
+            (function seedInitialSig() {
+                lastRxSig = djb2Hash($list.html() || '');
+                // Initial check for a server-rendered modal at first page render:
+                maybeAutoOpenModal();
+            })();
+
+            // Search + filters (fixed: no immediate invocation)
             $('#rxSearch').on('input', function() {
                 clearTimeout(t);
                 t = setTimeout(() => refreshRxList(), 300);
             });
-            $('#rxStatus').on('change', refreshRxList());
+            $('#rxStatus').on('change', refreshRxList);
 
             $btnRefresh.on('click', function() {
                 refreshRxList();
             });
 
-            // NEW: AJAX pagination inside #rxList
+            // AJAX pagination inside #rxList (preserves smart refresh + ETag)
             $(document).on('click', '#rxList .pagination a', function(e) {
                 e.preventDefault();
                 const url = this.href;
@@ -941,10 +963,9 @@
                 refreshRxList(url);
             });
 
-
-            // View: read JSON payload embedded in row
+            // ====== View modal (unchanged) ======
             $(document).on('click', '[data-rx-view]', function() {
-                const payload = $(this).data('rx-view'); // stringified JSON
+                const payload = $(this).data('rx-view');
                 const rx = typeof payload === 'string' ? JSON.parse(payload) : payload;
 
                 let itemsHtml = rx.items.map(i => {
@@ -957,31 +978,24 @@
                     return `<li class="${bought ? 'opacity-50' : ''}">
                 ${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}
                 ${badge}${price}
-                </li>`;
+            </li>`;
                 }).join('');
 
                 let html = `
-                    <div class="mb-2">
-                        <span class="rx-badge">Rx ${rx.code}</span>
-                        <span class="rx-status ms-2">${(rx.dispense || rx.status || '').toString().replaceAll('_',' ')}</span>
-                    </div>
-                    <div class="mb-2"><strong>Doctor:</strong> ${rx.doctor}</div>
-                    ${rx.notes ? `<div class="mb-3"><strong>Notes:</strong> ${rx.notes}</div>` : ``}
-                    <div class="mb-2"><strong>Items</strong></div>
-                    <ul class="mb-0">${itemsHtml}</ul>
-                `;
+            <div class="mb-2">
+                <span class="rx-badge">Rx ${rx.code}</span>
+                <span class="rx-status ms-2">${(rx.dispense || rx.status || '').toString().replaceAll('_',' ')}</span>
+            </div>
+            <div class="mb-2"><strong>Doctor:</strong> ${rx.doctor}</div>
+            ${rx.notes ? `<div class="mb-3"><strong>Notes:</strong> ${rx.notes}</div>` : ``}
+            <div class="mb-2"><strong>Items</strong></div>
+            <ul class="mb-0">${itemsHtml}</ul>
+        `;
                 $('#rxViewBody').html(html);
                 new bootstrap.Modal(document.getElementById('rxViewModal')).show();
             });
 
-
-            // Refill click (placeholder: route to your refill flow)
-            $(document).on('click', '[data-rx-refill]', function() {
-                const id = $(this).data('rx-refill');
-                window.location.href = `/patient/prescriptions/${id}/refill`; // implement when ready
-            });
-
-
+            // ====== Buy flow (unchanged) ======
             let currentRxId = null;
             const $pharmModal = $('#pharmModal');
             const $pharmList = $('#pharmList');
@@ -989,7 +1003,6 @@
             const $pharmFilter = $('#pharmFilter');
             let searchTimer = null;
 
-            // Open modal and load pharmacies
             $(document).on('click', '[data-rx-buy]', function() {
                 currentRxId = $(this).data('rx-buy');
                 if (!currentRxId) return;
@@ -1017,7 +1030,6 @@
                         `<div class="text-center text-danger py-3">Failed to load pharmacies</div>`));
             }
 
-            // Select pharmacy -> assign to prescription
             $(document).on('click', '[data-pharm-select]', function() {
                 const pharmId = $(this).data('pharm-select');
                 const $btn = $(this);
@@ -1030,27 +1042,25 @@
                         pharmacy_id: pharmId
                     })
                     .done(res => {
-                        // Always close the picker
                         $pharmModal.modal('hide');
 
-                        // If server returned a quote, show it immediately
                         if (res && res.quote) {
                             currentOrderIdForQuote = res.order_id;
-                            currentRxIdForQuote =
-                                currentRxId; // <- you already have currentRxId in your page
-                            renderQuoteModal(res.order_id, res.quote); // signature can stay the same
+                            currentRxIdForQuote = currentRxId;
+                            renderQuoteModal(res.order_id, res.quote);
                             bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal'))
-                                .show();
+                            .show();
                         } else {
-                            flash('success', res.message || 'Pharmacy selected');
+                            if (typeof flash === 'function') flash('success', res.message ||
+                                'Pharmacy selected');
                             try {
                                 (typeof fetchList === 'function') && fetchList();
                             } catch (e) {}
                         }
                     })
-
                     .fail(xhr => {
-                        flash('danger', xhr.responseJSON?.message || 'Failed to assign pharmacy');
+                        if (typeof flash === 'function') flash('danger', xhr.responseJSON?.message ||
+                            'Failed to assign pharmacy');
                     })
                     .always(() => unlockBtn($btn));
             });
@@ -1060,24 +1070,21 @@
                 const $btn = $(this);
                 lockBtn($btn);
 
-                $.post(
-                        `{{ route('patient.orders.confirmDeliveryFee', ['order' => '__OID__']) }}`.replace(
-                            '__OID__', orderId), {
-                            _token: `{{ csrf_token() }}`
-                        }
-                    )
+                $.post(`{{ route('patient.orders.confirmDeliveryFee', ['order' => '__OID__']) }}`.replace(
+                        '__OID__', orderId), {
+                        _token: `{{ csrf_token() }}`
+                    })
                     .done(res => {
-                        flash('success', res.message || 'Delivery fee confirmed');
+                        if (typeof flash === 'function') flash('success', res.message ||
+                            'Delivery fee confirmed');
                         location.reload();
                     })
                     .fail(err => {
-                        flash('danger', err.responseJSON?.message || 'Failed');
+                        if (typeof flash === 'function') flash('danger', err.responseJSON?.message ||
+                            'Failed');
                     })
                     .always(() => unlockBtn($btn));
             });
-
-
-
 
             function renderQuoteModal(orderId, q) {
                 currentOrderIdForQuote = orderId;
@@ -1086,41 +1093,40 @@
                     const unit = Number(a.unit_price || 0);
                     const line = Number(a.line_total || unit);
                     return `
-                    <tr>
-                        <td>${escapeHtml(a.drug || '')}</td>
-                        <td class="text-end">$${unit.toFixed(2)}</td>
-                        <td class="text-end">$${line.toFixed(2)}</td>
-                    </tr>
-                    `;
+            <tr>
+                <td>${escapeHtml(a.drug || '')}</td>
+                <td class="text-end">$${unit.toFixed(2)}</td>
+                <td class="text-end">$${line.toFixed(2)}</td>
+            </tr>`;
                 }).join('');
 
                 const unavailable = (q.unavailable || []).map(u => `
-                    <li>${escapeHtml(u.drug || '')}${u.reason ? ` — <span class="section-subtle">${escapeHtml(u.reason)}</span>` : ''}</li>
-                `).join('');
+            <li>${escapeHtml(u.drug || '')}${u.reason ? ` — <span class="section-subtle">${escapeHtml(u.reason)}</span>` : ''}</li>
+        `).join('');
 
                 const table = available ?
                     `
-                        <div class="mb-2 fw-semibold">Available items</div>
-                        <div class="table-responsive">
-                        <table class="table table-borderless table-darkish align-middle mb-3">
-                            <thead>
-                            <tr>
-                                <th>Drug</th>
-                                <th class="text-end">Unit Price</th>
-                                <th class="text-end">Line Total</th>
-                            </tr>
-                            </thead>
-                            <tbody>${available}</tbody>
-                        </table>
-                        </div>
-                    ` :
+                <div class="mb-2 fw-semibold">Available items</div>
+                <div class="table-responsive">
+                    <table class="table table-borderless table-darkish align-middle mb-3">
+                        <thead>
+                        <tr>
+                            <th>Drug</th>
+                            <th class="text-end">Unit Price</th>
+                            <th class="text-end">Line Total</th>
+                        </tr>
+                        </thead>
+                        <tbody>${available}</tbody>
+                    </table>
+                </div>
+            ` :
                     `<div class="text-warning mb-2">No matching items found in this pharmacy inventory.</div>`;
 
                 const unvBlock = unavailable ?
                     `
-                        <div class="mb-2 fw-semibold">Unavailable here</div>
-                        <ul class="mb-0 small">${unavailable}</ul>
-                    ` :
+                <div class="mb-2 fw-semibold">Unavailable here</div>
+                <ul class="mb-0 small">${unavailable}</ul>
+            ` :
                     '';
 
                 $('#quoteBody').html(`${table}${unvBlock}`);
@@ -1128,68 +1134,53 @@
                 $('#quoteTotal').text(`$${total.toFixed(2)}`);
                 $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
                 $('#quoteBody').append(`
-                    <div class="small section-subtle">
-                        Items: ₦${Number(q.items_total).toFixed(2)} ·
-                        Delivery: ₦${Number(q.delivery_fee).toFixed(2)} (${q.distance_km} km @ ₦100/km)
-                    </div>
-                `);
+            <div class="small section-subtle">
+                Items: ₦${Number(q.items_total).toFixed(2)} ·
+                Delivery: ₦${Number(q.delivery_fee).toFixed(2)} (${q.distance_km} km @ ₦100/km)
+            </div>
+        `);
             }
 
-            // Confirm the quoted items for this order
             $(document)
                 .off('click.quote', '#btnConfirmQuotedItems')
                 .on('click.quote', '#btnConfirmQuotedItems', function() {
                     const $btn = $(this);
-                    if (!currentRxIdForQuote) return; // we confirm by PRESCRIPTION
+                    if (!currentRxIdForQuote) return;
 
                     lockBtn($btn);
-                    $.post(
-                            `{{ route('patient.prescriptions.confirmPrice', ['rx' => '__RX__']) }}`
-                            .replace('__RX__', currentRxIdForQuote), {
-                                _token: `{{ csrf_token() }}`
-                            }
-                        )
+                    $.post(`{{ route('patient.prescriptions.confirmPrice', ['rx' => '__RX__']) }}`.replace(
+                            '__RX__', currentRxIdForQuote), {
+                            _token: `{{ csrf_token() }}`
+                        })
                         .done(res => {
-                            flash('success', res.message || 'Items confirmed');
+                            if (typeof flash === 'function') flash('success', res.message || 'Items confirmed');
                             bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal')).hide();
                             try {
                                 (typeof fetchList === 'function') && fetchList();
                             } catch (e) {}
                         })
                         .fail(xhr => {
-                            flash('danger', xhr.responseJSON?.message || 'Failed to confirm');
+                            if (typeof flash === 'function') flash('danger', xhr.responseJSON?.message ||
+                                'Failed to confirm');
                         })
                         .always(() => unlockBtn($btn));
                 });
 
-
-
-            // tiny HTML escaper for safe rendering
             function escapeHtml(s) {
                 return String(s || '')
                     .replaceAll('&', '&amp;').replaceAll('<', '&lt;')
                     .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
             }
 
-            // --- Config ---
-            const POLL_MS = 3000; // how often to check
-            const IDLE_GRACE_MS = 1200; // “user not typing” window
+            // --- Auto-poll loop (modal-aware) ---
+            const POLL_MS = 3000;
+            const IDLE_GRACE_MS = 1200;
 
-            // --- State ---
             let inFlight = false;
             let nextTimer = null;
             let lastUserActivityAt = Date.now();
-            let lastStartedAt = 0;
-            let lastFinishedAt = 0;
 
-            // If your previous code defined these, we reuse them:
-            //   const $btnRefresh = $('#btnRxRefresh');
-            //   const $spin = $('#rxRefreshSpin');
-
-            // Ensure refreshRxList returns a jqXHR/Promise and toggles the button/spinner.
-            // If you copied the earlier snippet, it already does.
             function startAutoPolling() {
-                // guard: don’t create multiple loops
                 if (nextTimer) return;
                 scheduleNext();
             }
@@ -1211,57 +1202,66 @@
             }
 
             function tick() {
-                // Skip if tab not visible or user busy or request running
-                if (document.hidden || !idleEnough() || inFlight) {
+                if (document.hidden || !idleEnough() || inFlight || rxModalOpen) {
                     return scheduleNext();
                 }
-
                 inFlight = true;
-                lastStartedAt = Date.now();
-
-                // Kick the refresh (reuse your function)
-                // If you don’t want the top-right button spinner during auto, you can
-                // add a flag to refreshRxList; but it’s fine to show a tiny spinner.
-                refreshRxList()
-                    .always(function() {
-                        inFlight = false;
-                        lastFinishedAt = Date.now();
-                        scheduleNext();
-                    });
+                refreshRxList().always(() => {
+                    inFlight = false;
+                    scheduleNext();
+                });
             }
 
-            // --- Wire user activity (pause while typing/selecting) ---
             function bumpIdle() {
                 lastUserActivityAt = Date.now();
             }
 
             $(document).on('input', '#rxSearch', bumpIdle);
             $(document).on('change', '#rxStatus', bumpIdle);
-
-            // If you have more interactive inputs inside the list, track them too:
             $(document).on('input change', '#rxList :input', bumpIdle);
 
-            // Pause when tab hidden; resume when visible
+            // Pause polling while modal is shown (prevents DOM replacement under it)
+            $(document)
+                .off('shown.bs.modal.apAccepted hidden.bs.modal.apAccepted')
+                .on('shown.bs.modal.apAccepted', '#apAcceptedModal', function() {
+                    rxModalOpen = true;
+                    const apptId = getCurrentModalApptId();
+                    if (apptId) lastShownApptId = apptId;
+                    // (Re)init countdown if needed
+                    if (typeof initMeetingCountdown === 'function') {
+                        try {
+                            initMeetingCountdown();
+                        } catch (_) {}
+                    }
+                    stopAutoPolling();
+                })
+                .on('hidden.bs.modal.apAccepted', '#apAcceptedModal', function() {
+                    rxModalOpen = false;
+                    setTimeout(() => {
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open').css('padding-right', '');
+                    }, 50);
+                    scheduleNext(); // resume polling soon
+                });
+
             document.addEventListener('visibilitychange', function() {
                 if (document.hidden) {
                     stopAutoPolling();
                 } else {
-                    // user came back—reset idle and schedule soon
                     bumpIdle();
                     scheduleNext();
                 }
             });
 
-            // If your manual Refresh button exists, make sure it doesn’t break the loop
             $(document).on('click', '#btnRxRefresh', function() {
-                bumpIdle(); // treat as user activity
-                // When manual refresh finishes, the loop will scheduleNext() again automatically
+                bumpIdle();
             });
 
             // Kick it off
             startAutoPolling();
         })();
     </script>
+
     <script>
         (function() {
             function initMeetingCountdown() {
@@ -1272,20 +1272,13 @@
 
                 if (!meta || !label) return;
 
-                // Pull & coerce numbers
                 const endEpoch = Number(meta.getAttribute('data-end-epoch')) || 0;
                 const nowEpoch = Number(meta.getAttribute('data-now-epoch')) || 0;
+                if (!endEpoch || !nowEpoch) return;
 
-                if (!endEpoch || !nowEpoch) {
-                    return;
-                }
-
-                // Align client time to DB "now"
                 const clientNow = Math.floor(Date.now() / 1000);
                 const skew = nowEpoch - clientNow;
 
-
-                // UI helpers
                 function endUI() {
                     label.textContent = '00:00';
                     if (join) {
@@ -1307,42 +1300,36 @@
                     return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
                 }
 
-                // tick loop
                 function tick() {
-                    const now = Math.floor(Date.now() / 1000) + skew; // DB-aligned current time
+                    const now = Math.floor(Date.now() / 1000) + skew;
                     const remaining = Math.max(0, endEpoch - now);
-
                     label.textContent = fmt(remaining);
-
                     if (remaining <= 0) {
                         endUI();
                         clearInterval(timer);
                     }
                 }
 
-                // Start
-                tick(); // render immediately so you see it
+                tick();
                 const timer = setInterval(tick, 1000);
 
-                // Clean up on modal close
                 const modal = document.getElementById('apAcceptedModal');
                 modal && modal.addEventListener('hidden.bs.modal', () => clearInterval(timer), {
                     once: true
                 });
             }
 
-            // Run once DOM is ready
+            // Make the init function available globally (used in modal shown handler)
+            window.initMeetingCountdown = initMeetingCountdown;
+
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initMeetingCountdown);
             } else {
                 initMeetingCountdown();
             }
 
-            // Also re-init when modal is shown (useful if DOM is updated dynamically)
             const modal = document.getElementById('apAcceptedModal');
             modal && modal.addEventListener('shown.bs.modal', initMeetingCountdown);
-
-            // If you use PJAX/Livewire/Turbo and replace DOM, call initMeetingCountdown() after replacement.
         })();
     </script>
 @endpush

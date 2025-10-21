@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Prescription;
 use App\Models\User;
 use App\Models\Order;
@@ -45,8 +46,43 @@ class PrescriptionController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $acceptedAppt = Appointment::with('doctor')
+            ->where('patient_id', $user->id)
+            ->where('status', 'accepted')
+            ->whereNotNull('meeting_link')
+            ->orderByDesc('updated_at')
+            ->first();
+
+        $timer = $acceptedAppt->doctor->doctorProfile->avg_duration ?? 15;
+
+        $meet_end_epoch = null;
+
+        // DB “now” in UTC (fallback to PHP time() if DB call fails)
+        $row = DB::selectOne("SELECT UNIX_TIMESTAMP(UTC_TIMESTAMP()) AS ts");
+        $meet_now_epoch = $row ? (int) $row->ts : time();
+
+        if ($acceptedAppt) {
+            $updatedTs = optional($acceptedAppt->updated_at)?->getTimestamp();
+            if ($updatedTs) {
+                $meet_end_epoch = $updatedTs + ((int) $timer * 60);
+            }
+        }
+
+        $meet_remaining = $meet_end_epoch ? max(0, $meet_end_epoch - $meet_now_epoch) : 0;
+
         if ($request->ajax()) {
-            return view('patient.prescriptions._list', compact('prescriptions'))->render();
+            $html = view('patient.prescriptions._list', compact('prescriptions', 'acceptedAppt', 'meet_remaining', 'meet_end_epoch', 'meet_now_epoch'))->render();
+            $etag = md5($html);
+
+            $response = response($html, 200)
+                ->header('Content-Type', 'text/html; charset=UTF-8')
+                ->setEtag($etag);
+
+            if ($response->isNotModified($request)) {
+                return $response; // 304
+            }
+
+            return $response;
         }
 
         return view('patient.prescriptions.index', compact('prescriptions'));
