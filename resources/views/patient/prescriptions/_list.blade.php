@@ -205,3 +205,81 @@
 @if ($prescriptions->hasPages())
     <div class="mt-3">{!! $prescriptions->links() !!}</div>
 @endif
+
+
+@if (!empty($acceptedAppt) && ($meet_remaining ?? 0) > 60)
+    <!-- Accepted Appointment Modal -->
+    <div class="modal fade" id="apAcceptedModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:#121a2c;border:1px solid var(--border);border-radius:18px;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <i class="fa-solid fa-video me-2"></i>Appointment Accepted
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <div class="subtle small">Doctor</div>
+                        <div id="apModalDoctor" class="fw-semibold">
+                            {{ $acceptedAppt->doctor?->full_name ?? ($acceptedAppt->doctor?->name ?? '—') }}
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="subtle small">Scheduled time</div>
+                        <div id="apModalWhen" class="fw-semibold">
+                            {{ optional($acceptedAppt->scheduled_at)->format('M d, Y · g:ia') ?? '—' }}
+                        </div>
+                    </div>
+                    <h3 class="mb-2">
+                        Time left: <span id="meetingCountdown">--:--</span>
+                    </h3>
+
+                    <div id="meetingCountdownMeta" data-end-epoch="{{ (int) ($meet_end_epoch ?? 0) }}"
+                        data-now-epoch="{{ (int) ($meet_now_epoch ?? 0) }}"></div>
+
+
+
+
+
+
+
+
+
+
+                    {{-- <div class="mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <input id="apModalLink" class="form-control" readonly
+                                    value="{{ $acceptedAppt->meeting_link }}" style="visibility: hidden">
+                                <button class="btn btn-ghost" id="apCopyLink">
+                                    <i class="fa-regular fa-copy me-1"></i> Copy
+                                </button>
+                                <a class="btn btn-gradient" id="apOpenLink" target="_blank" rel="noopener"
+                                    href="{{ $acceptedAppt->meeting_link }}">
+                                    <i class="fa-solid fa-up-right-from-square me-1"></i> Open
+                                </a>
+                            </div>
+                            <div class="small mt-1" id="apCopyNote" style="display:none;">Copied!</div>
+                        </div> --}}
+
+                    <div class="alert alert-info mt-3 mb-0 small"
+                        style="background:#0f1a2e;border:1px solid var(--border);color:#cfe0ff;">
+                        Make sure you’re ready a few minutes early. Test your mic/camera before joining.
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <a id="apJoinNow" href="{{ $acceptedAppt->meeting_link }}" target="_blank" rel="noopener"
+                        class="btn btn-gradient">
+                        <i class="fa-solid fa-video me-1"></i> Join meeting
+                    </a>
+                    <button style="display: none" id="closeModal" data-bs-dismiss="modal"></button>
+                    <button class="btn btn-outline-light" id="endAppointment" data-apt-id="{{ $acceptedAppt->id }}">End
+                        Appointment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
