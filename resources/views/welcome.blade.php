@@ -23,6 +23,27 @@
             background: #0f172a;
             color: #fff;
         }
+        footer{
+            height: 90px;
+            width: 100vw;
+            position: absolute;
+            bottom: 0;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+            opacity: 0.5;
+            
+        }
+        footer > a{
+            margin-top: 10px;
+            opacity: 1;
+            color: white;
+            text-decoration: none;
+        }
+        footer span{
+            color: #DAB1DA;
+        }
 
         /* NAV */
         .navbar {
@@ -238,9 +259,8 @@
     </section>
     <footer class="bg-dark text-white text-center py-3 mt-auto">
         © 2025 CyberMediks. All rights reserved.
-        <a href="marthinsjuba19@gmail.com"></a>
+        <a href="info@cybermediks.com"><span>Contacts Email:</span> info@cybermediks.com</a>
     </footer>
-
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
