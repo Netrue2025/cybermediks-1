@@ -98,7 +98,7 @@
                 e.preventDefault();
                 const $btn = $(this).find('button[type=submit]');
                 lockBtn($btn);
-                $.post(`{{ route('patient.forgot.send') }}`, $(this).serialize())
+                $.post(`{{ route('forgot.send') }}`, $(this).serialize())
                     .done(res => {
                         flash('success', res.message || 'If email exists, code sent');
                         window.location = '{{ route('patient.reset.show') }}';

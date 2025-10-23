@@ -111,7 +111,7 @@
                 e.preventDefault();
                 const $btn = $(this).find('button[type=submit]');
                 lockBtn($btn);
-                $.post(`{{ route('patient.reset') }}`, $(this).serialize())
+                $.post(`{{ route('reset') }}`, $(this).serialize())
                     .done(res => {
                         flash('success', res.message || 'Password updated');
                         window.location = res.redirect;
