@@ -101,7 +101,7 @@
                 $.post(`{{ route('forgot.send') }}`, $(this).serialize())
                     .done(res => {
                         flash('success', res.message || 'If email exists, code sent');
-                        window.location = '{{ route('patient.reset.show') }}';
+                        window.location = '{{ route('reset.show') }}';
                     })
                     .fail(() => flash('danger', 'Failed to send code'))
                     .always(() => unlockBtn($btn));
