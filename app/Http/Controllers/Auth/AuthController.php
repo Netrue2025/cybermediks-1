@@ -70,6 +70,9 @@ class AuthController extends Controller
                 case 'doctor':
                     $redirect = 'doctor.dashboard';
                     break;
+                case 'hospital':
+                    $redirect = 'hospital.dashboard';
+                    break;
                 case 'pharmacy':
                     $redirect = 'pharmacy.dashboard';
                     break;
