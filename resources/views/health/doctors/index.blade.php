@@ -126,9 +126,6 @@
             <div class="col-md-6">
                 <label class="form-label small section-subtle mb-1">Search</label>
                 <div class="input-group">
-                    <span class="input-group-text" style="background:#0b1222;border-color:var(--border)">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
                     <input class="form-control" name="q" value="{{ $q }}" placeholder="Doctor name or title">
                 </div>
             </div>
@@ -146,7 +143,7 @@
         <div class="col-lg-8">
             <div class="cardx">
                 <div class="table-responsive">
-                    <table class="table table-borderless table-hover table-striped table-darkish align-middle">
+                    <table class="table table-borderless table-hover table-striped align-middle">
                         <thead>
                             <tr class="section-subtle">
                                 <th style="width:36px;"></th>

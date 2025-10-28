@@ -77,9 +77,7 @@
             <div class="col-md-6">
                 <label class="form-label small section-subtle mb-1">Search</label>
                 <div class="input-group">
-                    <span class="input-group-text" style="background:#0b1222;border-color:var(--border)">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
+                    
                     <input class="form-control" name="q" value="{{ $q }}"
                         placeholder="Pharmacy name or email">
                 </div>

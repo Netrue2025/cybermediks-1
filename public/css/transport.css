@@ -1,0 +1,620 @@
+/* health.css — full drop-in (light default; dark via :root[data-theme="dark"]) */
+
+/* ---------- Core tokens (Light = default) ---------- */
+:root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e5e7eb;
+    --panel: #ffffff;
+    --card: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #f1f5f9;
+    --hover: rgba(0, 0, 0, 0.05);
+    --chip: #eef2ff;
+    --chipBorder: #dbeafe;
+    --accent1: #8758e8;
+    --accent2: #e0568a;
+    --success: #16a34a;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --field: #ffffff;
+    --field-border: #d0d7e1;
+    --focus-ring: color-mix(in srgb, var(--accent1) 22%, transparent);
+    --page-glow-1: radial-gradient(
+        1200px 600px at -10% -20%,
+        color-mix(in srgb, var(--accent1) 12%, transparent),
+        transparent 50%
+    );
+    --page-glow-2: radial-gradient(
+        1000px 600px at 110% 10%,
+        color-mix(in srgb, var(--accent2) 10%, transparent),
+        transparent 50%
+    );
+    --sidebar: var(--panel);
+    --sidebar-text: var(--text);
+}
+
+/* ---------- Dark theme override ---------- */
+:root[data-theme="dark"] {
+    --bg: #0f172a;
+    --text: #e5e7eb;
+    --muted: #9aa3b2;
+    --border: #25324a;
+    --panel: #111827;
+    --card: #0f1a2e;
+    --surface-1: #0f1a2e;
+    --surface-2: #0f1628;
+    --hover: #131f34;
+    --chip: #1e293b;
+    --chipBorder: #2a3854;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --field: #0b1222;
+    --field-border: #2b3a56;
+    --focus-ring: color-mix(in srgb, var(--accent1) 35%, transparent);
+    --page-glow-1: radial-gradient(
+        1200px 600px at -10% -20%,
+        rgba(135, 88, 232, 0.08),
+        transparent 50%
+    );
+    --page-glow-2: radial-gradient(
+        1000px 600px at 110% 10%,
+        rgba(224, 86, 138, 0.06),
+        transparent 50%
+    );
+    --sidebar: #0b1222;
+    --sidebar-text: #c9d1e1;
+}
+
+/* ---------- Motion safety + smooth feel ---------- */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+* {
+    transition: background-color 0.18s, color 0.18s, border-color 0.18s,
+        box-shadow 0.18s, filter 0.18s;
+}
+
+/* =========================
+   GLOBAL + LAYOUT
+   ========================= */
+html,
+body {
+    height: 100%;
+}
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+.brand-gradient {
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+.layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+}
+.content {
+    min-height: 100vh;
+    background: var(--page-glow-1), var(--page-glow-2);
+}
+
+/* =========================
+   SIDEBAR
+   ========================= */
+.sidebar {
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: auto;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+}
+.sidebar .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.sidebar .user {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+.avatar,
+.avatar-sm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: color-mix(in srgb, var(--text) 85%, #cfe0ff);
+}
+.avatar {
+    width: 80px;
+    height: 80px;
+}
+.avatar-sm {
+    width: 56px;
+    height: 56px;
+}
+.sb-role {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+.sb-scroll {
+    overflow: auto;
+    padding: 8px 8px 12px;
+    flex: 1;
+}
+.sb-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.sb-scroll::-webkit-scrollbar-thumb {
+    background: #1b2741;
+    border-radius: 8px;
+}
+
+.menu {
+    padding: 8px;
+}
+.menu .section {
+    padding: 12px 12px 4px;
+    color: var(--muted);
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.item,
+.menu .item a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 10px 12px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    border-radius: 12px;
+    border: 1px solid transparent;
+}
+.item i {
+    width: 18px;
+    text-align: center;
+}
+.item:hover,
+.menu .item a:hover {
+    background: var(--hover);
+    color: #fff;
+}
+.item.active,
+.menu .item.active > a {
+    background: linear-gradient(
+        90deg,
+        rgba(92, 51, 180, 0.55),
+        rgba(92, 51, 180, 0.18) 70%
+    );
+    border: 1px solid color-mix(in srgb, var(--accent1) 35%, var(--border));
+    color: #fff;
+}
+
+.sb-bottom {
+    border-top: 1px solid var(--border);
+    padding: 10px 8px 14px;
+}
+.btn-as-link {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    line-height: 1;
+    color: inherit;
+}
+.logout {
+    color: #f43f5e !important;
+}
+.logout:hover {
+    background: #2a1020;
+}
+
+/* =========================
+   TOPBAR
+   ========================= */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+.btn-gradient {
+    background-image: linear-gradient(90deg, var(--accent1), var(--accent2));
+    color: #fff;
+    border: 0;
+}
+
+/* =========================
+   CARDS / SECTIONS / BLOCKS
+   ========================= */
+.cardx,
+.section-card,
+.balance-card,
+.qa-card,
+.ps-row,
+.tx-row,
+.tile,
+.kpi,
+.block,
+.right-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+}
+.section-card,
+.balance-card {
+    border-radius: 14px;
+    padding: 16px;
+}
+.cardx-soft {
+    background: var(--surface-1);
+}
+.kpi {
+    background: var(--surface-1);
+}
+.kpi .val {
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+.metric {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.subtle,
+.label-sub,
+.mini,
+.hint,
+.section-subtle {
+    color: var(--muted);
+}
+.tile + .tile {
+    margin-top: 12px;
+}
+.block {
+    background: var(--surface-1);
+}
+
+/* =========================
+   HEALTH-SPECIFIC UI
+   ========================= */
+/* doctor row / mini avatars */
+.doctor-row {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface-1);
+}
+.avatar-mini {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: color-mix(in srgb, var(--text) 85%, #cfe0ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* creds / right card list */
+.right-card .item {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: var(--surface-1);
+}
+.cred-status {
+    margin-top: 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+}
+.cred-status.pending {
+    background: color-mix(in srgb, var(--warning) 12%, transparent);
+    border-color: color-mix(in srgb, var(--warning) 40%, var(--border));
+    color: #fbbf24;
+}
+.cred-status.verified,
+.cred-status.approved {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+    color: #86efac;
+}
+.cred-status.rejected {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+    color: #fca5a5;
+}
+
+/* filter card inputs */
+.filter-card .form-control,
+.filter-card .form-select {
+    background: var(--field);
+    color: var(--text);
+    border: 1px solid var(--field-border);
+}
+
+/* modal theme */
+.modal-themed .modal-content {
+    background: var(--card) !important;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+.modal-themed .modal-header {
+    border-bottom: 1px solid var(--border);
+}
+.btn-close-white {
+    filter: invert(1);
+    opacity: 0.75;
+}
+.btn-close-white:hover {
+    opacity: 1;
+}
+
+/* =========================
+   FORMS / INPUTS / BUTTONS
+   ========================= */
+.form-control,
+.form-select {
+    background: var(--field) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--field-border) !important;
+    box-shadow: none !important;
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: color-mix(in srgb, var(--accent1) 55%, var(--field-border));
+    box-shadow: 0 0 0 3px var(--focus-ring) !important;
+}
+.form-control::placeholder {
+    color: color-mix(in srgb, var(--muted) 78%, #aaa);
+}
+.form-control:disabled,
+.form-select:disabled {
+    background: var(--field) !important;
+    border-color: var(--field-border) !important;
+    color: var(--text) !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.input-icon {
+    position: relative;
+}
+.input-icon-prefix {
+    position: absolute;
+    left: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+}
+.input-icon-suffix {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+}
+.input-icon .form-control {
+    padding-left: 1.6rem;
+    padding-right: 2.2rem;
+}
+
+.btn-outline-light,
+.btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+.btn-outline-light:hover,
+.btn-ghost:hover {
+    background: var(--hover);
+    color: #fff;
+    border-color: color-mix(in srgb, var(--accent1) 25%, var(--border));
+}
+.btn-ico {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+}
+.btn-ico:hover {
+    filter: brightness(1.08);
+}
+.row-actions .btn {
+    --bs-btn-padding-y: 0.25rem;
+    --bs-btn-padding-x: 0.5rem;
+    --bs-btn-font-size: 0.8rem;
+}
+
+.pill,
+.pill-money {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.18rem 0.55rem;
+    font-weight: 600;
+}
+
+/* =========================
+   CHIPS / BADGES
+   ========================= */
+.chip,
+.status-chip,
+.badge-soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--chip);
+    color: color-mix(in srgb, var(--text) 85%, #7c8aa1);
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+.badge-on {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+.badge-off {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+}
+.badge-note {
+    background: var(--surface-2);
+    border-color: var(--chipBorder);
+}
+.note-alert {
+    background: #2a1f00;
+    border: 1px solid #5b4200;
+    color: #ffd78a;
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem;
+}
+
+/* =========================
+   TABLES
+   ========================= */
+.table {
+    --bs-table-color: var(--text);
+    --bs-table-bg: var(--surface-1);
+    --bs-table-border-color: var(--border);
+    --bs-table-striped-bg: color-mix(
+        in srgb,
+        var(--surface-1) 92%,
+        var(--text)
+    );
+    --bs-table-hover-bg: var(--surface-2);
+    --bs-table-hover-color: var(--text);
+}
+.table thead th {
+    background: var(--surface-2);
+    color: var(--text);
+    border-bottom-color: var(--border);
+}
+.table > :not(caption) > * > * {
+    background-color: var(--bs-table-bg) !important;
+    color: var(--bs-table-color) !important;
+    border-color: var(--bs-table-border-color) !important;
+}
+/* optional darkish helper (kept for parity) */
+.table-darkish {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: color-mix(
+        in srgb,
+        var(--surface-1) 92%,
+        var(--text)
+    );
+    --bs-table-hover-bg: var(--surface-2);
+    --bs-table-hover-color: var(--text);
+    color: var(--text);
+}
+
+/* Force white table text when needed (as in your snippet) */
+table th,
+table td {
+    color: var(--text) !important;
+}
+
+/* =========================
+   UTILITIES
+   ========================= */
+.line {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed var(--border);
+    padding: 0.35rem 0;
+}
+.row-gap {
+    row-gap: 12px;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Skeleton shimmer */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--surface-2) 92%, var(--text));
+    border-radius: 8px;
+    min-height: 12px;
+}
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.18),
+        transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+@media (max-width: 992px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+    .sidebar {
+        position: fixed;
+        left: -270px;
+        width: 260px;
+        z-index: 1040;
+        height: 100vh;
+        transition: left 0.2s ease;
+    }
+    .sidebar.show {
+        left: 0;
+    }
+    .content {
+        padding-left: 0 !important;
+    }
+}

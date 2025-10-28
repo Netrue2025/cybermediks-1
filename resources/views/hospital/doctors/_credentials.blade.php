@@ -1,4 +1,4 @@
-<style>
+{{-- <style>
     :root {
         --card: #0f172a;
         --border: #27344e;
@@ -99,7 +99,7 @@
     .td-when {
         white-space: nowrap
     }
-</style>
+</style> --}}
 
 @if ($docs->isEmpty())
     <div class="text-center section-subtle py-3">No credentials uploaded.</div>
@@ -137,10 +137,10 @@
                                 {{ ucfirst($c->status ?? 'pending') }}
                             </span>
                         </td>
-                        <td class="td-when" style="color:white !important;">{{ $c->created_at?->format('M d, Y · g:ia') }}</td>
-                        <td class="td-when d-none d-md-table-cell" style="color:white !important;">
+                        <td class="td-when">{{ $c->created_at?->format('M d, Y · g:ia') }}</td>
+                        <td class="td-when d-none d-md-table-cell">
                             {{ $c->verified_at?->format('M d, Y · g:ia') ?? '—' }}</td>
-                        <td class="td-notes d-none d-lg-table-cell" style="color:white !important;">{{ $c->review_notes ?: '—' }}</td>
+                        <td class="td-notes d-none d-lg-table-cell">{{ $c->review_notes ?: '—' }}</td>
                         <td class="text-end">
                             <a href="{{ $c->url }}" target="_blank" class="btn btn-outline-light btn-sm">
                                 <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open
