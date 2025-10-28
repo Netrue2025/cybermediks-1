@@ -9,6 +9,7 @@ use App\Services\OneTimeCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -25,30 +26,51 @@ class AuthController extends Controller
 
     public function register(Request $r)
     {
-        $data = $r->validate([
+        $facilityRoles = ['hospital', 'pharmacy', 'labtech'];
+        $isFacility = in_array($r->input('role'), $facilityRoles, true);
+
+        $rules = [
             'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', 'in:hospital,pharmacy,dispatcher,patient,labtech,health,transport'],
+            'last_name'  => ['required', 'string', 'max:255'],
+            'email'      => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role'       => ['required', 'string', 'in:hospital,pharmacy,dispatcher,patient,labtech,health,transport'],
             'country_id' => ['required', 'string', 'exists:countries,id'],
-            'password' => ['required', 'confirmed', Password::min(6)],
-        ]);
+            'password'   => ['required', 'confirmed', Password::min(6)],
+        ];
+
+        // Facility-only fields
+        $facilityRules = [
+            'facility_name'       => Rule::requiredIf($isFacility),
+            'address_building_no' => Rule::requiredIf($isFacility),
+            'address_street'      => Rule::requiredIf($isFacility),
+            'city'                => Rule::requiredIf($isFacility),
+            'state'               => Rule::requiredIf($isFacility),
+        ];
+
+        $data = $r->validate(array_merge($rules, $facilityRules));
 
         $user = User::create([
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'email' => strtolower($data['email']),
-            'role' => $data['role'],
-            'country_id' => $data['country_id'],
-            'password' => Hash::make($data['password']),
+            'first_name'  => $data['first_name'],
+            'last_name'   => $data['last_name'],
+            'email'       => strtolower($data['email']),
+            'role'        => $data['role'],
+            'country_id'  => $data['country_id'],
+            'password'    => Hash::make($data['password']),
+
+            // If you're storing on the users table (make columns nullable in a migration)
+            'facility_name'       => $data['facility_name']       ?? null,
+            'address_building_no' => $data['address_building_no'] ?? null,
+            'address'      => $data['address_street']      ?? null,
+            'city'                => $data['city']                ?? null,
+            'state'               => $data['state']               ?? null,
         ]);
 
         Auth::login($user);
         (new VerificationController())->sendVerifyCode();
 
         return response()->json([
-            'ok' => true,
-            'message' => 'Account created. Verification code sent to your email.',
+            'ok'       => true,
+            'message'  => 'Account created. Verification code sent to your email.',
             'redirect' => route('verify.show')
         ]);
     }

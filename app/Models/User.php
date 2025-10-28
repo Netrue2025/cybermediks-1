@@ -34,6 +34,10 @@ class User extends Authenticatable
         'dob',
         'address',
         'wallet_balance',
+        'facility_name',
+        'address_building_no',
+        'city',
+        'state',
     ];
 
     /**

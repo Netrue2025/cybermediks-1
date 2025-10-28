@@ -108,6 +108,13 @@
                                 value="{{ old('phone', auth()->user()->phone ?? '') }}" disabled>
                         </div>
 
+                        <div class="col-12">
+                            <label class="form-label">Facility Name</label>
+                            <input class="form-control" name="facility_name"
+                                value="{{ old('facility_name', auth()->user()->facility_name ?? '') }}" disabled>
+                        </div>
+
+
                         <div class="col-md-4">
                             <label class="form-label">Gender</label>
                             <select class="form-select" name="gender" disabled>
@@ -138,7 +145,26 @@
                             </select>
                         </div>
 
-                        <div class="col-12">
+                        <div class="col-md-6">
+                            <label class="form-label">State</label>
+                            <input class="form-control" name="state"
+                                value="{{ old('state', auth()->user()->state ?? '') }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">City</label>
+                            <input class="form-control" name="city"
+                                value="{{ old('city', auth()->user()->city ?? '') }}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Building / House No.</label>
+                            <input class="form-control" name="address_building_no"
+                                value="{{ old('address_building_no', auth()->user()->address_building_no ?? '') }}"
+                                disabled>
+                        </div>
+
+                        <div class="col-md-6">
                             <label class="form-label">Address</label>
                             <input class="form-control" name="address"
                                 value="{{ old('address', auth()->user()->address ?? '') }}" disabled>

@@ -70,7 +70,6 @@
         <div class="row g-2 mt-2">
             <div class="col-lg-6">
                 <div class="search-wrap">
-                    <i class="fa-solid fa-magnifying-glass icon"></i>
                     <input id="pSearch" class="form-control" placeholder="Search by name, email, or ID..."
                         value="{{ request('q') }}">
                 </div>

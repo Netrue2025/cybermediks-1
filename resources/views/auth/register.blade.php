@@ -105,6 +105,20 @@
 
                         <form id="regForm" autocomplete="off">
                             <div class="row g-3">
+
+                                <div class="col-12">
+                                    <select name="role" class="form-select" required>
+                                        <option value="" disabled selected>Select Role</option>
+                                        <option value="patient">Patient</option>
+                                        <option value="hospital">Hospital</option>
+                                        <option value="pharmacy">Pharmacy</option>
+                                        <option value="dispatcher">Dispatch Rider</option>
+                                        <option value="labtech">Laboratory</option>
+                                        <option value="health">Department of Health</option>
+                                        <option value="transport">Department of Pharmacy</option>
+                                    </select>
+                                </div>
+
                                 <div class="col-md-6">
                                     <input type="text" name="first_name" class="form-control" placeholder="First Name"
                                         required>
@@ -118,18 +132,6 @@
                                         required>
                                 </div>
 
-                                <div class="col-12">
-                                    <select name="role" class="form-select" required>
-                                        <option value="" disabled selected>Select Role</option>
-                                        <option value="patient">Patient</option>
-                                        <option value="hospital">Hospital</option>
-                                        <option value="pharmacy">Pharmacy</option>
-                                        <option value="dispatcher">Dispatch Rider</option>
-                                        <option value="labtech">Laboratory Technician</option>
-                                        <option value="health">Department of Health</option>
-                                        <option value="transport">Department of Pharmacy</option>
-                                    </select>
-                                </div>
 
                                 <div class="col-12">
                                     <select name="country_id" class="form-select" required>
@@ -139,6 +141,32 @@
                                         @endforeach
                                     </select>
                                 </div>
+
+                                <!-- Facility details (Hospital/Pharmacy/Laboratory only) -->
+                                <div id="facilityFields" class="row g-3 mt-1" style="display:none;">
+                                    <div class="col-12">
+                                        <input type="text" name="facility_name" class="form-control"
+                                            placeholder="Facility Name (e.g., Mercy Hospital)">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <input type="text" name="address_building_no" class="form-control"
+                                            placeholder="Building/House Number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" name="address_street" class="form-control"
+                                            placeholder="Street">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <input type="text" name="city" class="form-control" placeholder="City">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" name="state" class="form-control" placeholder="State">
+                                    </div>
+
+                                </div>
+
 
                                 <div class="col-12 input-with-icon">
                                     <input type="password" name="password" class="form-control" placeholder="Password"
@@ -159,8 +187,8 @@
                         </form>
 
                         <div class="text-center mt-4 subtle">
-                            Already have an account? <a href="{{ route('login.show') }}"
-                                class="text-decoration-none">Sign in</a>
+                            Already have an account? <a href="{{ route('login.show') }}" class="text-decoration-none">Sign
+                                in</a>
                         </div>
                     </div>
                 </div>
@@ -170,7 +198,28 @@
 
     @push('scripts')
         <script>
-            // Show/Hide password
+            const FACILITY_ROLES = ['hospital', 'pharmacy', 'labtech'];
+
+            function toggleFacilityFields(role) {
+                const show = FACILITY_ROLES.includes(role);
+                const $wrap = $('#facilityFields');
+                $wrap.toggle(show);
+
+                // Toggle required attributes
+                $wrap.find('input[name="facility_name"]').prop('required', show);
+                $wrap.find('input[name="address_building_no"]').prop('required', show);
+                $wrap.find('input[name="address_street"]').prop('required', show);
+                $wrap.find('input[name="city"]').prop('required', show);
+                $wrap.find('input[name="state"]').prop('required', show);
+            }
+
+            // on load + on change
+            $(document).on('change', 'select[name="role"]', function() {
+                toggleFacilityFields($(this).val());
+            });
+            // initialize once in case of browser autofill
+            toggleFacilityFields($('select[name="role"]').val());
+
             $(document).on('click', '.toggle-password', function() {
                 const $pwd = $('input[name="password"]');
                 if ($pwd.attr('type') === 'password') {
@@ -182,22 +231,33 @@
                 }
             });
 
-            // Submit (concat first+last -> name)
+            // Submit (extend payload with facility fields when needed)
             $('#regForm').on('submit', function(e) {
                 e.preventDefault();
                 const $btn = $(this).find('button[type=submit]');
                 lockBtn($btn);
 
+                const role = $('select[name="role"]').val();
+
                 const data = {
                     first_name: $('input[name="first_name"]').val().trim(),
                     last_name: $('input[name="last_name"]').val().trim(),
                     email: $('input[name="email"]').val().trim(),
-                    country_id: $('select[name="country_id"]').val().trim(),
+                    country_id: $('select[name="country_id"]').val(),
                     password: $('input[name="password"]').val(),
                     password_confirmation: $('input[name="password_confirmation"]').val(),
-                    role: $('select[name="role"]').val()
+                    role
                 };
-                data.name = (data.first_name + ' ' + data.last_name).trim(); // for your controller
+
+                data.name = (data.first_name + ' ' + data.last_name).trim();
+
+                if (FACILITY_ROLES.includes(role)) {
+                    data.facility_name = $('input[name="facility_name"]').val().trim();
+                    data.address_building_no = $('input[name="address_building_no"]').val().trim();
+                    data.address_street = $('input[name="address_street"]').val().trim();
+                    data.city = $('input[name="city"]').val().trim();
+                    data.state = $('input[name="state"]').val().trim();
+                }
 
                 $.post(`{{ route('register') }}`, data)
                     .done(res => {

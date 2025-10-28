@@ -422,7 +422,7 @@ Route::prefix('labtech')->name('labtech.')->middleware(['auth', 'verified', 'mus
     Route::post('/profile/password', [LabtechDashboardController::class, 'updatePassword'])->name('profile.password');
 });
 
-// HEALTH ROUTES
+// HOSPITAL ROUTES
 
 Route::middleware(['auth', 'verified', 'mustVerify', 'role:hospital'])->prefix('hospital')->name('hospital.')->group(function () {
     Route::get('/', [HospitalDashboardController::class, 'index'])->name('dashboard');

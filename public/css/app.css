@@ -1,0 +1,49 @@
+/* 1) Light first (base) */
+:root {
+  --bg: #f8fafc;
+  --text: #0f172a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+
+  --panel: #ffffff;
+  --card:  #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f1f5f9;
+  --chip:  #eef2ff;
+  --chipBorder: #dbeafe;
+
+  --accent1: #8758e8;
+  --accent2: #e0568a;
+  --success: #16a34a;
+
+  --field: #ffffff;
+  --field-border: #d1d5db;
+
+  --hover: rgba(0,0,0,.045);
+  --focus-ring: rgba(167,139,250,.35);
+}
+
+/* 2) Dark override AFTER light */
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --text: #e5e7eb;
+  --muted: #9aa3b2;
+  --border: #25324a;
+
+  --panel: #0f1628;
+  --card:  #101a2e;
+  --surface-1: #0f1a2e;
+  --surface-2: #0f1628;
+  --chip:  #1e293b;
+  --chipBorder: #2a3854;
+
+  --accent1: #8758e8;
+  --accent2: #e0568a;
+  --success: #22c55e;
+
+  --field: #0b1222;
+  --field-border: #27344e;
+
+  --hover: #131f34;
+  --focus-ring: rgba(167,139,250,.45);
+}

@@ -85,20 +85,28 @@ class PharmacySettingsController extends Controller
             'first_name' => ['required', 'string', 'max:100'],
             'last_name'  => ['nullable', 'string', 'max:100'],
             'phone'      => ['nullable', 'string', 'max:40'],
+            'facility_name' => ['nullable', 'string', 'max:255'],
             'gender'     => ['nullable', 'in:male,female,other'],
             'dob'        => ['nullable', 'date'],
             'country_id'    => ['nullable', 'string', 'exists:countries,id'],
             'address'    => ['nullable', 'string', 'max:255'],
+            'address_building_no'    => ['nullable', 'string', 'max:100'],
+            'state'    => ['nullable', 'string', 'max:100'],
+            'city'    => ['nullable', 'string', 'max:100'],
         ]);
 
         $user->fill([
             'first_name'    => $data['first_name'],
             'last_name'     => $data['last_name'],
             'phone'   => $data['phone'] ?? null,
+            'facility_name' => $data['facility_name'] ?? null,
             'gender'  => $data['gender'] ?? null,
             'dob'     => $data['dob'] ?? null,
             'country_id' => $data['country_id'] ?? null,
+            'state' => $data['state'] ?? null,
+            'city' => $data['city'] ?? null,
             'address' => $data['address'] ?? null,
+            'address_building_no' => $data['address_building_no'] ?? null,
         ])->save();
 
         return response()->json(['ok' => true, 'message' => 'Profile updated']);

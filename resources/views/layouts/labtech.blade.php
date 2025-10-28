@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 
 <head>
     <meta charset="utf-8">
@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
 
-    <style>
+    {{-- <style>
         :root {
             --bg: #0f172a;
             --panel: #111827;
@@ -359,9 +359,11 @@
                 padding-left: 0 !important;
             }
         }
-    </style>
+    </style> --}}
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/labtech.css') }}">
 
-    @stack('styles')
+    {{-- @stack('styles') --}}
 </head>
 
 <body>
@@ -377,8 +379,15 @@
                     <button class="btn btn-sm btn-outline-light d-lg-none" id="btnSidebar">
                         <i class="fa-solid fa-bars"></i>
                     </button>
+
+
                     <span class="fw-semibold">LabTech</span>
+                    <div class="btn-group" style="float: right;">
+                        <button class="btn btn-outline-secondary" data-set-theme="light">Light</button>
+                        <button class="btn btn-outline-secondary" data-set-theme="dark">Dark</button>
+                    </div>
                 </div>
+                
             </div>
 
             <div class="container-fluid py-4">
@@ -393,6 +402,46 @@
     <script>
         $('#btnSidebar').on('click', () => $('.sidebar').toggleClass('show'));
     </script>
+    <script>
+        (function() {
+            const KEY = 'cm_theme'; // 'light' | 'dark' | 'auto'
+            const root = document.documentElement;
+
+            function getPreferredTheme() {
+                const saved = localStorage.getItem(KEY);
+                if (saved) return saved;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            function setTheme(theme) {
+                if (theme === 'auto') {
+                    root.setAttribute('data-bs-theme',
+                        window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                } else {
+                    root.setAttribute('data-theme', theme);
+                }
+            }
+
+            // initialize
+            const initial = getPreferredTheme();
+            setTheme(initial);
+
+            // optional: react to OS changes only if user chose 'auto'
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if ((localStorage.getItem(KEY) || 'auto') === 'auto') setTheme('auto');
+            });
+
+            // hook up your buttons
+            document.addEventListener('click', e => {
+                const btn = e.target.closest('[data-set-theme]');
+                if (!btn) return;
+                const theme = btn.getAttribute('data-set-theme'); // 'light' | 'dark' | 'auto'
+                localStorage.setItem(KEY, theme);
+                setTheme(theme);
+            });
+        })();
+    </script>
+
     @include('labtech.partials.location-modal')
     @stack('scripts')
 </body>

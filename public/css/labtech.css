@@ -1,0 +1,430 @@
+/* Smooth transitions (respects reduced motion) */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}
+* {
+    transition: background-color 0.18s ease, color 0.18s ease,
+        border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* =========================
+   GLOBAL + LAYOUT
+   ========================= */
+
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+.brand-gradient {
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+}
+.content {
+    min-height: 100vh;
+    background: var(--page-glow-1), var(--page-glow-2);
+}
+
+/* =========================
+   SIDEBAR
+   ========================= */
+
+.sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: auto;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.sidebar .logo .name {
+    font-weight: 800;
+    letter-spacing: 0.6px;
+}
+
+.sidebar .user {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.avatar,
+.avatar-sm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: #cfe0ff;
+}
+.avatar {
+    width: 80px;
+    height: 80px;
+}
+.avatar-sm {
+    width: 56px;
+    height: 56px;
+}
+
+.menu {
+    padding: 8px;
+}
+.menu .section {
+    padding: 12px 12px 4px;
+    color: var(--muted);
+    font-size: 0.84rem;
+    text-transform: uppercase;
+}
+
+.menu .item a,
+.item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 10px 12px;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 10px;
+    border: 1px solid transparent;
+}
+.menu .item a:hover,
+.item:hover {
+    background: var(--hover);
+    color: #fff;
+}
+.menu .item.active > a,
+.item.active {
+    background: linear-gradient(
+        90deg,
+        rgba(92, 51, 180, 0.55),
+        rgba(92, 51, 180, 0.18) 70%
+    );
+    color: #fff;
+    border: 1px solid rgba(135, 88, 232, 0.35);
+}
+
+/* =========================
+   TOPBAR
+   ========================= */
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+
+/* =========================
+   CARDS / SECTIONS
+   ========================= */
+
+.cardx,
+.section-card,
+.balance-card,
+.qa-card,
+.cred-card,
+.ps-row,
+.tx-row,
+.sec-wrap,
+.doctor-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+}
+.cardx,
+.section-card,
+.balance-card {
+    border-radius: 14px;
+    padding: 16px;
+}
+.cardx-soft {
+    background: var(--surface-1);
+}
+
+.metric {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.subtle,
+.label-sub,
+.sb-role {
+    color: var(--muted);
+}
+
+.chip,
+.status-chip,
+.badge-soft {
+    background: var(--chip);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: color-mix(in srgb, var(--text) 80%, #789);
+}
+.badge-soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.85rem;
+}
+.badge-on {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    border-color: color-mix(in srgb, var(--success) 35%, var(--border));
+}
+.badge-off {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+}
+
+.pill,
+.pill-ghost {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+.pill-ghost {
+    width: 40px;
+    height: 40px;
+}
+
+.link-card {
+    position: relative;
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+.link-card:hover {
+    filter: brightness(1.04);
+}
+.link-card .stretched-link {
+    position: static;
+}
+
+.empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 32px 8px;
+}
+.empty .ico {
+    font-size: 28px;
+    opacity: 0.7;
+    margin-bottom: 8px;
+}
+
+/* Doctor row uses surface contrast, not a hardcoded hex */
+.doctor-row {
+    background: var(--surface-1);
+}
+
+/* =========================
+   FORMS / BUTTONS
+   ========================= */
+
+.form-control,
+.form-select {
+    background: var(--field) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--field-border) !important;
+    box-shadow: none !important;
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: color-mix(in srgb, var(--accent1) 55%, var(--field-border));
+    box-shadow: 0 0 0 3px var(--focus-ring) !important;
+}
+.form-control::placeholder {
+    color: color-mix(in srgb, var(--muted) 80%, #aaa);
+}
+
+/* Disabled override (theme-aware) */
+.form-control:disabled,
+.form-select:disabled {
+    background-color: var(--field) !important;
+    border-color: var(--field-border) !important;
+    color: var(--text) !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-gradient {
+    background-image: linear-gradient(90deg, var(--accent1), var(--accent2));
+    color: #fff;
+    border: 0;
+}
+.btn-outline-light,
+.btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+.btn-outline-light:hover,
+.btn-ghost:hover {
+    background: var(--hover);
+    color: #fff;
+    border-color: color-mix(in srgb, var(--accent1) 25%, var(--border));
+}
+
+/* =========================
+   SPECIAL BLOCKS
+   ========================= */
+
+.sec-head {
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 10px;
+}
+.sec-wrap {
+    background: var(--surface-1);
+}
+
+.chips-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-height: 38px;
+    padding: 0.25rem;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.chip2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface-2);
+    border: 1px solid var(--chipBorder);
+    border-radius: 999px;
+    padding: 0.25rem 0.55rem;
+    color: #cfe0ff;
+    font-size: 0.85rem;
+}
+.chip2 .x {
+    opacity: 0.7;
+    cursor: pointer;
+}
+.chip2 .x:hover {
+    opacity: 1;
+}
+
+.spec-results {
+    position: relative;
+    margin-top: 0.25rem;
+}
+.spec-results .menu {
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.spec-results .item {
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+}
+.spec-results .item:hover {
+    background: var(--surface-2);
+}
+
+/* Status colors */
+.verified {
+    color: var(--success);
+}
+.unverified {
+    color: var(--warning);
+}
+.logout {
+    color: #f43f5e !important;
+}
+.logout:hover {
+    background: color-mix(in srgb, #f43f5e 12%, transparent);
+}
+/* Make Bootstrap tables follow your tokens */
+.table {
+    --bs-table-color: var(--text);
+    --bs-table-bg: var(--surface-1); /* body cells background */
+    --bs-table-border-color: var(--border);
+    --bs-table-striped-bg: color-mix(
+        in srgb,
+        var(--surface-1) 92%,
+        var(--text)
+    );
+    --bs-table-striped-color: var(--text);
+    --bs-table-hover-bg: var(--surface-2);
+    --bs-table-hover-color: var(--text);
+    --bs-table-active-bg: var(--surface-2);
+    --bs-table-active-color: var(--text);
+}
+
+/* Head cells */
+.table thead th {
+    background: var(--surface-2);
+    color: var(--text);
+    border-bottom-color: var(--border);
+}
+
+/* Ensure nested cell backgrounds don’t reintroduce white */
+.table > :not(caption) > * > * {
+    background-color: var(--bs-table-bg) !important;
+    color: var(--bs-table-color) !important;
+    border-color: var(--bs-table-border-color) !important;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 992px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+    .sidebar {
+        position: fixed;
+        left: -270px;
+        width: 260px;
+        z-index: 1040;
+        height: 100vh;
+        transition: left 0.2s ease;
+    }
+    .sidebar.show {
+        left: 0;
+    }
+    .content {
+        padding-left: 0 !important;
+    }
+}
