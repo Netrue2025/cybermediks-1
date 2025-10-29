@@ -44,10 +44,6 @@
                 href="{{ route('doctor.schedule') }}">
                 <i class="fa-solid fa-calendar-check"></i><span>Manage Schedule</span>
             </a>
-            <a class="item {{ request()->routeIs('doctor.wallet.index') ? 'active' : '' }}"
-                href="{{ route('doctor.wallet.index') }}">
-                <i class="fa-solid fa-wallet"></i><span>My Wallet</span>
-            </a>
         </nav>
     </div>
 

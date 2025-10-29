@@ -113,7 +113,8 @@
             color: #ef4444
         }
 
-        table th, table td {
+        table th,
+        table td {
             color: white !important;
         }
     </style>
@@ -188,9 +189,20 @@
                                                 data-doctor="{{ $d->id }}">
                                                 <i class="fa-regular fa-folder-open me-1"></i> Credentials
                                             </button>
-                                           
+
+                                            <button type="button" class="btn btn-outline-light btn-sm" data-edit-doctor
+                                                data-doctor-id="{{ $d->id }}"
+                                                data-first-name="{{ $d->first_name }}"
+                                                data-last-name="{{ $d->last_name }}" data-title="{{ $p->title ?? '' }}"
+                                                data-fee="{{ $p->consult_fee ?? 0 }}"
+                                                data-avg="{{ $p->avg_duration ?? 15 }}"
+                                                data-meeting="{{ $p->meeting_link ?? '' }}"
+                                                data-specialties='@json($d->specialties->pluck('id'))'>
+                                                <i class="fa-regular fa-pen-to-square me-1"></i> Edit
+                                            </button>
                                         </div>
                                     </td>
+
                                 </tr>
                             @empty
                                 <tr>
@@ -246,6 +258,74 @@
         </div>
     </div>
 
+    {{-- Edit Doctor Modal --}}
+    <div class="modal fade" id="editDoctorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content" style="background:var(--card);color:var(--text);border:1px solid var(--border)">
+                <div class="modal-header">
+                    <h6 class="modal-title"><i class="fa-regular fa-pen-to-square me-1"></i> Edit Doctor</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="editDoctorForm">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="doc_id" id="ed_doc_id">
+
+                        <div class="mb-2">
+                            <label class="form-label small">Name</label>
+                            <div class="form-control" id="ed_name" disabled></div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small">Title</label>
+                            <input type="text" class="form-control" name="title" id="ed_title"
+                                placeholder="e.g., Consultant Cardiologist">
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small">Meeting Link</label>
+                            <input type="url" class="form-control" name="meeting_link" id="ed_meeting"
+                                placeholder="https://...">
+                            <div class="mini-help">Optional: When set, <em>link_updated_at</em> will be refreshed.</div>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small">Consultation Fee ($)</label>
+                                <input type="number" step="0.01" min="0" class="form-control"
+                                    name="consult_fee" id="ed_fee">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small">Avg Duration (min)</label>
+                                <input type="number" min="5" max="240" class="form-control"
+                                    name="avg_duration" id="ed_avg">
+                            </div>
+                        </div>
+
+                        <div class="mt-2">
+                            <label class="form-label small">Specialties</label>
+                            <select class="form-select" name="specialty_ids[]" id="ed_specialties" multiple>
+                                @foreach ($allSpecialties as $s)
+                                    <option value="{{ $s->id }}">{{ $s->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="mini-help">Hold <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> to select multiple.</div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-light" type="button" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-gradient" id="btnSaveEd" type="submit">
+                            <i class="fa-regular fa-floppy-disk me-1"></i> Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
     {{-- Credentials Modal --}}
     <div class="modal fade" id="credModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -282,4 +362,84 @@
             });
         })();
     </script>
+
+    <script>
+(function () {
+    // CSRF for AJAX
+    $.ajaxSetup({
+        headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')}
+    });
+
+    // Open Edit modal + prefill
+    $(document).on('click', '[data-edit-doctor]', function () {
+        const $btn   = $(this);
+        const id     = $btn.data('doctor-id');
+        const first  = $btn.data('first-name') || '';
+        const last   = $btn.data('last-name')  || '';
+        const title  = $btn.data('title')      || '';
+        const fee    = $btn.data('fee')        || 0;
+        const avg    = $btn.data('avg')        || 15;
+        const meet   = $btn.data('meeting')    || '';
+        const specs  = ($btn.data('specialties') || []);
+
+        $('#ed_doc_id').val(id);
+        $('#ed_name').text(`${first} ${last}`);
+        $('#ed_title').val(title);
+        $('#ed_fee').val(fee);
+        $('#ed_avg').val(avg);
+        $('#ed_meeting').val(meet);
+
+        // Preselect specialties
+        const $sel = $('#ed_specialties');
+        $sel.val([]); // reset
+        specs.forEach(v => {
+            $sel.find(`option[value="${v}"]`).prop('selected', true);
+        });
+
+        new bootstrap.Modal(document.getElementById('editDoctorModal')).show();
+    });
+
+    // Submit edit
+    $('#editDoctorForm').on('submit', function (e) {
+        e.preventDefault();
+        const $btn   = $('#btnSaveEd').prop('disabled', true);
+        const docId  = $('#ed_doc_id').val();
+        const data   = $(this).serialize();
+
+        $.post(`{{ route('hospital.doctors.profile.update', ':id') }}`.replace(':id', docId), data)
+            .done(res => {
+                // Update the row UI (title, fee, avg)
+                const $rowBtn = $(`[data-edit-doctor][data-doctor-id="${docId}"]`);
+                const $tr     = $rowBtn.closest('tr');
+                $tr.find('.doc-title').text(res.profile.title ?? '—');
+                $tr.find('td:nth-child(5) .pill-money').text(`$${Number(res.profile.consult_fee ?? 0).toFixed(2)}`);
+                $tr.find('td:nth-child(6)').text(res.profile.avg_duration ?? '—');
+
+                // Also refresh the data-* cache on the Edit button
+                $rowBtn.data('title', res.profile.title || '');
+                $rowBtn.data('fee', res.profile.consult_fee || 0);
+                $rowBtn.data('avg', res.profile.avg_duration || 15);
+                $rowBtn.data('meeting', res.profile.meeting_link || '');
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('editDoctorModal')).hide();
+
+                // Small toast/flash
+                showToast('Profile updated', 'success'); // implement showToast or replace with your notifier
+            })
+            .fail(xhr => {
+                let msg = 'Unable to update profile';
+                if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                showToast(msg, 'error');
+            })
+            .always(() => $btn.prop('disabled', false));
+    });
+
+    // Minimal toast helper (optional)
+    window.showToast = function (text, type='info') {
+        // plug into your Toastify or Bootstrap alert; for quick demo:
+        console.log(`[${type}] ${text}`);
+    };
+})();
+</script>
 @endpush

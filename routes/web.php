@@ -32,6 +32,7 @@ use App\Http\Controllers\Doctor\DoctorScheduleController;
 use App\Http\Controllers\Doctor\DoctorWalletController;
 use App\Http\Controllers\Health\HealthDashboardController;
 use App\Http\Controllers\Hospital\HospitalDashboardController;
+use App\Http\Controllers\Hospital\HospitalWalletController;
 use App\Http\Controllers\Labtech\LabtechDashboardController;
 use App\Http\Controllers\Labtech\LabtechLabworkController;
 use App\Http\Controllers\PageController;
@@ -171,11 +172,6 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'mustV
     // PATIENTS
     Route::get('/patients', [DoctorPatientController::class, 'index'])->name('patients');
     Route::get('/patient/{patient}/history', [DoctorPatientController::class, 'show'])->name('patient.history');
-
-    // WALLETS
-    Route::get('/wallet', [DoctorWalletController::class, 'index'])->name('wallet.index');
-    Route::post('/wallet/add-funds', [DoctorWalletController::class, 'addFunds'])->name('wallet.add');
-    Route::post('/wallet/withdraw', [DoctorWalletController::class, 'withdraw'])->name('wallet.withdraw');
 
     // MESSENGERS
     Route::get('/messenger', [DoctorMessengerController::class, 'index'])->name('messenger'); // list + optional open
@@ -428,8 +424,13 @@ Route::middleware(['auth', 'verified', 'mustVerify', 'role:hospital'])->prefix('
     Route::get('/', [HospitalDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/doctors', [HospitalDashboardController::class, 'doctorIndex'])->name('doctors.index');
+    Route::post('/doctors/profile/update/{docId}', [HospitalDashboardController::class, 'updateDoctorProfile'])->name('doctors.profile.update');
     Route::post('/doctors/create', [HospitalDashboardController::class, 'register'])->name('doctors.create');
     Route::get('/doctors/{doctor}/credentials', [HospitalDashboardController::class, 'credentials'])->name('doctors.credentials');
+
+    // WALLETS
+    Route::get('/wallet', [HospitalWalletController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/withdraw', [HospitalWalletController::class, 'withdraw'])->name('wallet.withdraw');
 
     Route::get('/profile', [HospitalDashboardController::class, 'showProfile'])->name('profile');
     Route::post('/profile', [HospitalDashboardController::class, 'updateProfile'])->name('profile.update');

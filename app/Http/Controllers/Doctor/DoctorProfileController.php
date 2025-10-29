@@ -95,8 +95,8 @@ class DoctorProfileController extends Controller
         $data = $request->validate([
             'title'        => ['nullable', 'string', 'max:120'],
             'meeting_link'        => ['nullable', 'url', 'max:120'],
-            'consult_fee'  => ['nullable', 'numeric', 'min:0', 'max:100000'],
-            'avg_duration' => ['nullable', 'integer', 'min:5', 'max:240'], // minutes
+            // 'consult_fee'  => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            // 'avg_duration' => ['nullable', 'integer', 'min:5', 'max:240'], // minutes
             'specialty_ids' => ['array'],            // NEW
             'specialty_ids.*' => ['integer', 'exists:specialties,id'],
         ]);
@@ -113,8 +113,8 @@ class DoctorProfileController extends Controller
             'title'        => $data['title']        ?? null,
             'meeting_link' => $data['meeting_link']        ?? null,
             'link_updated_at' => $now,
-            'consult_fee'  => $data['consult_fee']  ?? null,
-            'avg_duration' => $data['avg_duration'] ?? null,
+            // 'consult_fee'  => $data['consult_fee']  ?? null,
+            // 'avg_duration' => $data['avg_duration'] ?? null,
         ], fn($v) => !is_null($v)));
 
         if ($request->has('specialty_ids')) {
@@ -137,8 +137,8 @@ class DoctorProfileController extends Controller
             'message' => 'Profile updated',
             'profile' => [
                 'title'        => $profile->title,
-                'consult_fee'  => (string)$profile->consult_fee,
-                'avg_duration' => (int)$profile->avg_duration,
+                // 'consult_fee'  => (string)$profile->consult_fee,
+                // 'avg_duration' => (int)$profile->avg_duration,
             ],
         ]);
     }

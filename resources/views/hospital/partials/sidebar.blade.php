@@ -32,6 +32,10 @@
                 <i class="fa-solid fa-user-doctor"></i><span>Doctors</span>
             </a>
 
+             <a class="item {{ request()->routeIs('hospital.wallet.index') ? 'active' : '' }}" href="{{ route('hospital.wallet.index') }}">
+                <i class="fa-solid fa-dollar-sign"></i><span>Wallet</span>
+            </a>
+
         </nav>
     </div>
 

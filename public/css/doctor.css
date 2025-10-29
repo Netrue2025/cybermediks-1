@@ -387,6 +387,15 @@ body {
     border-color: color-mix(in srgb, var(--accent1) 25%, var(--border));
 }
 
+.logout {
+    color: #f43f5e !important;
+    background: none;
+}
+
+.logout:hover {
+    background: var(--hover) !important;
+}
+
 /* Input with icons */
 .input-icon {
     position: relative;

@@ -344,12 +344,12 @@
                             <i class="fa-solid fa-badge-check me-1"></i> Credentials
                         </button>
                     </li>
-                    <li class="nav-item" role="presentation">
+                    {{-- <li class="nav-item" role="presentation">
                         <button class="nav-link" id="tab-billing" data-bs-toggle="tab" data-bs-target="#pane-billing"
                             type="button" role="tab">
                             <i class="fa-solid fa-wallet me-1"></i> Billing
                         </button>
-                    </li>
+                    </li> --}}
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="tab-security" data-bs-toggle="tab" data-bs-target="#pane-security"
                             type="button" role="tab">
@@ -506,7 +506,7 @@
                                     <input id="qTitle" class="form-control"
                                         placeholder="e.g., Consultant Cardiologist" value="{{ $profile?->title }}">
                                 </div>
-                                <div class="mb-3">
+                                {{-- <div class="mb-3">
                                     <label class="form-label small subtle mb-1">Consult Fee</label>
                                     <div class="input-icon">
                                         <span class="input-icon-prefix">$</span>
@@ -522,7 +522,7 @@
                                             class="form-control" value="{{ $profile?->avg_duration ?? 15 }}">
                                         <span class="input-icon-suffix subtle">min</span>
                                     </div>
-                                </div>
+                                </div> --}}
 
                                 <div>
                                     <label class="form-label small subtle mb-1">Meeting Link</label>
@@ -618,7 +618,7 @@
                 </div>
 
                 {{-- TAB 4: Billing --}}
-                <div class="tab-pane fade" id="pane-billing" role="tabpanel" aria-labelledby="tab-billing">
+                {{-- <div class="tab-pane fade" id="pane-billing" role="tabpanel" aria-labelledby="tab-billing">
                     <div class="section-card">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
@@ -628,13 +628,8 @@
                             </div>
                             <i class="fa-solid fa-wallet fs-3" style="color:#cbd5e1;"></i>
                         </div>
-                        <div class="d-grid gap-2 mt-3">
-                            <a href="{{ route('doctor.wallet.index') }}" class="btn btn-gradient">Withdraw Funds</a>
-                            <a href="{{ route('doctor.wallet.index') }}" class="btn btn-outline-light">View
-                                Transactions</a>
-                        </div>
                     </div>
-                </div>
+                </div> --}}
 
                 {{-- TAB 5: Security --}}
                 <div class="tab-pane fade" id="pane-security" role="tabpanel" aria-labelledby="tab-security">

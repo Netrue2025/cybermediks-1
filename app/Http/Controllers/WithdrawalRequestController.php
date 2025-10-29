@@ -39,7 +39,7 @@ class WithdrawalRequestController extends Controller
         $calculatedFee = $amount * $fee;
         $calculatedAmount = $amount - $calculatedFee;
 
-        if ($user->role === 'patient' || $user->role === 'admin') {
+        if ($user->role === 'patient' || $user->role === 'doctor' || $user->role === 'admin') {
             return response()->json(['message' => 'You are not allowed to make a withdrawal'], 422);
         }
 

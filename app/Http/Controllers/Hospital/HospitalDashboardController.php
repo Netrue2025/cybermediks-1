@@ -7,9 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Mail\UniversalMail;
 use App\Models\Country;
 use App\Models\DoctorCredential;
+use App\Models\DoctorProfile;
+use App\Models\DoctorSpecialty;
+use App\Models\Specialty;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -17,6 +21,14 @@ use Illuminate\Validation\Rules\Password;
 
 class HospitalDashboardController extends Controller
 {
+    protected function getProfile($doctorId): DoctorProfile
+    {
+        return DoctorProfile::firstOrCreate(
+            ['doctor_id' => $doctorId],
+            ['title' => null, 'bio' => null, 'is_available' => false, 'consult_fee' => 0, 'avg_duration' => 15]
+        );
+    }
+
     public function index()
     {
         $user = Auth::user();
@@ -47,12 +59,12 @@ class HospitalDashboardController extends Controller
 
     public function doctorIndex(Request $r)
     {
-        $q         = trim((string) $r->query('q'));
+        $q    = trim((string) $r->query('q'));
         $user = Auth::user();
 
         $doctors = User::with([
-            'doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration',
-            'specialties'
+            'doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration,meeting_link,link_updated_at',
+            'specialties:id,name'
         ])
             ->doctors()
             ->where('hospital_id', $user->id)
@@ -66,14 +78,67 @@ class HospitalDashboardController extends Controller
             ->orderBy('first_name')
             ->paginate(20);
 
-        $credentials = DoctorCredential::with('doctor')
+        $credentials    = DoctorCredential::with('doctor')
             ->where('status', 'pending')
             ->whereDoctorHospital($user->id)
             ->latest()
             ->take(10)
             ->get();
 
-        return view('hospital.doctors.index', compact('doctors', 'q', 'credentials'));
+        $allSpecialties = Specialty::orderBy('name')->get(['id', 'name']); // NEW
+
+        return view('hospital.doctors.index', compact('doctors', 'q', 'credentials', 'allSpecialties'));
+    }
+
+    public function updateDoctorProfile(Request $request, $docId)
+    {
+        $hospitalId = Auth::id();
+        // Security: ensure this doctor belongs to this hospital
+        $ownsDoctor = User::whereKey($docId)->where('hospital_id', $hospitalId)->exists();
+        abort_unless($ownsDoctor, 403, 'Unauthorized');
+
+        $data = $request->validate([
+            'title'         => ['nullable', 'string', 'max:120'],
+            'meeting_link'  => ['nullable', 'url', 'max:255'],
+            'consult_fee'   => ['nullable', 'numeric', 'min:0', 'max:100000'],
+            'avg_duration'  => ['nullable', 'integer', 'min:5', 'max:240'],
+            'specialty_ids' => ['array'],
+            'specialty_ids.*' => ['integer', 'exists:specialties,id'],
+        ]);
+
+        $profile = $this->getProfile($docId);
+
+        $profile->update(array_filter([
+            'title'          => $data['title']        ?? null,
+            'meeting_link'   => $data['meeting_link'] ?? null,
+            'link_updated_at' => filled($data['meeting_link'] ?? null) ? now() : null,
+            'consult_fee'    => $data['consult_fee']  ?? null,
+            'avg_duration'   => $data['avg_duration'] ?? null,
+        ], fn($v) => !is_null($v)));
+
+        if ($request->has('specialty_ids')) {
+            DB::transaction(function () use ($docId, $data) {
+                DoctorSpecialty::where('doctor_id', $docId)->delete();
+                if (!empty($data['specialty_ids'])) {
+                    $rows = array_map(fn($sid) => [
+                        'doctor_id'   => $docId,
+                        'specialty_id' => $sid,
+                    ], $data['specialty_ids']);
+                    DoctorSpecialty::insert($rows);
+                }
+            });
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Profile updated',
+            'profile' => [
+                'title'        => $profile->title,
+                'meeting_link' => $profile->meeting_link,
+                'consult_fee'  => (float) $profile->consult_fee,
+                'avg_duration' => (int) $profile->avg_duration,
+            ],
+        ]);
     }
 
     public function credentials(User $doctor)

@@ -36,32 +36,6 @@ class DoctorWalletController extends Controller
         return view('doctor.wallet.index', compact('balance', 'transactions', 'fee'));
     }
 
-    public function addFunds(Request $request)
-    {
-        $data = $request->validate([
-            'amount'   => 'required|numeric|min:5',
-            'currency' => 'nullable|string|size:3'
-        ]);
-
-        $user = Auth::user();
-        $currency = strtoupper($data['currency'] ?? 'USD');
-
-        // TODO: integrate your payment gateway; for now we demo-credit immediately.
-        $tx = WalletTransaction::create([
-            'user_id'  => $user->id,
-            'type'     => 'credit',
-            'amount'   => $data['amount'],
-            'currency' => $currency,
-            'purpose'  => 'top_up',
-            'reference' => 'TX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
-            'meta'     => ['source' => 'manual_demo', 'status' => 'success'],
-        ]);
-
-        $user->update(['wallet_balance' => $user->wallet_balance + $data['amount']]);
-
-        return response()->json(['status' => 'success', 'message' => 'Funds added', 'tx' => $tx]);
-    }
-
     public function withdraw(Request $request)
     {
         $data = $request->validate([
