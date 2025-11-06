@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->web(append: [
             \App\Http\Middleware\DetectCountryFromIp::class,
+            \App\Http\Middleware\TouchLastSeen::class,
         ]);
 
         $middleware->alias([

@@ -183,4 +183,9 @@ class User extends Authenticatable
         return $q->where('role', 'pharmacy');
     }
 
+    public function scopeOnlineDoctors($q, int $minutes = 5)
+    {
+        return $q->where('role', 'doctor')
+            ->where('last_seen_at', '>=', now()->subMinutes($minutes));
+    }
 };

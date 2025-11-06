@@ -9,8 +9,10 @@ use Illuminate\Http\Request;
 
 class DoctorBrowseController extends Controller
 {
+    
     public function index(Request $r)
     {
+        $ACTIVE_MINUTES = 5;
         $search       = trim((string)$r->query('q'));
         $specialtyId  = $r->integer('specialty_id');
         $available    = (bool)$r->boolean('available');
@@ -18,7 +20,7 @@ class DoctorBrowseController extends Controller
 
         // base query
         $q = User::query()
-            ->where('role', 'doctor')
+            ->onlineDoctors($ACTIVE_MINUTES)
             ->with([
                 'doctorHospital',
                 'doctorProfile:id,doctor_id,is_available,title,consult_fee,avg_duration',
