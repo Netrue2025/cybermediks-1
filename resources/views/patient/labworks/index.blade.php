@@ -37,7 +37,7 @@
                                 </td>
                                 <td>{{ ucwords(str_replace('_', ' ', $lab->status)) }}</td>
                                 <td>{{ $lab->scheduled_at?->format('M d, Y g:ia') ?? '—' }}</td>
-                                <td>{{ $lab->price ? '$' . number_format($lab->price, 2) : '—' }}</td>
+                                <td>@money($lab->price)</td>
                                 <td class="text-end">
                                     <a href="{{ route('patient.labworks.show', $lab) }}"
                                         class="btn btn-outline-light btn-sm">Open</a>

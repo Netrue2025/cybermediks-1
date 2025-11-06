@@ -99,6 +99,8 @@ Route::prefix('patient')->name('patient.')->middleware(['auth', 'verified', 'mus
     Route::post('/prescriptions/{rx}/confirm-price', [PrescriptionController::class, 'confirm'])->name('prescriptions.confirmPrice');
     Route::post('/prescriptions/{rx}/confirm-delivery-fee', [PrescriptionController::class, 'confirmDeliveryFee'])->name('confirmDeliveryFee');
     Route::post('/orders/{order}/confirm-delivery-fee', [PrescriptionController::class, 'confirmDeliveryFee'])->name('orders.confirmDeliveryFee');
+    Route::get('/orders/{order}/quote-frag', [PrescriptionController::class, 'quoteFragment'])->name('orders.quoteFragment');
+
 
     Route::get('/pharmacies', fn() => view('patient.pharmacies'))->name('pharmacies');
 

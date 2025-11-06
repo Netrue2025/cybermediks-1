@@ -35,7 +35,7 @@
             <div class="balance-card h-100">
                 <div class="section-subtle">Wallet Balance</div>
                 <div class="display-6 fw-bold">
-                    $ {{ number_format($balance, 2, '.', ',') }}
+                    @money($balance)
                 </div>
                 <div class="d-grid gap-2 mt-3">
                     <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#addFundsModal">Add Funds</button>

@@ -14,7 +14,7 @@
                                 • Scheduled: {{ $lab->scheduled_at->format('M d, Y g:ia') }}
                             @endif
                             @if ($lab->price)
-                                • Price: ${{ number_format($lab->price, 2) }}
+                                • Price: @money($lab->price)
                             @endif
                         </div>
                     </div>

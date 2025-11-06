@@ -302,9 +302,16 @@
                             currentOrderIdForQuote = res.order_id;
                             currentRxIdForQuote =
                                 currentRxId; // <- you already have currentRxId in your page
-                            renderQuoteModal(res.order_id, res.quote); // signature can stay the same
-                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal'))
-                                .show();
+                            $.get(`{{ route('patient.orders.quoteFragment', ['order' => '__OID__']) }}`
+                                    .replace('__OID__', res.order_id))
+                                .done(function(html) {
+                                    $('#quoteBody').html(html);
+                                    bootstrap.Modal.getOrCreateInstance(document.getElementById(
+                                        'quoteModal')).show();
+                                })
+                                .fail(function() {
+                                    flash('danger', 'Failed to load quote');
+                                });
                         } else {
                             flash('success', res.message || 'Pharmacy selected');
                             try {
@@ -343,61 +350,7 @@
 
 
 
-            function renderQuoteModal(orderId, q) {
-                currentOrderIdForQuote = orderId;
 
-                const available = (q.available || []).map(a => {
-                    const unit = Number(a.unit_price || 0);
-                    const line = Number(a.line_total || unit);
-                    return `
-                    <tr>
-                        <td>${escapeHtml(a.drug || '')}</td>
-                        <td class="text-end">$${unit.toFixed(2)}</td>
-                        <td class="text-end">$${line.toFixed(2)}</td>
-                    </tr>
-                    `;
-                }).join('');
-
-                const unavailable = (q.unavailable || []).map(u => `
-                    <li>${escapeHtml(u.drug || '')}${u.reason ? ` — <span class="section-subtle">${escapeHtml(u.reason)}</span>` : ''}</li>
-                `).join('');
-
-                const table = available ?
-                    `
-                        <div class="mb-2 fw-semibold">Available items</div>
-                        <div class="table-responsive">
-                        <table class="table table-borderless table-darkish align-middle mb-3">
-                            <thead>
-                            <tr>
-                                <th>Drug</th>
-                                <th class="text-end">Unit Price</th>
-                                <th class="text-end">Line Total</th>
-                            </tr>
-                            </thead>
-                            <tbody>${available}</tbody>
-                        </table>
-                        </div>
-                    ` :
-                    `<div class="text-warning mb-2">No matching items found in this pharmacy inventory.</div>`;
-
-                const unvBlock = unavailable ?
-                    `
-                        <div class="mb-2 fw-semibold">Unavailable here</div>
-                        <ul class="mb-0 small">${unavailable}</ul>
-                    ` :
-                    '';
-
-                $('#quoteBody').html(`${table}${unvBlock}`);
-                const total = Number(q.items_total || 0);
-                $('#quoteTotal').text(`$${total.toFixed(2)}`);
-                $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
-                $('#quoteBody').append(`
-                    <div class="small section-subtle">
-                        Items: ₦${Number(q.items_total).toFixed(2)} ·
-                        Delivery: ₦${Number(q.delivery_fee).toFixed(2)} (${q.distance_km} km @ ₦100/km)
-                    </div>
-                `);
-            }
 
             // Confirm the quoted items for this order
             $(document)
@@ -586,9 +539,16 @@
                             currentOrderIdForQuote = res.order_id;
                             currentRxIdForQuote =
                                 currentRxId; // <- you already have currentRxId in your page
-                            renderQuoteModal(res.order_id, res.quote); // signature can stay the same
-                            bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal'))
-                                .show();
+                            $.get(`{{ route('patient.orders.quoteFragment', ['order' => '__OID__']) }}`
+                                    .replace('__OID__', res.order_id))
+                                .done(function(html) {
+                                    $('#quoteBody').html(html);
+                                    bootstrap.Modal.getOrCreateInstance(document.getElementById(
+                                        'quoteModal')).show();
+                                })
+                                .fail(function() {
+                                    flash('danger', 'Failed to load quote');
+                                });
                         } else {
                             flash('success', res.message || 'Pharmacy selected');
                             try {
@@ -627,61 +587,7 @@
 
 
 
-            function renderQuoteModal(orderId, q) {
-                currentOrderIdForQuote = orderId;
 
-                const available = (q.available || []).map(a => {
-                    const unit = Number(a.unit_price || 0);
-                    const line = Number(a.line_total || unit);
-                    return `
-                    <tr>
-                        <td>${escapeHtml(a.drug || '')}</td>
-                        <td class="text-end">$${unit.toFixed(2)}</td>
-                        <td class="text-end">$${line.toFixed(2)}</td>
-                    </tr>
-                    `;
-                }).join('');
-
-                const unavailable = (q.unavailable || []).map(u => `
-                    <li>${escapeHtml(u.drug || '')}${u.reason ? ` — <span class="section-subtle">${escapeHtml(u.reason)}</span>` : ''}</li>
-                `).join('');
-
-                const table = available ?
-                    `
-                        <div class="mb-2 fw-semibold">Available items</div>
-                        <div class="table-responsive">
-                        <table class="table table-borderless table-darkish align-middle mb-3">
-                            <thead>
-                            <tr>
-                                <th>Drug</th>
-                                <th class="text-end">Unit Price</th>
-                                <th class="text-end">Line Total</th>
-                            </tr>
-                            </thead>
-                            <tbody>${available}</tbody>
-                        </table>
-                        </div>
-                    ` :
-                    `<div class="text-warning mb-2">No matching items found in this pharmacy inventory.</div>`;
-
-                const unvBlock = unavailable ?
-                    `
-                        <div class="mb-2 fw-semibold">Unavailable here</div>
-                        <ul class="mb-0 small">${unavailable}</ul>
-                    ` :
-                    '';
-
-                $('#quoteBody').html(`${table}${unvBlock}`);
-                const total = Number(q.items_total || 0);
-                $('#quoteTotal').text(`$${total.toFixed(2)}`);
-                $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
-                $('#quoteBody').append(`
-                    <div class="small section-subtle">
-                        Items: ₦${Number(q.items_total).toFixed(2)} ·
-                        Delivery: ₦${Number(q.delivery_fee).toFixed(2)} (${q.distance_km} km @ ₦100/km)
-                    </div>
-                `);
-            }
 
             // Confirm the quoted items for this order
             $(document)

@@ -23,18 +23,19 @@
             // Order-first commerce data
             $order = $rx->order; // may be null early in the flow
             $orderStatus = $order?->status; // pending|quoted|patient_confirmed|pharmacy_accepted|ready|...
-            $itemsSubtotal = $order?->items_subtotal; // sum of purchasable items
-            $deliveryFee = $order?->dispatcher_price ?? $rx->dispatcher_price;
+            $itemsSubtotal = $order?->items_subtotal; // NGN base (assumed)
+            $deliveryFee = $order?->dispatcher_price ?? $rx->dispatcher_price; // NGN base (assumed)
+
+            // If both are known, sum; else keep known portion
             $grandTotalCalc =
                 !is_null($itemsSubtotal) && !is_null($deliveryFee) ? $itemsSubtotal + $deliveryFee : $itemsSubtotal;
 
             // Legacy fallbacks
             $legacyDispense = $rx->dispense_status ?? 'pending';
-            $legacyAmount = $rx->total_amount;
+            $legacyAmount = $rx->total_amount; // NGN base (assumed)
 
-            // Preferred amount display: grand total (calc) -> legacy total
+            // Preferred numeric amount used for all displays
             $amount = $grandTotalCalc ?? $legacyAmount;
-            $amountDisplay = is_null($amount) ? '—' : '$' . number_format((float) $amount, 2, '.', ',');
 
             // Badge source priority: order.status > legacy dispense_status
             $badgeSource = $orderStatus ?? $legacyDispense;
@@ -47,7 +48,7 @@
                 'code' => $rx->code,
                 'status' => $rx->status, // clinical/legacy
                 'dispense' => $badgeSource, // commerce badge source
-                'amount' => $amount,
+                'amount' => $amount, // keep numeric
                 'doctor' => $doctorName,
                 'notes' => $rx->notes,
                 'items' => $rx->items
@@ -59,16 +60,15 @@
                             'frequency' => $i->frequency,
                             'days' => $i->days,
                             'directions' => $i->directions,
-                            'status' => $oi?->status, // purchased / quoted / patient_confirmed …
-                            'unit_price' => $oi?->unit_price,
-                            'line_total' => $oi?->line_total,
+                            'status' => $oi?->status, // purchased / quoted / ...
+                            'unit_price' => $oi?->unit_price, // NGN base
+                            'line_total' => $oi?->line_total, // NGN base
                         ];
                     })
                     ->values(),
             ];
 
             // Buttons state:
-            // Once the order advances into fulfillment/dispatch, disallow changing pharmacy
             $commerceState = $orderStatus ?? ($legacyDispense ?? 'pending');
             $disallowChange = in_array(
                 $commerceState,
@@ -98,12 +98,6 @@
                     ? 'Choose New Pharmacy'
                     : 'Change Pharmacy')
                 : 'Buy';
-
-            // Chips: show items subtotal and (if present) delivery fee
-            $itemsSubtotalDisplay = is_null($itemsSubtotal)
-                ? null
-                : '$' . number_format((float) $itemsSubtotal, 2, '.', ',');
-            $deliveryFeeDisplay = is_null($deliveryFee) ? null : '$' . number_format((float) $deliveryFee, 2, '.', ',');
         @endphp
 
         <div class="rx-row">
@@ -124,23 +118,25 @@
                         <span>{!! rx_dispense_badge($badgeSource) !!}</span>
 
                         {{-- Items subtotal chip (when we have a quote) --}}
-                        @if (!is_null($itemsSubtotalDisplay))
+                        @if (!is_null($itemsSubtotal))
                             <span class="badge-soft">
                                 <i class="fa-solid fa-prescription-bottle-medical me-1"></i>
-                                Items: {{ $itemsSubtotalDisplay }}
+                                Items: @money($itemsSubtotal)
                             </span>
                         @endif
 
                         {{-- Delivery fee chip (when proposed/confirmed) --}}
-                        @if (!is_null($deliveryFeeDisplay))
+                        @if (!is_null($deliveryFee))
                             <span class="badge-soft">
                                 <i class="fa-solid fa-truck me-1"></i>
-                                Delivery: {{ $deliveryFeeDisplay }}
+                                Delivery: @money($deliveryFee)
                             </span>
                         @endif
 
-                        {{-- Grand total pill (items + delivery when both known, else legacy/partial) --}}
-                        <span class="price-pill">{{ $amountDisplay }}</span>
+                        {{-- Grand total pill (items + delivery when both known, else legacy/partial; else legacy total) --}}
+                        <span class="price-pill">
+                            {{ is_null($amount) ? '—' : money_display($amount) }}
+                        </span>
                     </div>
                 </div>
 
@@ -162,7 +158,7 @@
                     {{-- Legacy confirm price (kept for backward compatibility) --}}
                     @if (($rx->dispense_status ?? 'pending') === 'price_assigned')
                         <button class="btn btn-success btn-sm" data-id="{{ $rx->id }}" id="btnConfirmPrice">
-                            Confirm Price ({{ $rx->total_amount ? '$' . number_format($rx->total_amount, 2) : '—' }})
+                            Confirm Price ({{ $rx->total_amount ? money_display($rx->total_amount) : '—' }})
                         </button>
                     @endif
 
@@ -172,7 +168,7 @@
                             @csrf
                             <button class="btn btn-success btn-sm">
                                 Confirm Items
-                                ({{ $order->items_subtotal ? '$' . number_format($order->items_subtotal, 2) : '—' }})
+                                ({{ $order->items_subtotal ? money_display($order->items_subtotal) : '—' }})
                             </button>
                         </form>
                     @endif
@@ -180,10 +176,9 @@
                     {{-- Confirm Dispatcher Delivery Fee (uses ORDER now) --}}
                     @if (($order && $order->status === 'dispatcher_price_set') || $rx->dispense_status === 'dispatcher_price_set')
                         <button class="btn btn-success btn-sm" data-dsp-confirm-order="{{ $order->id }}">
-                            Confirm Delivery Fee ({{ $deliveryFeeDisplay ?? '—' }})
+                            Confirm Delivery Fee ({{ !is_null($deliveryFee) ? money_display($deliveryFee) : '—' }})
                         </button>
                     @endif
-
 
                     {{-- Selected pharmacy chip --}}
                     @if ($rx->pharmacy_id)
@@ -205,7 +200,6 @@
 @if ($prescriptions->hasPages())
     <div class="mt-3">{!! $prescriptions->links() !!}</div>
 @endif
-
 
 @if (!empty($acceptedAppt) && ($meet_remaining ?? 0) > 60)
     <!-- Accepted Appointment Modal -->
@@ -240,30 +234,6 @@
                     <div id="meetingCountdownMeta" data-end-epoch="{{ (int) ($meet_end_epoch ?? 0) }}"
                         data-now-epoch="{{ (int) ($meet_now_epoch ?? 0) }}"></div>
 
-
-
-
-
-
-
-
-
-
-                    {{-- <div class="mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <input id="apModalLink" class="form-control" readonly
-                                    value="{{ $acceptedAppt->meeting_link }}" style="visibility: hidden">
-                                <button class="btn btn-ghost" id="apCopyLink">
-                                    <i class="fa-regular fa-copy me-1"></i> Copy
-                                </button>
-                                <a class="btn btn-gradient" id="apOpenLink" target="_blank" rel="noopener"
-                                    href="{{ $acceptedAppt->meeting_link }}">
-                                    <i class="fa-solid fa-up-right-from-square me-1"></i> Open
-                                </a>
-                            </div>
-                            <div class="small mt-1" id="apCopyNote" style="display:none;">Copied!</div>
-                        </div> --}}
-
                     <div class="alert alert-info mt-3 mb-0 small"
                         style="background:#0f1a2e;border:1px solid var(--border);color:#cfe0ff;">
                         Make sure you’re ready a few minutes early. Test your mic/camera before joining.
@@ -276,8 +246,9 @@
                         <i class="fa-solid fa-video me-1"></i> Join meeting
                     </a>
                     <button style="display: none" id="closeModal" data-bs-dismiss="modal"></button>
-                    <button class="btn btn-outline-light" id="endAppointment" data-apt-id="{{ $acceptedAppt->id }}">End
-                        Appointment</button>
+                    <button class="btn btn-outline-light" id="endAppointment" data-apt-id="{{ $acceptedAppt->id }}">
+                        End Appointment
+                    </button>
                 </div>
             </div>
         </div>

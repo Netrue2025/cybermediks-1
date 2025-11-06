@@ -378,4 +378,46 @@ class PrescriptionController extends Controller
 
         return response()->json(['status' => 'ok', 'message' => 'Delivery fee confirmed']);
     }
+
+    public function quoteFragment(Order $order)
+    {
+        $order->load([
+            'items:id,order_id,drug,quantity,unit_price,line_total,status',
+            'prescription.patient:id',
+            'pharmacy',
+        ]);
+
+        // Available = items that got quoted
+        $available = $order->items
+            ->where('status', 'quoted')
+            ->map(function ($it) {
+                $qty  = max(1, (int)($it->quantity ?? 1));
+                $unit = (float)($it->unit_price ?? 0);
+                $line = (float)($it->line_total ?: $unit * $qty);
+                return [
+                    'drug'       => $it->drug,
+                    'unit_price' => $unit,
+                    'line_total' => $line,
+                ];
+            })
+            ->values();
+
+        // We can’t reconstruct “unavailable” reliably without the AI payload; leave empty
+        $unavailable = collect([]);
+
+        $items_total  = (float)($order->items_subtotal ?? $available->sum('line_total'));
+        $delivery_fee = (float)($order->dispatcher_price ?? 0);
+
+        // If you persisted distance somewhere, use it; else 0
+        $distance_km  = (float)($order->distance_km ?? 0.0);
+
+        return view('patient.prescriptions._quote', [
+            'order'        => $order,
+            'available'    => $available,
+            'unavailable'  => $unavailable,
+            'items_total'  => $items_total,
+            'delivery_fee' => $delivery_fee,
+            'distance_km'  => $distance_km,
+        ]);
+    }
 }

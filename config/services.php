@@ -43,6 +43,7 @@ return [
         'webhook'  => [
             'hash' => env('FLW_WEBHOOK_HASH'),
         ],
+        'fallback_ngn_usd'   => env('FLW_FALLBACK_NGN_USD', 0.0010),
     ],
 
     'openai' => [

@@ -77,7 +77,7 @@
                         <div class="fw-semibold">{{ $p->name }}</div>
                         <div class="section-subtle small">{{ \Illuminate\Support\Str::limit($p->description, 100) }}</div>
                         <div class="d-flex align-items-center justify-content-between mt-auto">
-                            <div class="price">$ {{ number_format((float) $p->price, 2) }}</div>
+                            <div class="price">@money($p->price)</div>
                             @if ($p->link)
                                 <a class="btn btn-sm btn-gradient" target="_blank" href="{{ $p->link }}">View
                                     Product</a>

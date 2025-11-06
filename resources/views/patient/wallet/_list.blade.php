@@ -12,8 +12,7 @@
             @endif
             </div>
             <div class="{{ $t->is_credit ? 'amount-pos' : 'amount-neg' }} flex-shrink-0 text-end">
-            {{ $t->currency === 'USD' ? '$' : $t->currency . ' ' }}
-            {{ number_format((float) $t->amount, 2, '.', ',') }}
+            @money($t->amount)
             </div>
             <div class="flex-shrink-0">
             <span class="badge {{ $t->status === 'successful' ? 'bg-success' : ($t->status === 'pending' ? 'bg-warning text-dark' : 'bg-secondary') }}">
