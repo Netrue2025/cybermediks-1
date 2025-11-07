@@ -23,7 +23,7 @@
                         <span class="chip">Follow-up</span>
                     @endif
                     @if (!empty($p->last_visit_at))
-                        <span class="text-secondary small">Last:
+                        <span class="text-secondary small">Last Visit:
                             {{ \Carbon\Carbon::parse($p->last_visit_at)->diffForHumans() }}</span>
                     @endif
                 </div>
