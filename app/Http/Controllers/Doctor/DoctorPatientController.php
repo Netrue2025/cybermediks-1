@@ -87,7 +87,8 @@ class DoctorPatientController extends Controller
         }
 
         $patients = $base
-            ->orderByDesc(DB::raw('last_visit_at'))
+            // ->orderByDesc(DB::raw('last_visit_at'))
+            ->orderByDesc('updated_at')
             ->paginate(12)
             ->withQueryString();
 
