@@ -306,7 +306,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Total Earnings</div>
-                        <div class="metric">$ {{ number_format($earnings, 2, '.', ',') }}</div>
+                        <div class="metric">@money($earnings)</div>
                     </div>
                     <div class="pill"><i class="fa-solid fa-dollar-sign fs-5" style="color:#86bcef;"></i></div>
                 </div>

@@ -64,9 +64,9 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <label class="form-label">Amount (USD)</label>
+                    <label class="form-label">Amount (NGN)</label>
                     <input id="addAmount" type="number" min="5" step="0.01" class="form-control"
-                        placeholder="50.00">
+                        placeholder="1000.00">
                 </div>
                 <div class="modal-footer border-0">
                     <button class="btn btn-gradient" id="btnAddFunds"><span class="btn-text">Add</span></button>
@@ -110,7 +110,6 @@
                         data: {
                             _token: `{{ csrf_token() }}`,
                             amount: amt,
-                            currency: 'USD'
                         }
                     })
                     .done(res => {

@@ -75,7 +75,6 @@ class WalletController extends Controller
         try {
             $data = $r->validate([
                 'amount'   => 'required|numeric|min:5',
-                'currency' => 'nullable|string|in:USD,NGN,GBP,EUR',
             ]);
         } catch (\Throwable $e) {
             Log::warning('FW:init validation failed', [
@@ -88,7 +87,7 @@ class WalletController extends Controller
 
         $user     = Auth::user();
         $amount   = (float) $data['amount'];
-        $currency = $data['currency'] ?? 'USD';
+        $currency = 'NGN';
         $txRef    = 'WALLET-' . Str::uuid()->toString();
 
         try {
