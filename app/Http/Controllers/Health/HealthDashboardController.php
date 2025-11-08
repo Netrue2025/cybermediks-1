@@ -82,30 +82,30 @@ class HealthDashboardController extends Controller
         return view('health.doctors._credentials', compact('doctor', 'docs'));
     }
 
-    public function approveCredential(Request $r, User $doctor)
-    {
-        abort_unless($doctor->country_id === auth()->user()->country_id, 403);
+    // public function approveCredential(Request $r, User $doctor)
+    // {
+    //     abort_unless($doctor->country_id === auth()->user()->country_id, 403);
 
-        $credId = (int) $r->input('credential_id');
+    //     $credId = (int) $r->input('credential_id');
 
-        $cred = DoctorCredential::where('doctor_id', $doctor->id)->findOrFail($credId);
-        $cred->update(['status' => 'approved']);
+    //     $cred = DoctorCredential::where('doctor_id', $doctor->id)->findOrFail($credId);
+    //     $cred->update(['status' => 'approved']);
 
-        return back()->with('success', 'Credential approved');
-    }
+    //     return back()->with('success', 'Credential approved');
+    // }
 
-    public function rejectCredential(Request $r, User $doctor)
-    {
-        abort_unless($doctor->country_id === auth()->user()->country_id, 403);
+    // public function rejectCredential(Request $r, User $doctor)
+    // {
+    //     abort_unless($doctor->country_id === auth()->user()->country_id, 403);
 
-        $r->validate(['reason' => 'required|string']);
-        $credId = (int) $r->input('credential_id');
+    //     $r->validate(['reason' => 'required|string']);
+    //     $credId = (int) $r->input('credential_id');
 
-        $cred = DoctorCredential::where('doctor_id', $doctor->id)->findOrFail($credId);
-        $cred->update(['status' => 'rejected', 'review_notes' => $r->reason]);
+    //     $cred = DoctorCredential::where('doctor_id', $doctor->id)->findOrFail($credId);
+    //     $cred->update(['status' => 'rejected', 'review_notes' => $r->reason]);
 
-        return back()->with('success', 'Credential rejected');
-    }
+    //     return back()->with('success', 'Credential rejected');
+    // }
 
 
     public function showProfile()

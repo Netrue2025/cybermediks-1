@@ -61,6 +61,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'dob' => 'date',
             'password' => 'hashed',
+            'country_id' => 'integer'
         ];
     }
 
