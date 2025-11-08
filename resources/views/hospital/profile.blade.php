@@ -72,7 +72,7 @@
                 <form id="profileForm" autocomplete="off">
                     @csrf
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        {{-- <div class="col-md-6">
                             <label class="form-label">First Name</label>
                             <input class="form-control" name="first_name"
                                 value="{{ old('first_name', auth()->user()->first_name) }}" required disabled>
@@ -81,6 +81,12 @@
                             <label class="form-label">Last Name</label>
                             <input class="form-control" name="last_name"
                                 value="{{ old('last_name', auth()->user()->last_name) }}" disabled>
+                        </div> --}}
+
+                         <div class="col-12">
+                            <label class="form-label">Facility Name</label>
+                            <input class="form-control" name="facility_name"
+                                value="{{ old('facility_name', auth()->user()->facility_name ?? '') }}" disabled>
                         </div>
 
                         <div class="col-md-6">
@@ -106,12 +112,6 @@
                             <label class="form-label">Phone</label>
                             <input class="form-control" name="phone"
                                 value="{{ old('phone', auth()->user()->phone ?? '') }}" disabled>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label">Facility Name</label>
-                            <input class="form-control" name="facility_name"
-                                value="{{ old('facility_name', auth()->user()->facility_name ?? '') }}" disabled>
                         </div>
 
 

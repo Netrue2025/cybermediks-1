@@ -119,11 +119,11 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-6" id="fname">
                                     <input type="text" name="first_name" class="form-control" placeholder="First Name"
                                         required>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6" id="lname">
                                     <input type="text" name="last_name" class="form-control" placeholder="Last Name"
                                         required>
                                 </div>
@@ -204,6 +204,25 @@
                 const show = FACILITY_ROLES.includes(role);
                 const $wrap = $('#facilityFields');
                 $wrap.toggle(show);
+
+
+                if (role === 'hospital') {
+                    $("#fname input").val('Hospital');
+                    $("#lname input").val('Name');
+                    $("#fname").hide();
+                    $("#lname").hide();
+
+                } else {
+                    $("#fname").show();
+                    $("#lname").show();
+
+                    $("#fname input").val('');
+                    $("#lname input").val('');
+                }
+
+
+
+
 
                 // Toggle required attributes
                 $wrap.find('input[name="facility_name"]').prop('required', show);

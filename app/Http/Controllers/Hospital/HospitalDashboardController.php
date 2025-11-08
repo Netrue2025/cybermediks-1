@@ -163,7 +163,7 @@ class HospitalDashboardController extends Controller
         $user = $r->user();
 
         $data = $r->validate([
-            'first_name' => ['required', 'string', 'max:100'],
+            'first_name' => ['nullable', 'string', 'max:100'],
             'last_name'  => ['nullable', 'string', 'max:100'],
             'phone'      => ['nullable', 'string', 'max:40'],
             'facility_name' => ['nullable', 'string', 'max:255'],
@@ -177,8 +177,8 @@ class HospitalDashboardController extends Controller
         ]);
 
         $user->fill([
-            'first_name'    => $data['first_name'],
-            'last_name'     => $data['last_name'],
+            // 'first_name'    => $data['first_name'],
+            // 'last_name'     => $data['last_name'],
             'phone'   => $data['phone'] ?? null,
             'facility_name' => $data['facility_name'] ?? null,
             'gender'  => $data['gender'] ?? null,

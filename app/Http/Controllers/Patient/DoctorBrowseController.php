@@ -109,7 +109,7 @@ class DoctorBrowseController extends Controller
                     'title'         => optional($d->doctorProfile)->title,
                     'available'     => (bool)optional($d->doctorProfile)->is_available,
                     'specialties'   => $d->specialties->pluck('name')->all(),
-                    'hospital'      => $d->doctorHospital?->name,
+                    'hospital'      => $d->doctorHospital?->facility_name,
                     'next_slot_iso' => $next?->toIso8601String(),
                     'next_slot_human' => $next?->format('D, M j · g:ia'),
                     'has_availability' => (bool)$next,
