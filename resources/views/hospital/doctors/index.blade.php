@@ -242,12 +242,12 @@
                                     data-doctor="{{ $c->doctor_id }}">
                                     View
                                 </button>
-                                <form method="POST"
+                                {{-- <form method="POST"
                                     action="{{ route('admin.doctors.approveCredential', $c->doctor_id) }}">
                                     @csrf
                                     <input type="hidden" name="credential_id" value="{{ $c->id }}">
                                     <button class="btn btn-success btn-sm">Approve</button>
-                                </form>
+                                </form> --}}
                             </div>
                         </div>
                     @empty
