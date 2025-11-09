@@ -206,8 +206,8 @@
                 $wrap.toggle(show);
 
 
-                if (role === 'hospital') {
-                    $("#fname input").val('Hospital');
+                if (role === 'hospital' || role === 'pharmacy') {
+                    $("#fname input").val(role);
                     $("#lname input").val('Name');
                     $("#fname").hide();
                     $("#lname").hide();
