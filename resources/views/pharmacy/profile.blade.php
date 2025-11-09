@@ -72,7 +72,15 @@
                 <form id="profileForm" autocomplete="off">
                     @csrf
                     <div class="row g-3">
-                        <div class="col-md-6">
+
+                         <div class="col-12">
+                            <label class="form-label">Facility Name</label>
+                            <input class="form-control" name="facility_name"
+                                value="{{ old('facility_name', auth()->user()->facility_name ?? '') }}" disabled>
+                        </div>
+
+                        
+                        {{-- <div class="col-md-6">
                             <label class="form-label">First Name</label>
                             <input class="form-control" name="first_name"
                                 value="{{ old('first_name', auth()->user()->first_name) }}" required disabled>
@@ -81,7 +89,7 @@
                             <label class="form-label">Last Name</label>
                             <input class="form-control" name="last_name"
                                 value="{{ old('last_name', auth()->user()->last_name) }}" disabled>
-                        </div>
+                        </div> --}}
 
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
@@ -108,11 +116,7 @@
                                 value="{{ old('phone', auth()->user()->phone ?? '') }}" disabled>
                         </div>
 
-                        <div class="col-12">
-                            <label class="form-label">Facility Name</label>
-                            <input class="form-control" name="facility_name"
-                                value="{{ old('facility_name', auth()->user()->facility_name ?? '') }}" disabled>
-                        </div>
+                       
 
 
                         <div class="col-md-4">
@@ -185,7 +189,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <div class="label-sub">Wallet Balance</div>
-                        <div class="display-6 fw-bold">$ {{ number_format(auth()->user()->wallet_balance ?? 0, 2) }}</div>
+                        <div class="display-6 fw-bold"> @money(auth()->user()->wallet_balance)</div>
                     </div>
                     <i class="fa-solid fa-wallet fs-3" style="color:#cbd5e1;"></i>
                 </div>
