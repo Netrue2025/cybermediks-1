@@ -137,7 +137,7 @@
                 <h6 class="mb-2">Financials</h6>
                 <div class="kv">
                     <div class="section-subtle small">Held Amount</div>
-                    <div>$ {{ $heldAmount }}</div>
+                    <div>@money($heldAmount)</div>
 
                     <div class="section-subtle small">Hold Status</div>
                     <div><span

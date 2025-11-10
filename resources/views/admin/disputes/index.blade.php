@@ -146,7 +146,7 @@
                                     class="badge-soft {{ $badge }}">{{ ucwords(str_replace('_', ' ', $d->status)) }}</span>
                             </td>
                             <td>
-                                <div>$ {{ $held }}</div>
+                                <div> @money($held)</div>
                                 <div class="section-subtle small">
                                     <span
                                         class="badge-soft {{ $hBadge }}">{{ str_replace('_', ' ', ucfirst($hstat)) }}</span>

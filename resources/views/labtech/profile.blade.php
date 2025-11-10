@@ -187,7 +187,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <div class="label-sub">Wallet Balance</div>
-                        <div class="display-6 fw-bold">$ {{ number_format(auth()->user()->wallet_balance ?? 0, 2) }}</div>
+                        <div class="display-6 fw-bold">@money(auth()->user()->wallet_balance)</div>
                     </div>
                     <i class="fa-solid fa-wallet fs-3" style="color:#cbd5e1;"></i>
                 </div>
