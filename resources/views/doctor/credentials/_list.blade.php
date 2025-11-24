@@ -17,7 +17,7 @@
             <div>
                 <div class="fw-semibold">{{ $d->type }}</div>
                 <div class="subtle small">
-                    {{ $d->file_name }} • {{ humanSize($d->size) }} • Uploaded {{ $d->created_at->diffForHumans() }}
+                    {{ $d->file_name }} • {{ humanSize($d->size) }} • Uploaded {{ $d->created_at?->diffForHumans() ?? 'N/A' }}
                 </div>
                 <br>
                 @php

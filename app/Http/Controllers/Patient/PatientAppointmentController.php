@@ -8,6 +8,7 @@ use App\Models\AppointmentDispute;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\BalanceService;
 use App\Services\DisputeHoldService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,30 +36,67 @@ class PatientAppointmentController extends Controller
             'reason'       => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Price can be dynamic (doctor_profiles.consult_fee) — simple fetch here:
+        // Get doctor and consult fee
         $doctor = User::where('role', 'doctor')->findOrFail($data['doctor_id']);
-        $price  = optional($doctor->doctorProfile)->consult_fee ?? 0;
+        $consultFee = (float)(optional($doctor->doctorProfile)->consult_fee ?? 0);
 
+        // Check patient balance
+        $patient = $r->user();
+        $patientBalance = (float)($patient->wallet_balance ?? 0);
+
+        if ($consultFee > 0 && $patientBalance < $consultFee) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'insufficient_balance',
+                'message' => 'Insufficient balance. Please fund your account to continue.',
+                'required_amount' => $consultFee,
+                'current_balance' => $patientBalance,
+            ], 422);
+        }
+
+        // Create appointment
         $appt = Appointment::create([
-            'patient_id'    => $r->user()->id,
+            'patient_id'    => $patient->id,
             'doctor_id'     => $data['doctor_id'],
             'type'          => $data['type'],
             'scheduled_at'  => $data['scheduled_at'] ?? null,
             'duration'      => $data['duration'] ?? null,
             'status'        => 'pending',
-            'price'         => $price,
-            'payment_status' => 'unpaid',
+            'price'         => $consultFee,
+            'payment_status' => 'paid',
             'reason'        => $data['reason'] ?? null,
         ]);
+
+        // Process payment immediately after successful appointment creation
+        if ($consultFee > 0) {
+            try {
+                // Create hold first
+                BalanceService::holdAppointment($appt, $consultFee);
+                // Immediately capture the hold (deduct from patient, credit doctor)
+                BalanceService::captureHoldForAppointment($appt);
+            } catch (\Exception $e) {
+                Log::error('Payment processing failed for appointment: ' . $appt->id, [
+                    'error' => $e->getMessage(),
+                    'appointment_id' => $appt->id,
+                ]);
+                // Rollback appointment if payment fails
+                $appt->delete();
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Payment processing failed. Please try again.',
+                ], 500);
+            }
+        }
+
         $redirect = route('patient.dashboard');
 
         if ($data['type'] === 'chat') {
             // check if there is a previous convo with the doctor
-            $conversation = Conversation::where('patient_id', $r->user()->id)->where('doctor_id', $data['doctor_id'])->first();
+            $conversation = Conversation::where('patient_id', $patient->id)->where('doctor_id', $data['doctor_id'])->first();
 
             if (!$conversation) {
                 $conversation = Conversation::create([
-                    'patient_id' => $r->user()->id,
+                    'patient_id' => $patient->id,
                     'doctor_id' => $data['doctor_id'],
                     'appointment_id' => $appt->id,
                     'status' => 'pending'

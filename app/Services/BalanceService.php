@@ -16,8 +16,8 @@ class BalanceService
     {
         return DB::transaction(function () use ($ap, $amount) {
             $hold = WalletHold::create([
-                'payer_user_id' => $ap->patient_id,
-                'payee_user_id' => $ap->doctor_id,
+                'source_user_id' => $ap->patient_id, // patient pays
+                'target_user_id' => $ap->doctor_id,  // doctor receives
                 'amount'        => $amount,
                 'status'        => 'pending',
                 'ref_type'      => 'appointment',
@@ -29,7 +29,7 @@ class BalanceService
                 'user_id'   => $ap->patient_id,
                 'type'      => 'hold',                       // no balance change
                 'amount'    => $amount,
-                'currency'  => 'USD',
+                'currency'  => 'NGN',
                 'purpose'   => 'appointment_hold',
                 'reference' => 'appointment:'.$ap->id,
                 'meta'      => ['hold_id' => $hold->id, 'status' => 'success'],
@@ -49,8 +49,8 @@ class BalanceService
                 'status'   => 'pending',
             ])->lockForUpdate()->firstOrFail();
 
-            $patient = User::whereKey($hold->payer_user_id)->lockForUpdate()->first();
-            $doctor  = User::whereKey($hold->payee_user_id)->lockForUpdate()->first();
+            $patient = User::whereKey($hold->source_user_id)->lockForUpdate()->first();
+            $doctor  = User::whereKey($hold->target_user_id)->lockForUpdate()->first();
 
             if ((float)$patient->wallet_balance < (float)$hold->amount) {
                 throw new InvalidArgumentException('Insufficient patient balance to capture.');
@@ -69,7 +69,7 @@ class BalanceService
                 'user_id'   => $patient->id,
                 'type'      => 'debit',
                 'amount'    => $hold->amount,
-                'currency'  => 'USD',
+                'currency'  => 'NGN',
                 'purpose'   => 'appointment_capture',
                 'reference' => 'appointment:'.$ap->id,
                 'meta'      => ['hold_id' => $hold->id],
@@ -79,7 +79,7 @@ class BalanceService
                 'user_id'   => $doctor->id,
                 'type'      => 'credit',
                 'amount'    => $hold->amount,
-                'currency'  => 'USD',
+                'currency'  => 'NGN',
                 'purpose'   => 'appointment_capture',
                 'reference' => 'appointment:'.$ap->id,
                 'meta'      => ['hold_id' => $hold->id],
@@ -101,10 +101,10 @@ class BalanceService
             $hold->update(['status' => 'released']);
 
             WalletTransaction::create([
-                'user_id'   => $hold->payer_user_id,
+                'user_id'   => $hold->source_user_id,
                 'type'      => 'release',                // no balance change
                 'amount'    => $hold->amount,
-                'currency'  => 'USD',
+                'currency'  => 'NGN',
                 'purpose'   => 'appointment_release',
                 'reference' => 'appointment:'.$ap->id,
                 'meta'      => ['hold_id' => $hold->id],
@@ -127,8 +127,8 @@ class BalanceService
                 throw new InvalidArgumentException('Invalid partial capture amount.');
             }
 
-            $patient = User::whereKey($hold->payer_user_id)->lockForUpdate()->first();
-            $doctor  = User::whereKey($hold->payee_user_id)->lockForUpdate()->first();
+            $patient = User::whereKey($hold->source_user_id)->lockForUpdate()->first();
+            $doctor  = User::whereKey($hold->target_user_id)->lockForUpdate()->first();
 
             if ($captureAmount > 0) {
                 if ((float)$patient->wallet_balance < $captureAmount) {
@@ -143,7 +143,7 @@ class BalanceService
                     'user_id'   => $patient->id,
                     'type'      => 'debit',
                     'amount'    => $captureAmount,
-                    'currency'  => 'USD',
+                    'currency'  => 'NGN',
                     'purpose'   => 'appointment_capture',
                     'reference' => 'appointment:'.$ap->id,
                     'meta'      => ['hold_id' => $hold->id, 'partial' => true],
@@ -153,7 +153,7 @@ class BalanceService
                     'user_id'   => $doctor->id,
                     'type'      => 'credit',
                     'amount'    => $captureAmount,
-                    'currency'  => 'USD',
+                    'currency'  => 'NGN',
                     'purpose'   => 'appointment_capture',
                     'reference' => 'appointment:'.$ap->id,
                     'meta'      => ['hold_id' => $hold->id, 'partial' => true],
@@ -167,7 +167,7 @@ class BalanceService
                     'user_id'   => $patient->id,
                     'type'      => 'release',
                     'amount'    => $releaseAmount,
-                    'currency'  => 'USD',
+                    'currency'  => 'NGN',
                     'purpose'   => 'appointment_release',
                     'reference' => 'appointment:'.$ap->id,
                     'meta'      => ['hold_id' => $hold->id, 'partial' => true],
@@ -184,8 +184,8 @@ class BalanceService
     {
         DB::transaction(function () use ($ap, $amount) {
             $hold    = WalletHold::where(['ref_type'=>'appointment','ref_id'=>$ap->id])->firstOrFail();
-            $patient = User::whereKey($hold->payer_user_id)->lockForUpdate()->first();
-            $doctor  = User::whereKey($hold->payee_user_id)->lockForUpdate()->first();
+            $patient = User::whereKey($hold->source_user_id)->lockForUpdate()->first();
+            $doctor  = User::whereKey($hold->target_user_id)->lockForUpdate()->first();
 
             if ((float)$doctor->wallet_balance < $amount) {
                 throw new InvalidArgumentException('Doctor has insufficient balance to refund.');
@@ -199,7 +199,7 @@ class BalanceService
                 'user_id'   => $doctor->id,
                 'type'      => 'debit',
                 'amount'    => $amount,
-                'currency'  => 'USD',
+                'currency'  => 'NGN',
                 'purpose'   => 'appointment_refund',
                 'reference' => 'appointment:'.$ap->id,
                 'meta'      => ['refund' => true],
@@ -209,7 +209,7 @@ class BalanceService
                 'user_id'   => $patient->id,
                 'type'      => 'credit',
                 'amount'    => $amount,
-                'currency'  => 'USD',
+                'currency'  => 'NGN',
                 'purpose'   => 'appointment_refund',
                 'reference' => 'appointment:'.$ap->id,
                 'meta'      => ['refund' => true],

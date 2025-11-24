@@ -65,6 +65,25 @@
         .subtle {
             color: var(--muted);
         }
+
+        .modal-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border);
+        }
+
+        .countdown-text {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
     </style>
 @endpush
 
@@ -139,27 +158,104 @@
             </div>
         </div>
     </div>
+
+    {{-- Insufficient Balance Modal --}}
+    <div class="modal fade" id="insufficientBalanceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-black">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fa-solid fa-exclamation-triangle text-warning me-2"></i>Insufficient Balance
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">You don't have sufficient funds in your wallet to book this appointment.</p>
+                    <div class="mb-3">
+                        <strong>Required:</strong> ₦<span id="requiredAmount">0.00</span><br>
+                        <strong>Your Balance:</strong> ₦<span id="currentBalance">0.00</span>
+                    </div>
+                    <p class="countdown-text mb-0">
+                        <span id="countdownText">Redirecting to wallet page in <span id="countdown">5</span> seconds...</span>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="{{ route('patient.wallet.index') }}" class="btn btn-gradient" id="fundAccountBtn">
+                        <i class="fa-solid fa-wallet me-2"></i>Fund Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
     <script>
-        $('#apptForm').on('submit', function(e) {
-            e.preventDefault();
-            const $btn = $(this).find('button[type=submit]');
-            lockBtn($btn);
-            $.post(`{{ route('patient.appointments.store') }}`, $(this).serialize())
-                .done(res => {
-                    flash('success', res.message || 'Appointment created');
-                    if (res.redirect) window.location = res.redirect;
-                })
-                .fail(xhr => {
-                    let msg = 'Failed to create appointment';
-                    if (xhr.responseJSON?.errors) {
-                        msg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
-                    } else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
-                    flash('danger', msg);
-                })
-                .always(() => unlockBtn($btn));
-        });
+        (function() {
+            let countdownInterval = null;
+
+            function clearCountdown() {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+            }
+
+            $('#apptForm').on('submit', function(e) {
+                e.preventDefault();
+                const $btn = $(this).find('button[type=submit]');
+                lockBtn($btn);
+                $.post(`{{ route('patient.appointments.store') }}`, $(this).serialize())
+                    .done(res => {
+                        flash('success', res.message || 'Appointment created');
+                        if (res.redirect) window.location = res.redirect;
+                    })
+                    .fail(xhr => {
+                        if (xhr.status === 422 && xhr.responseJSON?.error === 'insufficient_balance') {
+                            // Show insufficient balance modal
+                            const data = xhr.responseJSON;
+                            $('#requiredAmount').text(parseFloat(data.required_amount || 0).toFixed(2));
+                            $('#currentBalance').text(parseFloat(data.current_balance || 0).toFixed(2));
+                            
+                            const modal = new bootstrap.Modal(document.getElementById('insufficientBalanceModal'));
+                            modal.show();
+                            
+                            // Start countdown
+                            let seconds = 5;
+                            const $countdown = $('#countdown');
+                            
+                            clearCountdown();
+                            
+                            countdownInterval = setInterval(() => {
+                                seconds--;
+                                $countdown.text(seconds);
+                                
+                                if (seconds <= 0) {
+                                    clearCountdown();
+                                    window.location.href = '{{ route('patient.wallet.index') }}';
+                                }
+                            }, 1000);
+                            
+                            // Clean up on modal close
+                            $('#insufficientBalanceModal').off('hidden.bs.modal').on('hidden.bs.modal', function() {
+                                clearCountdown();
+                            });
+                            
+                            // Clear countdown when fund account button is clicked
+                            $('#fundAccountBtn').off('click').on('click', function() {
+                                clearCountdown();
+                            });
+                        } else {
+                            let msg = 'Failed to create appointment';
+                            if (xhr.responseJSON?.errors) {
+                                msg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                            } else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                            flash('danger', msg);
+                        }
+                    })
+                    .always(() => unlockBtn($btn));
+            });
+        })();
     </script>
 @endpush
