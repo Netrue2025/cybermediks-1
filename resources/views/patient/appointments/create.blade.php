@@ -176,7 +176,7 @@
                         <strong>Your Balance:</strong> ₦<span id="currentBalance">0.00</span>
                     </div>
                     <p class="countdown-text mb-0">
-                        <span id="countdownText">Redirecting to wallet page in <span id="countdown">5</span> seconds...</span>
+                        <span id="countdownText">Redirecting to wallet page in <span id="countdown">10</span> seconds...</span>
                     </p>
                 </div>
                 <div class="modal-footer">
@@ -222,7 +222,7 @@
                             modal.show();
                             
                             // Start countdown
-                            let seconds = 5;
+                            let seconds = 10;
                             const $countdown = $('#countdown');
                             
                             clearCountdown();
