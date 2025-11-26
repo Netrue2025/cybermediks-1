@@ -314,9 +314,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Revenue (Today)</div>
-                        <div class="metric">${{ number_format($revenueToday, 2, '.', ',') }}</div>
+                        <div class="metric">₦{{ number_format($revenueToday, 2, '.', ',') }}</div>
                     </div>
-                    <div class="pill"><i class="fa-solid fa-dollar-sign fs-5" style="color:#86efac;"></i></div>
+                    <div class="pill"><i class="fa-solid fa-naira-sign fs-5" style="color:#86efac;"></i></div>
                 </div>
             </div>
         </div>
@@ -380,7 +380,7 @@
                                         {{ $rx?->patient?->first_name }} {{ $rx?->patient?->last_name }}
                                         • {{ $order->created_at->diffForHumans() }}
                                         @if ($order->items_subtotal)
-                                            • ${{ number_format($order->items_subtotal, 2, '.', ',') }}
+                                            • ₦{{ number_format($order->items_subtotal, 2, '.', ',') }}
                                         @endif
                                         • {{ ucwords(str_replace('_', ' ', $order->status)) }}
                                     </div>
@@ -435,7 +435,7 @@
                                         {{ $rx?->patient?->first_name }} {{ $rx?->patient?->last_name }}
                                         • Status: {{ ucwords(str_replace('_', ' ', $order->status)) }}
                                         @if ($order->items_subtotal)
-                                            • ${{ number_format($order->items_subtotal, 2, '.', ',') }}
+                                            • ₦{{ number_format($order->items_subtotal, 2, '.', ',') }}
                                         @endif
                                     </div>
                                 </div>

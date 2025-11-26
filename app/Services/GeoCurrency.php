@@ -18,19 +18,15 @@ class GeoCurrency
             return $this->resolvedCurrency;
         }
 
-        $country = $this->countryCodeFromContext();  // NG, US, etc.
-        $this->resolvedCurrency = $country === 'NG' ? 'NGN' : 'USD';
+        // Always use NGN (Naira) for all users
+        $this->resolvedCurrency = 'NGN';
         return $this->resolvedCurrency;
     }
 
     public function convertFromNgn(float $amountNgn, string $toCcy): float
     {
-        if ($toCcy === 'NGN') {
-            return $amountNgn;
-        }
-        // USD per 1 NGN
-        $rate = \App\Services\FlutterwaveRates::ngnToUsd();
-        return $amountNgn * $rate;
+        // Always return the same amount since we're using NGN only
+        return $amountNgn;
     }
 
     public function format(float $amount, ?string $ccy = null): string
@@ -38,8 +34,8 @@ class GeoCurrency
         $ccy = $ccy ?: $this->currencyForCurrentUser();
 
         return match ($ccy) {
-            'USD' => '$' . number_format($amount, 2),
             'NGN' => '₦' . number_format($amount, 2),
+            'USD' => '$' . number_format($amount, 2), // Keep for legacy support
             default => $ccy . ' ' . number_format($amount, 2),
         };
     }

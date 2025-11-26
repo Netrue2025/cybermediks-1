@@ -20,7 +20,7 @@ return new class extends Migration
             $t->decimal('items_subtotal', 12, 2)->nullable();
             $t->decimal('delivery_fee', 12, 2)->nullable();
             $t->decimal('grand_total', 12, 2)->nullable();
-            $t->string('currency', 3)->default('USD');
+            $t->string('currency', 3)->default('NGN');
             $t->json('meta')->nullable(); // dispatcher refs, etc
             $t->timestamps();
             $t->index(['patient_id', 'pharmacy_id', 'status']);

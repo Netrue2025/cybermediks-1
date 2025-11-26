@@ -458,7 +458,7 @@
                                                     {{ $lab->labtech->last_name }}
                                                 @endif
                                                 @if ($lab->price)
-                                                    • ${{ number_format($lab->price, 2) }}
+                                                    • ₦{{ number_format($lab->price, 2) }}
                                                 @endif
                                             </div>
                                         </div>

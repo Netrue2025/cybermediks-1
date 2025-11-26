@@ -168,7 +168,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="me-auto section-subtle">
-                        <span id="quoteTotal" class="price-pill">$0.00</span>
+                        <span id="quoteTotal" class="price-pill">₦0.00</span>
                     </div>
                     <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-success" id="btnConfirmQuotedItems" disabled>Confirm
@@ -216,7 +216,7 @@
                     const badge = i.status ?
                         `<span class="badge-soft ms-1">${i.status.replaceAll('_',' ')}</span>` : '';
                     const price = (i.line_total ?? i.unit_price) ?
-                        `<span class="price-pill ms-2">$${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
+                        `<span class="price-pill ms-2">₦${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
                         '';
                     return `<li class="${bought ? 'opacity-50' : ''}">
                 ${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}
@@ -453,7 +453,7 @@
                     const badge = i.status ?
                         `<span class="badge-soft ms-1">${i.status.replaceAll('_',' ')}</span>` : '';
                     const price = (i.line_total ?? i.unit_price) ?
-                        `<span class="price-pill ms-2">$${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
+                        `<span class="price-pill ms-2">₦${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
                         '';
                     return `<li class="${bought ? 'opacity-50' : ''}">
                 ${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}

@@ -149,7 +149,7 @@
                                 </span>
                             </td>
                             <td>{{ $t->purpose ?: '—' }}</td>
-                            <td class="{{ $amtCls }}">{{ $sign }}${{ number_format($t->amount, 2) }}</td>
+                            <td class="{{ $amtCls }}">{{ $sign }}₦{{ number_format($t->amount, 2) }}</td>
                             <td><code>{{ $t->reference ?: '—' }}</code></td>
                         </tr>
                     @empty

@@ -509,10 +509,10 @@
                                 {{-- <div class="mb-3">
                                     <label class="form-label small subtle mb-1">Consult Fee</label>
                                     <div class="input-icon">
-                                        <span class="input-icon-prefix">$</span>
+                                        <span class="input-icon-prefix">₦</span>
                                         <input id="qFee" type="number" min="0" step="0.01"
                                             class="form-control" value="{{ $profile?->consult_fee }}">
-                                        <span class="input-icon-suffix subtle">USD</span>
+                                        <span class="input-icon-suffix subtle">NGN</span>
                                     </div>
                                 </div>
                                 <div>
@@ -623,7 +623,7 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <div class="label-sub">Wallet Balance</div>
-                                <div class="display-6 fw-bold">$
+                                <div class="display-6 fw-bold">₦
                                     {{ number_format(auth()->user()->wallet_balance ?? 0, 2) }}</div>
                             </div>
                             <i class="fa-solid fa-wallet fs-3" style="color:#cbd5e1;"></i>

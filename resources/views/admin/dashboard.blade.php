@@ -66,7 +66,7 @@
         <div class="col-lg-8">
             <div class="cardx">
                 <div class="subtle">Revenue (Today)</div>
-                <div class="metric">${{ number_format($revenueToday, 2) }}</div>
+                <div class="metric">₦{{ number_format($revenueToday, 2) }}</div>
             </div>
         </div>
     </div>

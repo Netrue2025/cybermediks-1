@@ -314,7 +314,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="fw-medium">${{ number_format($withdrawal->amount, 2) }}
+                                            <span class="fw-medium">₦{{ number_format($withdrawal->amount, 2) }}
                                                 {{ $withdrawal->currency }}</span>
                                         </td>
                                         <td>

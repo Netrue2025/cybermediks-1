@@ -325,9 +325,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Revenue (Today)</div>
-                        <div class="metric">${{ number_format($revenueToday, 2, '.', ',') }}</div>
+                        <div class="metric">₦{{ number_format($revenueToday, 2, '.', ',') }}</div>
                     </div>
-                    <div class="pill"><i class="fa-solid fa-dollar-sign fs-5" style="color:#86bcef;"></i></div>
+                    <div class="pill"><i class="fa-solid fa-naira-sign fs-5" style="color:#86bcef;"></i></div>
                 </div>
             </div>
         </div>
@@ -398,7 +398,7 @@
                                             • {{ $lab->scheduled_at->format('M d, Y g:ia') }}
                                         @endif
                                         @if ($lab->price)
-                                            • ${{ number_format($lab->price, 2, '.', ',') }}
+                                            • ₦{{ number_format($lab->price, 2, '.', ',') }}
                                         @endif
                                     </div>
                                 </div>

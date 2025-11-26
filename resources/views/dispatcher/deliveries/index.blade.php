@@ -91,7 +91,7 @@
         <div class="col-lg-3">
             <div class="cardx">
                 <div class="subtle">Total Dispatch Fees</div>
-                <div class="metric">${{ number_format($sumFees, 2, '.', ',') }}</div>
+                <div class="metric">₦{{ number_format($sumFees, 2, '.', ',') }}</div>
             </div>
         </div>
     </div>
@@ -137,7 +137,7 @@
                             @if (!is_null($rx->dispatcher_price))
                                 <span class="badge-soft">
                                     <i
-                                        class="fa-solid fa-dollar-sign me-1"></i>{{ number_format($rx->dispatcher_price, 2, '.', ',') }}
+                                        class="fa-solid fa-naira-sign me-1"></i>{{ number_format($rx->dispatcher_price, 2, '.', ',') }}</span>
                                 </span>
                             @endif
                         </div>
@@ -152,12 +152,12 @@
                     </div>
                     <div class="text-end">
                         @if (!is_null($rx->total_amount))
-                            <div class="fw-semibold">${{ number_format($rx->total_amount, 2, '.', ',') }}</div>
+                            <div class="fw-semibold">₦{{ number_format($rx->total_amount, 2, '.', ',') }}</div>
                         @else
                             <div class="rx-sub">—</div>
                         @endif
                         <div class="rx-sub">Dispatch Fee:
-                            {{ is_null($rx->dispatcher_price) ? '—' : '$' . number_format($rx->dispatcher_price, 2, '.', ',') }}
+                            {{ is_null($rx->dispatcher_price) ? '—' : '₦' . number_format($rx->dispatcher_price, 2, '.', ',') }}
                         </div>
                     </div>
                 </div>

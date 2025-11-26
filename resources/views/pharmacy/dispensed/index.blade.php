@@ -87,7 +87,7 @@
                 <div class="subtle small">Count</div>
                 <div class="fw-bold">{{ $count }}</div>
                 <div class="subtle small mt-1">Total Amount</div>
-                <div class="fw-bold">${{ number_format($totalAmount, 2, '.', ',') }}</div>
+                <div class="fw-bold">₦{{ number_format($totalAmount, 2, '.', ',') }}</div>
             </div>
         </div>
 

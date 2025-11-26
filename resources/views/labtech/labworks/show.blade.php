@@ -14,7 +14,7 @@
                                 • Scheduled: {{ $lab->scheduled_at->format('M d, Y g:ia') }}
                             @endif
                             @if ($lab->price)
-                                • Price: ${{ number_format($lab->price, 2) }}
+                                • Price: ₦{{ number_format($lab->price, 2) }}
                             @endif
                         </div>
                     </div>
@@ -161,7 +161,7 @@
                         <fieldset class="mt-2" {{ $accepted && !$isFinished ? '' : 'disabled' }}>
                             <label class="form-label small mb-1">Price</label>
                             <div class="input-group input-group-sm" style="max-width:260px;">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₦</span>
                                 <input type="number" step="0.01" min="0" class="form-control" id="priceInput"
                                     value="{{ $lab->price }}">
                                 <button class="btn btn-outline-light" data-once

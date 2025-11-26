@@ -434,7 +434,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="me-auto section-subtle">
-                        <span id="quoteTotal" class="price-pill">$0.00</span>
+                        <span id="quoteTotal" class="price-pill">₦0.00</span>
                     </div>
                     <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-success" id="btnConfirmQuotedItems" disabled>Confirm
@@ -537,7 +537,7 @@
 
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <span id="docStatus" class="badge-soft badge-pending">Offline</span>
-                        <span id="docFee" class="price-pill">$0.00</span>
+                        <span id="docFee" class="price-pill">₦0.00</span>
                         <span id="docDuration" class="badge-soft">—</span>
                     </div>
 
@@ -578,7 +578,7 @@
             if (n === null || n === undefined || n === '') return '—';
             const v = parseFloat(n);
             if (isNaN(v)) return '—';
-            return '$' + v.toFixed(2);
+            return '₦' + v.toFixed(2);
         }
 
         function openDoctorModal(id) {
@@ -973,7 +973,7 @@
                     const badge = i.status ?
                         `<span class="badge-soft ms-1">${i.status.replaceAll('_',' ')}</span>` : '';
                     const price = (i.line_total ?? i.unit_price) ?
-                        `<span class="price-pill ms-2">$${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
+                        `<span class="price-pill ms-2">₦${Number(i.line_total ?? i.unit_price).toFixed(2)}</span>` :
                         '';
                     return `<li class="${bought ? 'opacity-50' : ''}">
                 ${i.drug}${i.dose?` • ${i.dose}`:''}${i.frequency?` • ${i.frequency}`:''}${i.days?` • ${i.days}`:''}${i.directions?` — ${i.directions}`:''}
@@ -1095,8 +1095,8 @@
                     return `
             <tr>
                 <td>${escapeHtml(a.drug || '')}</td>
-                <td class="text-end">$${unit.toFixed(2)}</td>
-                <td class="text-end">$${line.toFixed(2)}</td>
+                <td class="text-end">₦${unit.toFixed(2)}</td>
+                <td class="text-end">₦${line.toFixed(2)}</td>
             </tr>`;
                 }).join('');
 
@@ -1131,7 +1131,7 @@
 
                 $('#quoteBody').html(`${table}${unvBlock}`);
                 const total = Number(q.items_total || 0);
-                $('#quoteTotal').text(`$${total.toFixed(2)}`);
+                $('#quoteTotal').text(`₦${total.toFixed(2)}`);
                 $('#btnConfirmQuotedItems').prop('disabled', total <= 0);
                 $('#quoteBody').append(`
             <div class="small section-subtle">

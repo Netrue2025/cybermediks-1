@@ -15,12 +15,12 @@ return new class extends Migration
             $t->id();
             $t->foreignId('user_id')->constrained()->cascadeOnDelete();
             $t->decimal('amount', 12, 2);
-            $t->string('currency', 10)->default('USD');
+            $t->string('currency', 10)->default('NGN');
             $t->string('status', 30)->default('pending'); // pending, approved, rejected, paid, failed
             $t->string('reference')->unique();           // our idempotency ref
             $t->string('payout_channel')->default('flutterwave');
 
-            // Payout details (USD bank transfer via Flutterwave)
+            // Payout details (NGN bank transfer via Flutterwave)
             $t->string('bank_name')->nullable();
             $t->string('bank_code')->nullable();         // flutterwave account_bank
             $t->string('account_number')->nullable();

@@ -7,16 +7,12 @@ use App\Services\FlutterwaveRates;
 class Price
 {
     /**
-     * Returns ['amount' => float, 'currency' => 'NGN'|'USD']
-     * $countryCode should be ISO2 (e.g., 'NG').
+     * Returns ['amount' => float, 'currency' => 'NGN']
+     * Always returns Naira - no conversion needed
      */
-    public static function presentForUser(float $amountNgn, ?string $countryCode): array
+    public static function toUserCurrency(float $amountNgn): array
     {
-        if (strtoupper((string) $countryCode) === 'NG') {
-            return ['amount' => $amountNgn, 'currency' => 'NGN'];
-        }
-        $rate = FlutterwaveRates::ngnToUsdRate();     // USD per 1 NGN
-        $usd  = $amountNgn * $rate;                   // convert
-        return ['amount' => $usd, 'currency' => 'USD'];
+        // Always use NGN (Naira) for all users
+        return ['amount' => $amountNgn, 'currency' => 'NGN'];
     }
 }

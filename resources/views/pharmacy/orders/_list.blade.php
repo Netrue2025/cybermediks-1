@@ -52,7 +52,7 @@
                     <div class="items-ellipsis">{{ $itemText ?: '—' }}</div>
                 </div>
                 <div class="col">
-                    <strong>${{ number_format((float) ($order->items_subtotal ?? 0), 2, '.', ',') }}</strong>
+                    <strong>₦{{ number_format((float) ($order->items_subtotal ?? 0), 2, '.', ',') }}</strong>
                     @if ($order->status === 'quoted')
                         <div class="cell-sub mt-1">Waiting for your decision</div>
                     @elseif ($order->status === 'patient_confirmed')

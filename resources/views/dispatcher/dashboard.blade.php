@@ -205,9 +205,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="subtle">Revenue (Today)</div>
-                        <div class="metric">${{ number_format($revenueToday, 2, '.', ',') }}</div>
+                        <div class="metric">₦{{ number_format($revenueToday, 2, '.', ',') }}</div>
                     </div>
-                    <div class="pill" aria-hidden="true"><i class="fa-solid fa-dollar-sign fs-5"
+                    <div class="pill" aria-hidden="true"><i class="fa-solid fa-naira-sign fs-5"
                             style="color:#86efac;"></i></div>
                 </div>
             </div>
@@ -247,7 +247,7 @@
                                         class="fa-regular fa-clock me-1"></i>{{ $order->created_at->diffForHumans() }}</span>
                                 @if (!is_null($order->items_subtotal))
                                     <span class="badge-soft"><i
-                                            class="fa-solid fa-dollar-sign me-1"></i>{{ number_format($order->items_subtotal, 2, '.', ',') }}</span>
+                                            class="fa-solid fa-naira-sign me-1"></i>{{ number_format($order->items_subtotal, 2, '.', ',') }}</span>
                                 @endif
                                 <span class="badge-soft badge-warn">{{ ucwords(str_replace('_', ' ', $st)) }}</span>
                             </div>
@@ -270,11 +270,11 @@
                             </div>
                         </div>
                         <div class="d-flex flex-column align-items-end gap-2">
-                            <span>Delivery Fee: <b>${{ $order->dispatcher_price }}</b></span>
+                            <span>Delivery Fee: <b>₦{{ $order->dispatcher_price }}</b></span>
                             {{-- @if ($canSetFee)
                                 <label for="dspFee{{ $order->id }}" class="visually-hidden">Delivery fee</label>
                                 <div class="input-group input-group-sm" style="width:220px;">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">₦</span>
                                     <input type="number" step="0.01" min="0" class="form-control"
                                         value="{{ $order->dispatcher_price }}" id="dspFee{{ $order->id }}"
                                         placeholder="Delivery fee" autocomplete="off">
@@ -333,7 +333,7 @@
                                     class="badge-soft {{ $st === 'dispatcher_price_confirm' ? 'badge-ok' : 'badge-note' }}">{{ ucwords(str_replace('_', ' ', $st)) }}</span>
                                 @if (!is_null($order->dispatcher_price))
                                     <span class="badge-soft"><i
-                                            class="fa-solid fa-dollar-sign me-1"></i>{{ number_format($order->dispatcher_price, 2, '.', ',') }}</span>
+                                            class="fa-solid fa-naira-sign me-1"></i>{{ number_format($order->dispatcher_price, 2, '.', ',') }}</span>
                                 @endif
                             </div>
                             <div class="subtle small mt-2">
@@ -344,11 +344,11 @@
                             </div>
                         </div>
                         <div class="d-flex flex-column align-items-end gap-2">
-                            <span>Delivery Fee: ${{ $order->dispatcher_price }}</span>
+                            <span>Delivery Fee: ₦{{ $order->dispatcher_price }}</span>
                             {{-- @if ($canSetFee)
                                 <label for="dspFee{{ $order->id }}" class="visually-hidden">Delivery fee</label>
                                 <div class="input-group input-group-sm" style="width:220px;">
-                                    <span class="input-group-text">$</span>
+                                    <span class="input-group-text">₦</span>
                                     <input type="number" step="0.01" min="0" class="form-control"
                                         value="{{ $order->dispatcher_price }}" id="dspFee{{ $order->id }}"
                                         placeholder="Delivery fee" autocomplete="off">

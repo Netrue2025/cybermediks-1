@@ -308,7 +308,7 @@
                         <div class="subtle">Total Earnings</div>
                         <div class="metric">@money($earnings)</div>
                     </div>
-                    <div class="pill"><i class="fa-solid fa-dollar-sign fs-5" style="color:#86bcef;"></i></div>
+                    <div class="pill"><i class="fa-solid fa-naira-sign fs-5" style="color:#86bcef;"></i></div>
                 </div>
             </div>
         </div>

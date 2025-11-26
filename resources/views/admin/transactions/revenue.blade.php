@@ -83,17 +83,17 @@
         <div class="d-flex flex-wrap gap-4">
             <div>
                 <div class="section-subtle small">Total Credits</div>
-                <div class="amt amt-pos">${{ number_format($totals->credits ?? 0, 2) }}</div>
+                <div class="amt amt-pos">₦{{ number_format($totals->credits ?? 0, 2) }}</div>
             </div>
             <div>
                 <div class="section-subtle small">Total Debits</div>
-                <div class="amt amt-neg">-${{ number_format($totals->debits ?? 0, 2) }}</div>
+                <div class="amt amt-neg">-₦{{ number_format($totals->debits ?? 0, 2) }}</div>
             </div>
             <div>
                 <div class="section-subtle small">Net</div>
                 @php $net = (float)($totals->net ?? 0); @endphp
                 <div class="amt {{ $net >= 0 ? 'amt-pos' : 'amt-neg' }}">
-                    {{ $net >= 0 ? '' : '-' }}${{ number_format(abs($net), 2) }}</div>
+                    {{ $net >= 0 ? '' : '-' }}₦{{ number_format(abs($net), 2) }}</div>
             </div>
         </div>
     </div>
@@ -147,10 +147,10 @@
                                 <div class="section-subtle small">{{ $iso }}</div>
                             </td>
                             <td><span class="badge-soft">{{ ucfirst($row->role) }}</span></td>
-                            <td class="text-end amt amt-pos">${{ number_format($row->credits, 2) }}</td>
-                            <td class="text-end amt amt-neg">-${{ number_format($row->debits, 2) }}</td>
+                            <td class="text-end amt amt-pos">₦{{ number_format($row->credits, 2) }}</td>
+                            <td class="text-end amt amt-neg">-₦{{ number_format($row->debits, 2) }}</td>
                             <td class="text-end {{ $netCls }}">
-                                {{ $net >= 0 ? '' : '-' }}${{ number_format(abs($net), 2) }}</td>
+                                {{ $net >= 0 ? '' : '-' }}₦{{ number_format(abs($net), 2) }}</td>
                             <td class="text-end">{{ number_format($row->tx_count) }}</td>
                             <td class="section-subtle small">{{ \Carbon\Carbon::parse($row->last_tx_at)->diffForHumans() }}
                             </td>

@@ -122,7 +122,7 @@
                 <div class="mb-2">
                     <label class="form-label small subtle">Total Amount</label>
                     <div class="input-icon">
-                        <span class="input-icon-prefix">$</span>
+                        <span class="input-icon-prefix">₦</span>
                         <input class="form-control" id="totalAmount" type="number" step="0.01" min="0"
                             value="{{ $rx->total_amount }}" {{ $st === 'pending' ? '' : 'disabled' }}>
                     </div>
@@ -145,7 +145,7 @@
                                 href="tel:{{ $rx->dispatcher->phone }}">{{ $rx->dispatcher->phone }}</a>
                         @endif
                         @if (!is_null($rx->dispatcher_price))
-                            • Delivery fee: ${{ number_format($rx->dispatcher_price, 2, '.', ',') }}
+                            • Delivery fee: ₦{{ number_format($rx->dispatcher_price, 2, '.', ',') }}
                         @endif
                     </div>
                 @endif

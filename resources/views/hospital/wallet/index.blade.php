@@ -66,7 +66,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Amount (USD)</label>
+                        <label class="form-label">Amount (NGN)</label>
                         <input id="wdAmount" type="number" min="5" step="0.01" class="form-control"
                             placeholder="20.00">
                         <span>Fee: <b id="feeDisplay">0.00</b></span>
@@ -81,7 +81,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Bank Code (Flutterwave)</label>
-                            <input id="wdBankCode" class="form-control" placeholder="Bank code for USD route">
+                            <input id="wdBankCode" class="form-control" placeholder="Bank code for NGN route">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Account Number</label>
@@ -102,7 +102,7 @@
                     </div>
 
                     <div class="small subtle mt-2">
-                        * Ensure details are correct. International USD routes may require routing and/or SWIFT.
+                        * Ensure details are correct. International NGN routes may require routing and/or SWIFT.
                     </div>
 
                 </div>
@@ -156,7 +156,7 @@
                 const payload = {
                     _token: `{{ csrf_token() }}`,
                     amount: parseFloat($('#wdAmount').val()),
-                    currency: 'USD',
+                    currency: 'NGN',
                     bank_name: $('#wdBankName').val(),
                     bank_code: $('#wdBankCode').val(),
                     account_number: $('#wdAccountNumber').val(),
@@ -165,7 +165,7 @@
                     swift_code: $('#wdSwift').val(),
                 };
                 if (isNaN(payload.amount) || payload.amount < 5) {
-                    flash('danger', 'Enter at least $5');
+                    flash('danger', 'Enter at least ₦5');
                     return unlockBtn($btn);
                 }
                 $.post(`{{ route('wallet.withdraw') }}`, payload)

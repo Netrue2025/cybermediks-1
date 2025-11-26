@@ -104,10 +104,10 @@
                             <div class="subtle small">
                                 Qty: {{ $it->quantity ?? 1 }}
                                 @if (!is_null($it->unit_price))
-                                    • Unit: ${{ number_format($it->unit_price, 2, '.', ',') }}
+                                    • Unit: ₦{{ number_format($it->unit_price, 2, '.', ',') }}
                                 @endif
                                 @if (!is_null($it->line_total))
-                                    • Line: ${{ number_format($it->line_total, 2, '.', ',') }}
+                                    • Line: ₦{{ number_format($it->line_total, 2, '.', ',') }}
                                 @endif
                                 @if ($it->status)
                                     • {{ ucwords(str_replace('_', ' ', $it->status)) }}
@@ -127,7 +127,7 @@
 
                 <div class="mb-2">
                     <div class="subtle small">Items Subtotal</div>
-                    <div class="fs-5 fw-bold">${{ number_format((float) ($order->items_subtotal ?? 0), 2, '.', ',') }}</div>
+                    <div class="fs-5 fw-bold">₦{{ number_format((float) ($order->items_subtotal ?? 0), 2, '.', ',') }}</div>
                     @if ($order->status === 'quoted')
                         <div class="hint mt-1">Waiting for your decision (accept / reject).</div>
                     @elseif ($order->status === 'patient_confirmed')
@@ -145,7 +145,7 @@
                                 href="tel:{{ $order->dispatcher->phone }}">{{ $order->dispatcher->phone }}</a>
                         @endif
                         @if (!is_null($order->prescription->dispatcher_price))
-                            • Delivery fee: ${{ number_format($order->prescription->dispatcher_price, 2, '.', ',') }}
+                            • Delivery fee: ₦{{ number_format($order->prescription->dispatcher_price, 2, '.', ',') }}
                         @endif
                     </div>
                 @endif

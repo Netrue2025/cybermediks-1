@@ -16,7 +16,7 @@ return new class extends Migration
             $t->foreignId('user_id')->constrained()->cascadeOnDelete();
             $t->enum('type', ['credit', 'debit']);
             $t->decimal('amount', 10, 2);
-            $t->string('currency', 3)->default('USD');
+            $t->string('currency', 3)->default('NGN');
             $t->string('purpose')->nullable(); // "consultation", "topup", etc.
             $t->string('reference')->nullable()->index();
             $t->json('meta')->nullable();

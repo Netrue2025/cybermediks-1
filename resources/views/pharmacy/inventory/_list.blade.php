@@ -19,7 +19,7 @@
                 <div>{{ $it->unit ?: '—' }}</div>
                 <div>
                     <div class="input-icon">
-                        <span class="input-icon-prefix">$</span>
+                        <span class="input-icon-prefix">₦</span>
                         <input data-price-edit="{{ $it->id }}" type="number" step="0.01" min="0"
                             class="form-control" value="{{ $it->price }}">
                     </div>

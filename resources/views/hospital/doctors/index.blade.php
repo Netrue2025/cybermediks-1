@@ -181,7 +181,7 @@
                                             {{ $p?->is_available ?? false ? 'Available' : 'Unavailable' }}
                                         </span>
                                     </td>
-                                    <td><span class="pill-money">${{ number_format($p->consult_fee ?? 0, 2) }}</span></td>
+                                    <td><span class="pill-money">₦{{ number_format($p->consult_fee ?? 0, 2) }}</span></td>
                                     <td>{{ $p->avg_duration ?? '—' }}</td>
                                     <td class="text-end row-actions">
                                         <div class="btn-group">
@@ -412,7 +412,7 @@
                 const $rowBtn = $(`[data-edit-doctor][data-doctor-id="${docId}"]`);
                 const $tr     = $rowBtn.closest('tr');
                 $tr.find('.doc-title').text(res.profile.title ?? '—');
-                $tr.find('td:nth-child(5) .pill-money').text(`$${Number(res.profile.consult_fee ?? 0).toFixed(2)}`);
+                $tr.find('td:nth-child(5) .pill-money').text(`₦${Number(res.profile.consult_fee ?? 0).toFixed(2)}`);
                 $tr.find('td:nth-child(6)').text(res.profile.avg_duration ?? '—');
 
                 // Also refresh the data-* cache on the Edit button

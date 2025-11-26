@@ -20,7 +20,7 @@ class OrderFactory
                     'patient_id'      => $rx->patient_id,
                     'pharmacy_id'     => $pharmacyId,
                     'status'          => 'pending',
-                    'currency'        => 'USD',
+                    'currency'        => 'NGN',
                 ]);
 
                 // copy Rx items -> order_items

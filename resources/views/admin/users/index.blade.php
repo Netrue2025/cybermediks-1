@@ -202,7 +202,7 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="pill-money">${{ number_format($u->wallet_balance ?? 0, 2) }}</span>
+                                <span class="pill-money">₦{{ number_format($u->wallet_balance ?? 0, 2) }}</span>
                             </td>
                             <td class="text-end row-actions">
                                 <div class="btn-group">

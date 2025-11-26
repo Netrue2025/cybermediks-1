@@ -207,7 +207,7 @@
                                             {{ $p?->is_available ?? false ? 'Available' : 'Unavailable' }}
                                         </span>
                                     </td>
-                                    <td><span class="pill-money">${{ number_format($p->consult_fee ?? 0, 2) }}</span></td>
+                                    <td><span class="pill-money">₦{{ number_format($p->consult_fee ?? 0, 2) }}</span></td>
                                     <td>{{ $p->avg_duration ?? '—' }}</td>
                                     <td class="text-end row-actions">
                                         <div class="btn-group">

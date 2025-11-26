@@ -99,7 +99,7 @@
 
                 const amt = parseFloat($('#addAmount').val());
                 if (isNaN(amt) || amt < 5) {
-                    flash('danger', 'Enter at least $5');
+                    flash('danger', 'Enter at least ₦5');
                     return unlockBtn($btn);
                 }
 

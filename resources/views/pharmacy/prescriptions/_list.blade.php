@@ -70,7 +70,7 @@
                 <div class="rx-col">
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-icon" style="width:160px">
-                            <span class="input-icon-prefix">$</span>
+                            <span class="input-icon-prefix">₦</span>
                             <input type="number" step="0.01" min="0" class="form-control"
                                 data-amount-input="{{ $rx->id }}" value="{{ $rx->total_amount }}"
                                 {{ $canEditAmount ? '' : 'disabled' }}>

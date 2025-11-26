@@ -129,7 +129,7 @@
                                         <div class="section-subtle small">
                                             {{ \Illuminate\Support\Str::limit($p->description, 60) }}</div>
                                     </td>
-                                    <td><span class="pill-money">${{ number_format($p->price, 2) }}</span></td>
+                                    <td><span class="pill-money">₦{{ number_format($p->price, 2) }}</span></td>
                                     <td>
                                         @if ($p->link)
                                             <a href="{{ $p->link }}" target="_blank"
@@ -221,7 +221,7 @@
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Price (USD)</label>
+                        <label class="form-label">Price (NGN)</label>
                         <input name="price" type="number" step="0.01" min="0"
                             class="form-control @error('price') is-invalid @enderror"
                             value="{{ old('price', $editing->price ?? '0.00') }}" required>

@@ -108,7 +108,7 @@
         <div class="col-lg-3">
             <div class="kpi">
                 <div class="subtle">Revenue</div>
-                <div class="val">${{ number_format($revenue, 2, '.', ',') }}</div>
+                <div class="val">₦{{ number_format($revenue, 2, '.', ',') }}</div>
             </div>
         </div>
         <div class="col-lg-3">
