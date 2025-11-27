@@ -24,6 +24,7 @@ class WalletController extends Controller
 
         $transactions = WalletTransaction::with([])
             ->forUser($user->id)
+            ->whereNotIn('type', ['hold'])
             ->latestFirst()
             ->paginate(10)
             ->withQueryString();
@@ -43,7 +44,7 @@ class WalletController extends Controller
         ]);
 
         $user = Auth::user();
-        $currency = strtoupper($data['currency'] ?? 'USD');
+        $currency = strtoupper($data['currency'] ?? 'NGN');
 
         // Compute current balance to prevent overdraft
         $credits = WalletTransaction::forUser($user->id)->where('type', 'credit')->sum('amount');
@@ -221,7 +222,7 @@ class WalletController extends Controller
         }
 
         $amount   = (float)($data['amount'] ?? 0);
-        $currency = $data['currency'] ?? 'USD';
+        $currency = $data['currency'] ?? 'NGN';
         $user     = Auth::user();
 
         // Idempotent credit (within a transaction)

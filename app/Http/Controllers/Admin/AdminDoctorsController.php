@@ -3,10 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Models\AppointmentDispute;
+use App\Models\Conversation;
 use App\Models\Country;
 use App\Models\DoctorCredential;
+use App\Models\LabworkRequest;
+use App\Models\Message;
+use App\Models\Prescription;
 use App\Models\User;
+use App\Models\WalletHold;
+use App\Models\WalletTransaction;
+use App\Models\WithdrawalRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AdminDoctorsController extends Controller
 {
@@ -106,5 +117,101 @@ class AdminDoctorsController extends Controller
             ->get();
 
         return view('admin.doctors._credentials', compact('doctor', 'docs'));
+    }
+
+    public function deleteDoctor($id)
+    {
+        $doctor = User::where('id', $id)
+            ->where('role', 'doctor')
+            ->first();
+        
+        if (!$doctor) {
+            return response()->json(['ok' => false, 'message' => 'Doctor not found'], 404);
+        }
+        
+        // Prevent deleting yourself if you're a doctor (though admins shouldn't be doctors)
+        if ($doctor->id === Auth::id()) {
+            return response()->json(['ok' => false, 'message' => 'You cannot delete yourself'], 422);
+        }
+        
+        try {
+            DB::transaction(function () use ($doctor) {
+                $doctorId = $doctor->id;
+                
+                // First, handle foreign key constraint: if this doctor is referenced as a hospital,
+                // set hospital_id to null for all doctors that reference it
+                DB::table('users')
+                    ->where('hospital_id', $doctorId)
+                    ->update(['hospital_id' => null]);
+                
+                // Also set this doctor's hospital_id to null if it has one
+                if ($doctor->hospital_id) {
+                    $doctor->hospital_id = null;
+                    $doctor->save();
+                }
+                
+                // Delete doctor-specific data
+                DB::table('doctor_profiles')->where('doctor_id', $doctorId)->delete();
+                DB::table('doctor_schedules')->where('doctor_id', $doctorId)->delete();
+                DB::table('doctor_timeoffs')->where('doctor_id', $doctorId)->delete();
+                DB::table('doctor_credentials')->where('doctor_id', $doctorId)->delete();
+                DB::table('doctor_specialty')->where('doctor_id', $doctorId)->delete();
+                
+                // Delete appointments where doctor is involved
+                $appointmentIds = DB::table('appointments')->where('doctor_id', $doctorId)->pluck('id');
+                if ($appointmentIds->isNotEmpty()) {
+                    // Delete appointment disputes
+                    DB::table('appointment_disputes')->whereIn('appointment_id', $appointmentIds)->delete();
+                    // Delete appointments
+                    DB::table('appointments')->where('doctor_id', $doctorId)->delete();
+                }
+                
+                // Delete prescriptions where doctor is involved
+                $prescriptionIds = DB::table('prescriptions')->where('doctor_id', $doctorId)->pluck('id');
+                if ($prescriptionIds->isNotEmpty()) {
+                    // Delete prescription items
+                    DB::table('prescription_items')->whereIn('prescription_id', $prescriptionIds)->delete();
+                    // Delete orders related to prescriptions
+                    $orderIds = DB::table('orders')->whereIn('prescription_id', $prescriptionIds)->pluck('id');
+                    if ($orderIds->isNotEmpty()) {
+                        DB::table('order_items')->whereIn('order_id', $orderIds)->delete();
+                        DB::table('orders')->whereIn('prescription_id', $prescriptionIds)->delete();
+                    }
+                    // Delete prescriptions
+                    DB::table('prescriptions')->where('doctor_id', $doctorId)->delete();
+                }
+                
+                // Delete conversations where doctor is involved
+                $conversationIds = DB::table('conversations')->where('doctor_id', $doctorId)->pluck('id');
+                if ($conversationIds->isNotEmpty()) {
+                    // Delete messages in those conversations
+                    DB::table('messages')->whereIn('conversation_id', $conversationIds)->delete();
+                    // Delete conversations
+                    DB::table('conversations')->where('doctor_id', $doctorId)->delete();
+                }
+                
+                // Delete messages sent by doctor
+                DB::table('messages')->where('sender_id', $doctorId)->delete();
+                
+                // Delete wallet transactions
+                DB::table('wallet_transactions')->where('user_id', $doctorId)->delete();
+                
+                // Delete wallet holds where doctor is source or target
+                DB::table('wallet_holds')->where('source_user_id', $doctorId)->orWhere('target_user_id', $doctorId)->delete();
+                
+                // Delete withdrawal requests
+                DB::table('withdrawal_requests')->where('user_id', $doctorId)->delete();
+                
+                // Delete labwork requests where doctor is labtech
+                DB::table('labwork_requests')->where('labtech_id', $doctorId)->delete();
+                
+                // Finally, delete the doctor user record
+                $doctor->delete();
+            });
+            
+            return response()->json(['ok' => true, 'message' => 'Doctor and all related data deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['ok' => false, 'message' => 'Failed to delete doctor: ' . $e->getMessage()], 500);
+        }
     }
 }

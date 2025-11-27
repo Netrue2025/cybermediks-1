@@ -41,7 +41,7 @@ class PharmacyWalletController extends Controller
         ]);
 
         $user = Auth::user();
-        $currency = strtoupper($data['currency'] ?? 'USD');
+        $currency = strtoupper($data['currency'] ?? 'NGN');
 
         // TODO: integrate your payment gateway; for now we demo-credit immediately.
         $tx = WalletTransaction::create([
@@ -67,7 +67,7 @@ class PharmacyWalletController extends Controller
         ]);
 
         $user = Auth::user();
-        $currency = strtoupper($data['currency'] ?? 'USD');
+        $currency = strtoupper($data['currency'] ?? 'NGN');
 
         // Compute current balance to prevent overdraft
         $credits = WalletTransaction::forUser($user->id)->where('type', 'credit')->sum('amount');

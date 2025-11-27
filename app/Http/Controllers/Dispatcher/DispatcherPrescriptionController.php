@@ -85,7 +85,7 @@ class DispatcherPrescriptionController extends Controller
         WalletTransaction::create([
             'user_id' => $patient->id,
             'amount' => -$fee,
-            'currency' => 'USD',
+            'currency' => 'NGN',
             'type' => 'debit',
             'reference' => uniqid('txn_'),
             'purpose' => "Payment for prescription delivery with ID {$rx->id}",
@@ -94,7 +94,7 @@ class DispatcherPrescriptionController extends Controller
         WalletTransaction::create([
             'user_id' => $dispatcher->id,
             'amount' => $fee,
-            'currency' => 'USD',
+            'currency' => 'NGN',
             'type' => 'credit',
             'reference' => uniqid('txn_'),
             'purpose' => "Payment received prescription delivery with ID {$rx->id}",

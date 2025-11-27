@@ -200,6 +200,12 @@
                                                 data-specialties='@json($d->specialties->pluck('id'))'>
                                                 <i class="fa-regular fa-pen-to-square me-1"></i> Edit
                                             </button>
+
+                                            <button type="button" class="btn btn-outline-danger btn-sm" data-delete-doctor
+                                                data-doctor-id="{{ $d->id }}"
+                                                data-doctor-name="{{ $d->first_name }} {{ $d->last_name }}">
+                                                <i class="fa-regular fa-trash-can me-1"></i> Delete
+                                            </button>
                                         </div>
                                     </td>
 
@@ -292,7 +298,7 @@
 
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label small">Consultation Fee ($)</label>
+                                <label class="form-label small">Consultation Fee (₦)</label>
                                 <input type="number" step="0.01" min="0" class="form-control"
                                     name="consult_fee" id="ed_fee">
                             </div>
@@ -440,6 +446,43 @@
         // plug into your Toastify or Bootstrap alert; for quick demo:
         console.log(`[${type}] ${text}`);
     };
+
+    // Delete doctor functionality
+    $(document).on('click', '[data-delete-doctor]', function() {
+        const $btn = $(this);
+        const doctorId = $btn.data('doctor-id');
+        const doctorName = $btn.data('doctor-name');
+        
+        if (!confirm(`Are you sure you want to delete ${doctorName}? This action cannot be undone.`)) {
+            return;
+        }
+        
+        $btn.prop('disabled', true);
+        
+        $.ajax({
+            url: `{{ route('hospital.doctors.delete', ':id') }}`.replace(':id', doctorId),
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        })
+        .done(function(res) {
+            if (res.ok) {
+                $btn.closest('tr').fadeOut(300, function() {
+                    $(this).remove();
+                });
+                showToast(res.message || 'Doctor deleted successfully', 'success');
+            } else {
+                showToast(res.message || 'Failed to delete doctor', 'error');
+                $btn.prop('disabled', false);
+            }
+        })
+        .fail(function(xhr) {
+            const msg = xhr.responseJSON?.message || 'Failed to delete doctor';
+            showToast(msg, 'error');
+            $btn.prop('disabled', false);
+        });
+    });
 })();
 </script>
 @endpush

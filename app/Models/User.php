@@ -61,7 +61,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'dob' => 'date',
             'password' => 'hashed',
-            'country_id' => 'integer'
+            'country_id' => 'integer',
+            'wallet_balance' => 'decimal:2'
         ];
     }
 

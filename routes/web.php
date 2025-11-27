@@ -303,11 +303,14 @@ Route::middleware(['auth', 'verified', 'mustVerify', 'role:admin'])->prefix('adm
 
     Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
     Route::post('/users/{user}/toggle', [AdminUsersController::class, 'toggleActive'])->name('users.toggle');
+    Route::delete('/users/{id}', [AdminUsersController::class, 'deleteUser'])->name('users.delete');
 
     Route::get('/doctors', [AdminDoctorsController::class, 'index'])->name('doctors.index');
     Route::get('/doctors/{doctor}/credentials', [AdminDoctorsController::class, 'credentials'])->name('doctors.credentials');
     Route::post('/doctors/{id}/availability', [AdminDoctorsController::class, 'availability'])->name('doctors.availability');
     Route::post('/doctors/{id}/approve-credential', [AdminDoctorsController::class, 'approveCredential'])->name('doctors.approveCredential');
+    Route::delete('/doctors/{id}', [AdminDoctorsController::class, 'deleteDoctor'])->name('doctors.delete');
+
 
     Route::get('/pharmacies', [AdminPharmaciesController::class, 'index'])->name('pharmacies.index');
     Route::get('/pharmacies/{pharmacy}/profile', [AdminPharmaciesController::class, 'profile'])->name('pharmacies.profile');
@@ -428,7 +431,9 @@ Route::middleware(['auth', 'verified', 'mustVerify', 'role:hospital'])->prefix('
     Route::get('/doctors', [HospitalDashboardController::class, 'doctorIndex'])->name('doctors.index');
     Route::post('/doctors/profile/update/{docId}', [HospitalDashboardController::class, 'updateDoctorProfile'])->name('doctors.profile.update');
     Route::post('/doctors/create', [HospitalDashboardController::class, 'register'])->name('doctors.create');
+    Route::delete('/doctors/{id}', [HospitalDashboardController::class, 'deleteDoctor'])->name('doctors.delete');
     Route::get('/doctors/{doctor}/credentials', [HospitalDashboardController::class, 'credentials'])->name('doctors.credentials');
+
 
     // WALLETS
     Route::get('/wallet', [HospitalWalletController::class, 'index'])->name('wallet.index');

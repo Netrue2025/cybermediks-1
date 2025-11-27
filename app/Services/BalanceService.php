@@ -131,9 +131,7 @@ class BalanceService
             $doctor  = User::whereKey($hold->target_user_id)->lockForUpdate()->first();
 
             if ($captureAmount > 0) {
-                if ((float)$patient->wallet_balance < $captureAmount) {
-                    throw new InvalidArgumentException('Insufficient patient balance for partial capture.');
-                }
+
                 $patient->wallet_balance = (float)$patient->wallet_balance - $captureAmount;
                 $doctor->wallet_balance  = (float)$doctor->wallet_balance  + $captureAmount;
                 $patient->save();
@@ -186,10 +184,6 @@ class BalanceService
             $hold    = WalletHold::where(['ref_type'=>'appointment','ref_id'=>$ap->id])->firstOrFail();
             $patient = User::whereKey($hold->source_user_id)->lockForUpdate()->first();
             $doctor  = User::whereKey($hold->target_user_id)->lockForUpdate()->first();
-
-            if ((float)$doctor->wallet_balance < $amount) {
-                throw new InvalidArgumentException('Doctor has insufficient balance to refund.');
-            }
 
             $doctor->wallet_balance  = (float)$doctor->wallet_balance  - $amount;
             $patient->wallet_balance = (float)$patient->wallet_balance + $amount;

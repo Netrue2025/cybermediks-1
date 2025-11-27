@@ -698,7 +698,7 @@
                 </span>
                 ${specs ? `<span class="chip ms-2">${specs}</span>` : ''}
                 <div class="mt-2">${next}</div>
-                <div class="mt-2">Charges: ${d.charges}</div>
+                <div class="mt-2">Charges: ₦ ${d.charges}</div>
                 <div class="mt-2">Duration: ${d.duration} mins</div>
             </div>
             <div class="d-flex gap-2">
@@ -1160,11 +1160,47 @@
                             } catch (e) {}
                         })
                         .fail(xhr => {
-                            if (typeof flash === 'function') flash('danger', xhr.responseJSON?.message ||
-                                'Failed to confirm');
+                            // Check for insufficient balance error
+                            if (xhr.status === 422 && xhr.responseJSON?.error === 'insufficient_balance') {
+                                const data = xhr.responseJSON;
+                                
+                                // Hide quote modal first
+                                bootstrap.Modal.getOrCreateInstance(document.getElementById('quoteModal')).hide();
+                                
+                                // Show custom insufficient balance alert
+                                const message = `
+                                    <div class="alert alert-warning">
+                                        <h5><i class="fa-solid fa-exclamation-triangle me-2"></i>Insufficient Wallet Balance</h5>
+                                        <p>You don't have enough funds in your wallet to complete this purchase.</p>
+                                        <div class="mb-2">
+                                            <strong>Required:</strong> ₦${parseFloat(data.required_amount || 0).toFixed(2)}<br>
+                                            <strong>Your Balance:</strong> ₦${parseFloat(data.current_balance || 0).toFixed(2)}
+                                        </div>
+                                        <p class="mb-3">Please choose one of the following options:</p>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ route('patient.wallet.index') }}" class="btn btn-primary">
+                                                <i class="fa-solid fa-wallet me-1"></i> Fund Wallet
+                                            </a>
+                                            <button class="btn btn-secondary" onclick="alert('Payment on Delivery option will be available soon')">
+                                                <i class="fa-solid fa-truck me-1"></i> Payment on Delivery
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                if (typeof flash === 'function') {
+                                    flash('warning', message);
+                                } else {
+                                    alert(data.message || 'Insufficient balance. Please fund your wallet.');
+                                }
+                            } else {
+                                if (typeof flash === 'function') flash('danger', xhr.responseJSON?.message ||
+                                    'Failed to confirm');
+                            }
                         })
                         .always(() => unlockBtn($btn));
                 });
+
 
             function escapeHtml(s) {
                 return String(s || '')

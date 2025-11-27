@@ -133,7 +133,7 @@ class PharmacyPrescriptionController extends Controller
                 WalletTransaction::create([
                     'user_id' => $patient->id,
                     'amount' => -$fee,
-                    'currency' => 'USD',
+                    'currency' => 'NGN',
                     'type' => 'debit',
                     'reference' => uniqid('txn_'),
                     'purpose' => "Payment for prescription ID {$rx->id}",
@@ -142,7 +142,7 @@ class PharmacyPrescriptionController extends Controller
                 WalletTransaction::create([
                     'user_id' => $pharmcy->id,
                     'amount' => $fee,
-                    'currency' => 'USD',
+                    'currency' => 'NGN',
                     'type' => 'credit',
                     'reference' => uniqid('txn_'),
                     'purpose' => "Payment received for prescription ID {$rx->id}",

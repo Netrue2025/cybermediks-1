@@ -19,13 +19,14 @@ class DisputeHoldService
         return DB::transaction(function () use ($ap, $amount, $patientId, $doctorId, $disputeId) {
             $doctor  = User::whereKey($doctorId)->lockForUpdate()->firstOrFail();
 
-            if ((float)$doctor->wallet_balance < $amount) {
-                throw new InvalidArgumentException('Doctor has insufficient balance to place dispute hold.');
-            }
+            // Deduct from doctor's wallet immediately 
+             DB::update(
+                "UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?",
+                [(float)$amount, $doctor->id]
+            );
 
-            // Deduct from doctor's wallet immediately
-            $doctor->wallet_balance = (float)$doctor->wallet_balance - $amount;
-            $doctor->save();
+            // Refresh to get the updated value from database
+            $doctor->refresh();
 
             // Create hold
             $hold = WalletHold::create([

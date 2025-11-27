@@ -187,7 +187,7 @@ class LabtechLabworkController extends Controller
                     WalletTransaction::create([
                         'user_id'   => $patient->id,
                         'amount'    => -$fee,
-                        'currency'  => 'USD',
+                        'currency'  => 'NGN',
                         'type'      => 'debit',
                         'reference' => $ref . '-DEBIT',
                         'purpose'   => "Labwork fee for request ID {$lab->id}",
@@ -196,7 +196,7 @@ class LabtechLabworkController extends Controller
                     WalletTransaction::create([
                         'user_id'   => $labtech->id,
                         'amount'    => $fee,
-                        'currency'  => 'USD',
+                        'currency'  => 'NGN',
                         'type'      => 'credit',
                         'reference' => $ref . '-CREDIT',
                         'purpose'   => "Labwork fee received for request ID {$lab->id}",

@@ -206,20 +206,11 @@
                             </td>
                             <td class="text-end row-actions">
                                 <div class="btn-group">
-                                    {{-- <a href="{{ route('admin.users.show', $u) }}" class="btn btn-outline-light btn-sm">
-                                        <i class="fa-regular fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.users.edit', $u) }}" class="btn btn-outline-light btn-sm">
-                                        <i class="fa-regular fa-pen-to-square"></i>
-                                    </a> --}}
-                                    {{-- Optional: quick toggle active via POST if you have the route
-                                <form action="{{ route('admin.users.toggle', $u) }}" method="POST" onsubmit="return confirm('Toggle active status?')">
-                                    @csrf
-                                    <button class="btn btn-outline-light btn-sm">
-                                        <i class="fa-solid fa-power-off"></i>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-delete-user
+                                        data-user-id="{{ $u->id }}"
+                                        data-user-name="{{ $u->first_name }} {{ $u->last_name }}">
+                                        <i class="fa-regular fa-trash-can me-1"></i> Delete
                                     </button>
-                                </form>
-                                --}}
                                 </div>
                             </td>
                         </tr>
@@ -237,3 +228,53 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+(function() {
+    // CSRF for AJAX
+    $.ajaxSetup({
+        headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')}
+    });
+
+    // Delete user functionality
+    $(document).on('click', '[data-delete-user]', function() {
+        const $btn = $(this);
+        const userId = $btn.data('user-id');
+        const userName = $btn.data('user-name');
+        
+        if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+            return;
+        }
+        
+        $btn.prop('disabled', true);
+        
+        $.ajax({
+            url: `{{ route('admin.users.delete', ':id') }}`.replace(':id', userId),
+            method: 'DELETE'
+        })
+        .done(function(res) {
+            if (res.ok) {
+                $btn.closest('tr').fadeOut(300, function() {
+                    $(this).remove();
+                });
+                // Show success message
+                if (typeof showToast === 'function') {
+                    showToast(res.message || 'User deleted successfully', 'success');
+                } else {
+                    alert(res.message || 'User deleted successfully');
+                }
+            } else {
+                alert(res.message || 'Failed to delete user');
+                $btn.prop('disabled', false);
+            }
+        })
+        .fail(function(xhr) {
+            const msg = xhr.responseJSON?.message || 'Failed to delete user';
+            alert(msg);
+            $btn.prop('disabled', false);
+        });
+    });
+})();
+</script>
+@endpush

@@ -91,7 +91,7 @@ class DoctorConversationQuickController extends Controller
             WalletTransaction::create([
                 'user_id' => $patient->id,
                 'amount' => -$fee,
-                'currency' => 'USD',
+                'currency' => 'NGN',
                 'type' => 'debit',
                 'reference' => uniqid('txn_'),
                 'purpose' => "Consultation fee for conversation ID {$conversation->id}",
@@ -100,7 +100,7 @@ class DoctorConversationQuickController extends Controller
             WalletTransaction::create([
                 'user_id' => $doctor->id,
                 'amount' => $fee,
-                'currency' => 'USD',
+                'currency' => 'NGN',
                 'type' => 'credit',
                 'reference' => uniqid('txn_'),
                 'purpose' => "Consultation fee received for conversation ID {$conversation->id}",

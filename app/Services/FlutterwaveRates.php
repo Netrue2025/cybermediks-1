@@ -23,7 +23,7 @@ class FlutterwaveRates
             $resp = Http::withToken($secret)->get($url, [
                 'amount'               => $srcAmount,
                 'source_currency'      => 'NGN',
-                'destination_currency' => 'USD',
+                'destination_currency' => 'NGN',
             ]);
 
             $fallback = (float) config('services.flutterwave.fallback_ngn_usd', 1 / 1700); // ~0.000588

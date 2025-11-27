@@ -35,8 +35,7 @@
             </div>
 
             <div class="{{ $t->is_credit ? 'amount-pos' : 'amount-neg' }} flex-shrink-0 text-end">
-                {{ $t->currency === 'NGN' ? '₦' : $t->currency . ' ' }}
-                {{ number_format((float) $t->amount, 2, '.', ',') }}
+                ₦{{ number_format((float) $t->amount, 2, '.', ',') }}
             </div>
 
             <div class="flex-shrink-0">

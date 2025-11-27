@@ -98,7 +98,7 @@ class DoctorQueueController extends Controller
             WalletTransaction::create([
                 'user_id' => $patient->id,
                 'amount' => -$fee,
-                'currency' => 'USD',
+                'currency' => 'NGN',
                 'type' => 'debit',
                 'reference' => uniqid('txn_'),
                 'purpose' => "Consultation fee for appointment ID {$appointment->id}",
@@ -107,7 +107,7 @@ class DoctorQueueController extends Controller
             WalletTransaction::create([
                 'user_id' => $doctor->id,
                 'amount' => $fee,
-                'currency' => 'USD',
+                'currency' => 'NGN',
                 'type' => 'credit',
                 'reference' => uniqid('txn_'),
                 'purpose' => "Consultation fee received for appointment ID {$appointment->id}",

@@ -84,6 +84,24 @@
             color: var(--muted);
             font-size: 0.9rem;
         }
+
+        /* Make modal scrollable within viewport */
+        .modal-dialog {
+            max-height: 90vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .modal-content {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            max-height: calc(90vh - 120px);
+        }
     </style>
 @endpush
 

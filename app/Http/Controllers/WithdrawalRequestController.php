@@ -17,7 +17,7 @@ class WithdrawalRequestController extends Controller
     {
         $data = $r->validate([
             'amount'        => 'required|numeric|min:5',
-            'currency'      => 'nullable|string|in:USD',
+            'currency'      => 'nullable|string|in:NGN',
             // payout details (required for USD transfers)
             'bank_name'     => 'required|string|max:120',
             'bank_code'     => 'required|string|max:40',     // Flutterwave bank code for USD route
@@ -29,7 +29,7 @@ class WithdrawalRequestController extends Controller
 
         $user     = $r->user();
         $amount   = (float)$data['amount'];
-        $currency = $data['currency'] ?? 'USD';
+        $currency = $data['currency'] ?? 'NGN';
         if ($user->role === 'pharmacy') {
             $fee = (8 / 100);
         } else {

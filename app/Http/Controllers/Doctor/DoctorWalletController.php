@@ -44,7 +44,7 @@ class DoctorWalletController extends Controller
         ]);
 
         $user = Auth::user();
-        $currency = strtoupper($data['currency'] ?? 'USD');
+        $currency = strtoupper($data['currency'] ?? 'NGN');
         $fee = (23 / 100);
         $calculatedFee = $data['amount'] * $fee;
         $calculatedAmount = $data['amount'] - $calculatedFee;

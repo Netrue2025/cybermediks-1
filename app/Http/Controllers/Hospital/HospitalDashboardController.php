@@ -258,4 +258,23 @@ class HospitalDashboardController extends Controller
             'message' => 'Account created. Temporary password emailed to the doctor.',
         ]);
     }
+
+    public function deleteDoctor($id)
+    {
+        $hospitalId = Auth::id();
+  
+        $doctor = User::where('id', $id)
+            ->where('role', 'doctor')
+            ->where('hospital_id', $hospitalId)
+            ->first();
+        
+        if (!$doctor) {
+            return response()->json(['ok' => false, 'message' => 'Doctor not found or unauthorized'], 404);
+        }
+        
+        // Delete the doctor
+        $doctor->delete();
+        
+        return response()->json(['ok' => true, 'message' => 'Doctor deleted successfully']);
+    }
 }

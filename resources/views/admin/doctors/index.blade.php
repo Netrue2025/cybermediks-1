@@ -216,6 +216,11 @@
                                                 <i class="fa-regular fa-folder-open me-1"></i> Credentials
                                             </button>
 
+                                            <button type="button" class="btn btn-outline-danger btn-sm" data-delete-doctor
+                                                data-doctor-id="{{ $d->id }}"
+                                                data-doctor-name="{{ $d->first_name }} {{ $d->last_name }}">
+                                                <i class="fa-regular fa-trash-can me-1"></i> Delete
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -293,6 +298,11 @@
 @push('scripts')
     <script>
         (function() {
+            // CSRF for AJAX
+            $.ajaxSetup({
+                headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')}
+            });
+
             // When "Credentials" clicked, fetch and show
             $(document).on('click', '[data-view-creds]', function() {
                 const doctorId = $(this).data('doctor');
@@ -305,6 +315,45 @@
                 }).fail(function(xhr) {
                     const msg = xhr.responseJSON?.message || 'Failed to load credentials';
                     $body.html(`<div class="text-center text-danger">${msg}</div>`);
+                });
+            });
+
+            // Delete doctor functionality
+            $(document).on('click', '[data-delete-doctor]', function() {
+                const $btn = $(this);
+                const doctorId = $btn.data('doctor-id');
+                const doctorName = $btn.data('doctor-name');
+                
+                if (!confirm(`Are you sure you want to delete ${doctorName}? This action cannot be undone.`)) {
+                    return;
+                }
+                
+                $btn.prop('disabled', true);
+                
+                $.ajax({
+                    url: `{{ route('admin.doctors.delete', ':id') }}`.replace(':id', doctorId),
+                    method: 'DELETE'
+                })
+                .done(function(res) {
+                    if (res.ok) {
+                        $btn.closest('tr').fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                        // Show success message
+                        if (typeof showToast === 'function') {
+                            showToast(res.message || 'Doctor deleted successfully', 'success');
+                        } else {
+                            alert(res.message || 'Doctor deleted successfully');
+                        }
+                    } else {
+                        alert(res.message || 'Failed to delete doctor');
+                        $btn.prop('disabled', false);
+                    }
+                })
+                .fail(function(xhr) {
+                    const msg = xhr.responseJSON?.message || 'Failed to delete doctor';
+                    alert(msg);
+                    $btn.prop('disabled', false);
                 });
             });
         })();
