@@ -83,7 +83,7 @@
             <a href="{{ route('admin.disputes.index') }}" class="btn btn-outline-light">
                 <i class="fa-solid fa-arrow-left-long me-1"></i> Back
             </a>
-            @if ($dispute->status !== 'resolved' && ($holdVar->status ?? null) === 'pending')
+            @if ($dispute->status !== 'resolved')
                 <button type="button" class="btn btn-warning js-open-resolve" data-id="{{ $dispute->id }}"
                     data-appointment="{{ $ap->id }}"
                     data-patient="{{ $ap->patient?->first_name }} {{ $ap->patient?->last_name }}"

@@ -211,4 +211,120 @@ class BalanceService
             ]);
         });
     }
+
+
+    public static function processAppointmentPayment(Appointment $ap, float $amount): void
+    {
+        if ($amount <= 0) {
+            return; 
+        }
+
+        DB::transaction(function () use ($ap, $amount) {
+            $existingHold = WalletHold::where([
+                'ref_type' => 'appointment',
+                'ref_id' => $ap->id,
+            ])->lockForUpdate()->first();
+
+            if ($existingHold) {
+                if ($existingHold->status === 'pending') {
+                    $patient = User::whereKey($existingHold->source_user_id)->lockForUpdate()->first();
+                    $doctor = User::whereKey($existingHold->target_user_id)->lockForUpdate()->first();
+
+                    if ((float)$patient->wallet_balance < (float)$existingHold->amount) {
+                        throw new InvalidArgumentException('Insufficient patient balance to capture.');
+                    }
+
+                    // Move balances
+                    $patient->wallet_balance = (float)$patient->wallet_balance - (float)$existingHold->amount;
+                    $doctor->wallet_balance = (float)$doctor->wallet_balance + (float)$existingHold->amount;
+                    $patient->save();
+                    $doctor->save();
+
+                    $existingHold->update(['status' => 'captured']);
+
+                    // Create transaction records
+                    WalletTransaction::create([
+                        'user_id'   => $patient->id,
+                        'type'      => 'debit',
+                        'amount'    => $existingHold->amount,
+                        'currency'  => 'NGN',
+                        'purpose'   => 'appointment_capture',
+                        'reference' => 'appointment:'.$ap->id,
+                        'meta'      => ['hold_id' => $existingHold->id],
+                        'status'    => 'ok',
+                    ]);
+                    WalletTransaction::create([
+                        'user_id'   => $doctor->id,
+                        'type'      => 'credit',
+                        'amount'    => $existingHold->amount,
+                        'currency'  => 'NGN',
+                        'purpose'   => 'appointment_capture',
+                        'reference' => 'appointment:'.$ap->id,
+                        'meta'      => ['hold_id' => $existingHold->id],
+                        'status'    => 'ok',
+                    ]);
+                }
+                return;
+            }
+
+            // Create hold first
+            $hold = WalletHold::create([
+                'source_user_id' => $ap->patient_id,
+                'target_user_id' => $ap->doctor_id,
+                'amount'        => $amount,
+                'status'        => 'pending',
+                'ref_type'      => 'appointment',
+                'ref_id'        => $ap->id,
+            ]);
+
+            // Audit row (patient) - no balance change
+            WalletTransaction::create([
+                'user_id'   => $ap->patient_id,
+                'type'      => 'hold',
+                'amount'    => $amount,
+                'currency'  => 'NGN',
+                'purpose'   => 'appointment_hold',
+                'reference' => 'appointment:'.$ap->id,
+                'meta'      => ['hold_id' => $hold->id, 'status' => 'success'],
+            ]);
+
+            // Immediately capture the hold (deduct from patient, credit doctor)
+            $patient = User::whereKey($ap->patient_id)->lockForUpdate()->first();
+            $doctor = User::whereKey($ap->doctor_id)->lockForUpdate()->first();
+
+            if ((float)$patient->wallet_balance < (float)$amount) {
+                throw new InvalidArgumentException('Insufficient patient balance to capture.');
+            }
+
+            // Move balances
+            $patient->wallet_balance = (float)$patient->wallet_balance - (float)$amount;
+            $doctor->wallet_balance = (float)$doctor->wallet_balance + (float)$amount;
+            $patient->save();
+            $doctor->save();
+
+            $hold->update(['status' => 'captured']);
+
+            // Create transaction records
+            WalletTransaction::create([
+                'user_id'   => $patient->id,
+                'type'      => 'debit',
+                'amount'    => $amount,
+                'currency'  => 'NGN',
+                'purpose'   => 'appointment_capture',
+                'reference' => 'appointment:'.$ap->id,
+                'meta'      => ['hold_id' => $hold->id],
+                'status'    => 'ok',
+            ]);
+            WalletTransaction::create([
+                'user_id'   => $doctor->id,
+                'type'      => 'credit',
+                'amount'    => $amount,
+                'currency'  => 'NGN',
+                'purpose'   => 'appointment_capture',
+                'reference' => 'appointment:'.$ap->id,
+                'meta'      => ['hold_id' => $hold->id],
+                'status'    => 'ok',
+            ]);
+        });
+    }
 }

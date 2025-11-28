@@ -12,6 +12,7 @@ use App\Services\BalanceService;
 use App\Services\DisputeHoldService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -54,38 +55,36 @@ class PatientAppointmentController extends Controller
             ], 422);
         }
 
-        // Create appointment
-        $appt = Appointment::create([
-            'patient_id'    => $patient->id,
-            'doctor_id'     => $data['doctor_id'],
-            'type'          => $data['type'],
-            'scheduled_at'  => $data['scheduled_at'] ?? null,
-            'duration'      => $data['duration'] ?? null,
-            'status'        => 'pending',
-            'price'         => $consultFee,
-            'payment_status' => 'paid',
-            'reason'        => $data['reason'] ?? null,
-        ]);
-
-        // Process payment immediately after successful appointment creation
-        if ($consultFee > 0) {
-            try {
-                // Create hold first
-                BalanceService::holdAppointment($appt, $consultFee);
-                // Immediately capture the hold (deduct from patient, credit doctor)
-                BalanceService::captureHoldForAppointment($appt);
-            } catch (\Exception $e) {
-                Log::error('Payment processing failed for appointment: ' . $appt->id, [
-                    'error' => $e->getMessage(),
-                    'appointment_id' => $appt->id,
+        // Create appointment and process payment
+        try {
+            $appt = DB::transaction(function () use ($patient, $data, $consultFee) {
+                // Create appointment
+                $appt = Appointment::create([
+                    'patient_id'    => $patient->id,
+                    'doctor_id'     => $data['doctor_id'],
+                    'type'          => $data['type'],
+                    'scheduled_at'  => $data['scheduled_at'] ?? null,
+                    'duration'      => $data['duration'] ?? null,
+                    'status'        => 'pending',
+                    'price'         => $consultFee,
+                    'payment_status' => 'paid',
+                    'reason'        => $data['reason'] ?? null,
                 ]);
-                // Rollback appointment if payment fails
-                $appt->delete();
-                return response()->json([
-                    'ok' => false,
-                    'message' => 'Payment processing failed. Please try again.',
-                ], 500);
-            }
+
+                // Process payment using BalanceService (handles hold + capture atomically)
+                BalanceService::processAppointmentPayment($appt, $consultFee);
+
+                return $appt;
+            });
+        } catch (\Exception $e) {
+            Log::error('Appointment creation or payment processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Appointment creation failed. Please try again.',
+            ], 500);
         }
 
         $redirect = route('patient.dashboard');
@@ -162,14 +161,14 @@ class PatientAppointmentController extends Controller
         $patient = $appointment->patient;
         $doctor = $appointment->doctor;
         $doctorProfile = $doctor->doctorProfile;
-        $fee = $doctorProfile?->consult_fee;
-        if ($fee && $patient) {
+        $fee = (float)($doctorProfile?->consult_fee ?? 0);
+        if ($fee > 0 && $patient) {
             // Charge the patient
-            $patient->wallet_balance -= $fee;
+            $patient->wallet_balance = (float)$patient->wallet_balance - $fee;
             $patient->save();
 
             // Pay the doctor
-            $doctor->wallet_balance += $fee;
+            $doctor->wallet_balance = (float)$doctor->wallet_balance + $fee;
             $doctor->save();
 
             // Log the transaction (pseudo-code, implement as needed)
