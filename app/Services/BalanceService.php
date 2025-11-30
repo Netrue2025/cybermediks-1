@@ -31,7 +31,7 @@ class BalanceService
                 'amount'    => $amount,
                 'currency'  => 'NGN',
                 'purpose'   => 'appointment_hold',
-                'reference' => 'appointment:'.$ap->id,
+                'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['hold_id' => $hold->id, 'status' => 'success'],
             ]);
 
@@ -71,7 +71,7 @@ class BalanceService
                 'amount'    => $hold->amount,
                 'currency'  => 'NGN',
                 'purpose'   => 'appointment_capture',
-                'reference' => 'appointment:'.$ap->id,
+                'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['hold_id' => $hold->id],
                 'status'    => 'ok',
             ]);
@@ -81,7 +81,7 @@ class BalanceService
                 'amount'    => $hold->amount,
                 'currency'  => 'NGN',
                 'purpose'   => 'appointment_capture',
-                'reference' => 'appointment:'.$ap->id,
+                'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['hold_id' => $hold->id],
                 'status'    => 'ok',
             ]);
@@ -106,7 +106,7 @@ class BalanceService
                 'amount'    => $hold->amount,
                 'currency'  => 'NGN',
                 'purpose'   => 'appointment_release',
-                'reference' => 'appointment:'.$ap->id,
+                'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['hold_id' => $hold->id],
                 'status'    => 'ok',
             ]);
@@ -143,7 +143,7 @@ class BalanceService
                     'amount'    => $captureAmount,
                     'currency'  => 'NGN',
                     'purpose'   => 'appointment_capture',
-                    'reference' => 'appointment:'.$ap->id,
+                    'reference' => 'appointment:' . $ap->id,
                     'meta'      => ['hold_id' => $hold->id, 'partial' => true],
                     'status'    => 'ok',
                 ]);
@@ -153,7 +153,7 @@ class BalanceService
                     'amount'    => $captureAmount,
                     'currency'  => 'NGN',
                     'purpose'   => 'appointment_capture',
-                    'reference' => 'appointment:'.$ap->id,
+                    'reference' => 'appointment:' . $ap->id,
                     'meta'      => ['hold_id' => $hold->id, 'partial' => true],
                     'status'    => 'ok',
                 ]);
@@ -167,7 +167,7 @@ class BalanceService
                     'amount'    => $releaseAmount,
                     'currency'  => 'NGN',
                     'purpose'   => 'appointment_release',
-                    'reference' => 'appointment:'.$ap->id,
+                    'reference' => 'appointment:' . $ap->id,
                     'meta'      => ['hold_id' => $hold->id, 'partial' => true],
                     'status'    => 'ok',
                 ]);
@@ -181,13 +181,14 @@ class BalanceService
     public static function refundCaptured(Appointment $ap, float $amount): void
     {
         DB::transaction(function () use ($ap, $amount) {
-            $hold    = WalletHold::where(['ref_type'=>'appointment','ref_id'=>$ap->id])->firstOrFail();
+            $hold    = WalletHold::where(['ref_type' => 'appointment', 'ref_id' => $ap->id])->firstOrFail();
             $patient = User::whereKey($hold->source_user_id)->lockForUpdate()->first();
             $doctor  = User::whereKey($hold->target_user_id)->lockForUpdate()->first();
 
             $doctor->wallet_balance  = (float)$doctor->wallet_balance  - $amount;
             $patient->wallet_balance = (float)$patient->wallet_balance + $amount;
-            $doctor->save(); $patient->save();
+            $doctor->save();
+            $patient->save();
 
             WalletTransaction::create([
                 'user_id'   => $doctor->id,
@@ -195,7 +196,7 @@ class BalanceService
                 'amount'    => $amount,
                 'currency'  => 'NGN',
                 'purpose'   => 'appointment_refund',
-                'reference' => 'appointment:'.$ap->id,
+                'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['refund' => true],
                 'status'    => 'ok',
             ]);
@@ -205,7 +206,7 @@ class BalanceService
                 'amount'    => $amount,
                 'currency'  => 'NGN',
                 'purpose'   => 'appointment_refund',
-                'reference' => 'appointment:'.$ap->id,
+                'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['refund' => true],
                 'status'    => 'ok',
             ]);
@@ -216,7 +217,7 @@ class BalanceService
     public static function processAppointmentPayment(Appointment $ap, float $amount): void
     {
         if ($amount <= 0) {
-            return; 
+            return;
         }
 
         DB::transaction(function () use ($ap, $amount) {
@@ -248,20 +249,20 @@ class BalanceService
                         'type'      => 'debit',
                         'amount'    => $existingHold->amount,
                         'currency'  => 'NGN',
-                        'purpose'   => 'appointment_capture',
-                        'reference' => 'appointment:'.$ap->id,
+                        'purpose'   => "Consultation fee received for appointment ID {$ap->id}",
+                        'reference' => uniqid('txn_'),
                         'meta'      => ['hold_id' => $existingHold->id],
-                        'status'    => 'ok',
+                        'status'    => 'successful',
                     ]);
                     WalletTransaction::create([
                         'user_id'   => $doctor->id,
                         'type'      => 'credit',
                         'amount'    => $existingHold->amount,
                         'currency'  => 'NGN',
-                        'purpose'   => 'appointment_capture',
-                        'reference' => 'appointment:'.$ap->id,
+                        'purpose'   => "Consultation fee received for appointment ID {$ap->id}",
+                        'reference' => uniqid('txn_'),
                         'meta'      => ['hold_id' => $existingHold->id],
-                        'status'    => 'ok',
+                        'status'    => 'successful',
                     ]);
                 }
                 return;
@@ -284,7 +285,7 @@ class BalanceService
                 'amount'    => $amount,
                 'currency'  => 'NGN',
                 'purpose'   => 'appointment_hold',
-                'reference' => 'appointment:'.$ap->id,
+                'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['hold_id' => $hold->id, 'status' => 'success'],
             ]);
 
@@ -310,20 +311,20 @@ class BalanceService
                 'type'      => 'debit',
                 'amount'    => $amount,
                 'currency'  => 'NGN',
-                'purpose'   => 'appointment_capture',
-                'reference' => 'appointment:'.$ap->id,
+                'purpose'   => "Consultation fee received for appointment ID {$ap->id}",
+                'reference' => uniqid('txn_'),
                 'meta'      => ['hold_id' => $hold->id],
-                'status'    => 'ok',
+                'status'    => 'successful',
             ]);
             WalletTransaction::create([
                 'user_id'   => $doctor->id,
                 'type'      => 'credit',
                 'amount'    => $amount,
                 'currency'  => 'NGN',
-                'purpose'   => 'appointment_capture',
-                'reference' => 'appointment:'.$ap->id,
+                'purpose'   => "Consultation fee received for appointment ID {$ap->id}",
+                'reference' => uniqid('txn_'),
                 'meta'      => ['hold_id' => $hold->id],
-                'status'    => 'ok',
+                'status'    => 'successful',
             ]);
         });
     }

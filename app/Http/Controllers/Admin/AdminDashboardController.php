@@ -24,7 +24,7 @@ class AdminDashboardController extends Controller
         $rxPicked     = Prescription::where('dispense_status', 'picked')->count();
 
         $apptsToday   = Appointment::whereDate('scheduled_at', now()->toDateString())->count();
-        $revenueToday = WalletTransaction::whereDate('created_at', now()->toDateString())
+        $revenueToday = WalletTransaction::whereDate('created_at', now()->toDateString())->where('purpose', 'appointment_capture')
             ->where('type', 'credit')->sum('amount');
 
         return view('admin.dashboard', compact(
