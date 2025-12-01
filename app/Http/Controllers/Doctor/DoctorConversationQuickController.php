@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Conversation;
+use App\Models\WalletHold;
 use App\Models\WalletTransaction;
+use App\Services\BalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class DoctorConversationQuickController extends Controller
 {
@@ -45,8 +48,34 @@ class DoctorConversationQuickController extends Controller
         if ($appointment)
         {
             $appointment->update(['status' => 'rejected']);
+            
+            // Refund payment if it was captured
+            $this->refundAppointmentPayment($appointment);
         }
         return response()->json(['status' => 'success', 'message' => 'Request rejected ✅']);
+    }
+    
+    /**
+     * Refund payment for an appointment if payment was captured
+     */
+    private function refundAppointmentPayment(Appointment $appointment): void
+    {
+        try {
+            $hold = WalletHold::where([
+                'ref_type' => 'appointment',
+                'ref_id' => $appointment->id,
+                'status' => 'captured',
+            ])->first();
+
+            if ($hold && (float)$hold->amount > 0) {
+                BalanceService::refundCaptured($appointment, (float)$hold->amount);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to refund appointment payment on conversation rejection', [
+                'appointment_id' => $appointment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function close(Request $request, Conversation $conversation)

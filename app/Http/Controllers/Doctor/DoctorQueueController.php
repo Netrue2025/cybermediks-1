@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\DoctorProfile;
 use App\Models\User;
+use App\Models\WalletHold;
 use App\Models\WalletTransaction;
+use App\Services\BalanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -60,7 +62,33 @@ class DoctorQueueController extends Controller
         $appointment->status = 'rejected';
         $appointment->save();
 
+        // Refund payment if it was captured
+        $this->refundAppointmentPayment($appointment);
+
         return response()->json(['ok' => true, 'message' => 'Request rejected']);
+    }
+    
+    /**
+     * Refund payment for an appointment if payment was captured
+     */
+    private function refundAppointmentPayment(Appointment $appointment): void
+    {
+        try {
+            $hold = WalletHold::where([
+                'ref_type' => 'appointment',
+                'ref_id' => $appointment->id,
+                'status' => 'captured',
+            ])->first();
+
+            if ($hold && (float)$hold->amount > 0) {
+                BalanceService::refundCaptured($appointment, (float)$hold->amount);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to refund appointment payment on rejection', [
+                'appointment_id' => $appointment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function completed(Request $request, Appointment $appointment)

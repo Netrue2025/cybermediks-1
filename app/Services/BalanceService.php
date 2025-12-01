@@ -198,7 +198,7 @@ class BalanceService
                 'purpose'   => 'appointment_refund',
                 'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['refund' => true],
-                'status'    => 'ok',
+                'status'    => 'successful',
             ]);
             WalletTransaction::create([
                 'user_id'   => $patient->id,
@@ -208,7 +208,7 @@ class BalanceService
                 'purpose'   => 'appointment_refund',
                 'reference' => 'appointment:' . $ap->id,
                 'meta'      => ['refund' => true],
-                'status'    => 'ok',
+                'status'    => 'successful',
             ]);
         });
     }

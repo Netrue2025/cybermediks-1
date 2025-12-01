@@ -18,13 +18,11 @@ class WithdrawalRequestController extends Controller
         $data = $r->validate([
             'amount'        => 'required|numeric|min:5',
             'currency'      => 'nullable|string|in:NGN',
-            // payout details (required for USD transfers)
+            // payout details
             'bank_name'     => 'required|string|max:120',
-            'bank_code'     => 'required|string|max:40',     // Flutterwave bank code for USD route
+            'bank_code'     => 'required|string|max:40',     // Flutterwave bank code
             'account_number' => 'required|string|max:40',
             'account_name'  => 'required|string|max:120',
-            'routing_number' => 'nullable|string|max:40',
-            'swift_code'    => 'nullable|string|max:40',
         ]);
 
         $user     = $r->user();
@@ -75,9 +73,7 @@ class WithdrawalRequestController extends Controller
                     'bank_code'      => $data['bank_code'],
                     'account_number' => $data['account_number'],
                     'account_name'   => $data['account_name'],
-                    'routing_number' => $data['routing_number'] ?? null,
-                    'swift_code'     => $data['swift_code'] ?? null,
-                    'meta'           => ['note' => 'doctor requested withdrawal'],
+                    'meta'           => ['note' => 'withdrawal requested'],
                 ]);
 
                 $wallet = AdminWallet::first();

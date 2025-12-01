@@ -64,15 +64,13 @@ class AdminWithdrawalRequestController extends Controller
                 'account_bank'   => $wd->bank_code,
                 'account_number' => $wd->account_number,
                 'amount'         => (float)$wd->amount,
-                'currency'       => $wd->currency, // 'USD'
+                'currency'       => $wd->currency,
                 'narration'      => config('app.name') . ' withdrawal ' . $wd->reference,
                 'reference'      => $wd->reference, // idempotency
                 'debit_currency' => $wd->currency,
                 'meta'           => array_filter([
                     'account_name'   => $wd->account_name,
                     'bank_name'      => $wd->bank_name,
-                    'routing_number' => $wd->routing_number,
-                    'swift_code'     => $wd->swift_code,
                 ]),
             ];
 

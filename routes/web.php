@@ -195,7 +195,7 @@ Route::prefix('doctor')->name('doctor.')->middleware(['auth', 'verified', 'mustV
     Route::post('/profile/quick', [DoctorProfileController::class, 'quickUpdate'])->name('profile.quick');
 
     Route::post('/conversations/{conversation}/accept', [DoctorConversationQuickController::class, 'accept'])->name('conversations.accept');
-    Route::post('/conversations/{conversation}/reject', [DoctorConversationQuickController::class, 'reject'])->name('conversations.reject');
+    Route::post('/conversations/{conversation}/reject', [DoctorConversationQuickController::class, 'reject'])->name(name: 'conversations.reject');
     Route::post('/conversations/{conversation}/reopen', [DoctorConversationQuickController::class, 'reopen'])->name('conversations.reopen');
     Route::post('/conversations/{conversation}/close',  [DoctorConversationQuickController::class, 'close'])->name('conversations.close');
 
