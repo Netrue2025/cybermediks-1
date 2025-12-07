@@ -63,7 +63,7 @@ class AdminWithdrawalRequestController extends Controller
             $payload = [
                 'account_bank'   => $wd->bank_code,
                 'account_number' => $wd->account_number,
-                'amount'         => (float)$wd->amount,
+                'amount'         => (float)$wd->final_amount,
                 'currency'       => $wd->currency,
                 'narration'      => config('app.name') . ' withdrawal ' . $wd->reference,
                 'reference'      => $wd->reference, // idempotency

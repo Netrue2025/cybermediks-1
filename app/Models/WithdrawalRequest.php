@@ -25,7 +25,8 @@ class WithdrawalRequest extends Model
         'paid_at',
         'rejected_at',
         'approved_by',
-        'rejected_by'
+        'rejected_by',
+        'final_amount'
     ];
 
     protected $casts = [

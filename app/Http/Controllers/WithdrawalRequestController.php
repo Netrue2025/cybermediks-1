@@ -54,7 +54,7 @@ class WithdrawalRequestController extends Controller
                 WalletTransaction::create([
                     'user_id'   => $user->id,
                     'type'      => 'debit',
-                    'amount'    => $calculatedAmount,
+                    'amount'    => $amount,
                     'fee'       => $calculatedFee,
                     'reference' => $ref = 'WD-' . Str::uuid()->toString(),
                     'purpose'   => 'Withdrawal (hold)',
@@ -65,6 +65,7 @@ class WithdrawalRequestController extends Controller
                 WithdrawalRequest::create([
                     'user_id'        => $user->id,
                     'amount'         => $amount,
+                    'final_amount'  => $calculatedAmount,
                     'currency'       => $currency,
                     'status'         => 'pending',
                     'reference'      => $ref,
